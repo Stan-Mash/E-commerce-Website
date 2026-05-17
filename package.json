@@ -1,0 +1,29 @@
+{
+  "name": "nairobi-fashion",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*",
+    "workers/*"
+  ],
+  "scripts": {
+    "dev": "turbo run dev --parallel",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "type-check": "turbo run type-check",
+    "test": "turbo run test",
+    "db:migrate": "cd apps/web && npx supabase db push",
+    "db:seed": "npx tsx packages/lib/src/seed/index.ts"
+  },
+  "devDependencies": {
+    "turbo": "^1.13.3",
+    "typescript": "^5.4.5",
+    "@types/node": "^20.12.7",
+    "prettier": "^3.2.5",
+    "eslint": "^8.57.0"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "npm": ">=10.0.0"
+  }
+}
