@@ -1,0 +1,37 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Build outputs
+.next/
+dist/
+out/
+build/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Turbo
+.turbo/
+
+# Testing
+coverage/
+
+# Misc
+.DS_Store
+*.pem
+*.log
+npm-debug.log*
+
+# Vercel
+.vercel
+
+# Supabase local
+supabase/.branches
+supabase/.temp
+
+# TypeScript
+*.tsbuildinfo
