@@ -150,7 +150,7 @@ export type Database = {
         Update: Partial<Database["public"]["Tables"]["returns"]["Insert"]>;
       };
     };
-    Views: Record<string, never>;
+    Views: Record<string, never>; // no views defined yet
     Functions: Record<string, never>;
     Enums: {
       order_status: OrderStatus;

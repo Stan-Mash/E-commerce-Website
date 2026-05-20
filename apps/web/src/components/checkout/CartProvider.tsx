@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useReducer, useCallback } from "react";
+import { createContext, useContext, useReducer, useCallback, useState } from "react";
 
 export interface CartItem {
   productId: string;
@@ -60,12 +60,16 @@ interface CartContextValue {
   removeItem: (skuId: string) => void;
   updateQty: (skuId: string, quantity: number) => void;
   clearCart: () => void;
+  isCartOpen: boolean;
+  openCart: () => void;
+  closeCart: () => void;
 }
 
 const CartContext = createContext<CartContextValue | null>(null);
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = useReducer(cartReducer, { items: [] });
+  const [isCartOpen, setIsCartOpen] = useState(false);
 
   const addItem = useCallback((item: CartItem) => dispatch({ type: "ADD", item }), []);
   const removeItem = useCallback((skuId: string) => dispatch({ type: "REMOVE", skuId }), []);
@@ -74,12 +78,14 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     []
   );
   const clearCart = useCallback(() => dispatch({ type: "CLEAR" }), []);
+  const openCart = useCallback(() => setIsCartOpen(true), []);
+  const closeCart = useCallback(() => setIsCartOpen(false), []);
 
   const itemCount = state.items.reduce((sum, i) => sum + i.quantity, 0);
   const subtotal = state.items.reduce((sum, i) => sum + i.price * i.quantity, 0);
 
   return (
-    <CartContext.Provider value={{ items: state.items, itemCount, subtotal, addItem, removeItem, updateQty, clearCart }}>
+    <CartContext.Provider value={{ items: state.items, itemCount, subtotal, addItem, removeItem, updateQty, clearCart, isCartOpen, openCart, closeCart }}>
       {children}
     </CartContext.Provider>
   );
@@ -90,3 +96,4 @@ export function useCart(): CartContextValue {
   if (!ctx) throw new Error("useCart must be used within CartProvider");
   return ctx;
 }
+

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ShoppingBag, Heart, Share2, Truck, Store } from "lucide-react";
+import { ShoppingBag, Heart, Share2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useCart } from "@/components/checkout/CartProvider";
 import { formatKES } from "@/lib/utils";
@@ -37,7 +37,9 @@ export function ProductInfo({ product }: Props) {
   const discount =
     product.compare_price && product.compare_price > product.base_price
       ? Math.round(
-          ((product.compare_price - product.base_price) / product.compare_price) * 100
+          ((product.compare_price - product.base_price) /
+            product.compare_price) *
+            100
         )
       : null;
 
@@ -57,8 +59,8 @@ export function ProductInfo({ product }: Props) {
       skuId: selectedSku?.id ?? product.skus?.[0]?.id ?? "",
       name: product.name,
       price: product.base_price,
-      size: selectedSize ?? undefined,
-      color: selectedColor ?? undefined,
+      ...(selectedSize ? { size: selectedSize } : {}),
+      ...(selectedColor ? { color: selectedColor } : {}),
       imageUrl: product.product_images?.[0]?.url ?? "",
       quantity: 1,
     });
@@ -69,29 +71,47 @@ export function ProductInfo({ product }: Props) {
 
   return (
     <div className="flex flex-col gap-5">
-      {/* Category badge */}
-      <p className="text-xs font-semibold uppercase tracking-widest text-brand-500">
+      {/* Category label */}
+      <p
+        className="text-[11px] tracking-[.45em] uppercase"
+        style={{ color: "#9b7b3f" }}
+      >
         {product.category}
       </p>
 
-      {/* Name */}
-      <h1 className="font-display text-2xl sm:text-3xl text-ink leading-snug">
+      {/* Product name */}
+      <h1
+        className="font-bold leading-tight text-es-ink"
+        style={{
+          fontFamily: "var(--font-bodoni)",
+          fontSize: "clamp(32px, 4vw, 48px)",
+          letterSpacing: "-0.02em",
+        }}
+      >
         {product.name}
       </h1>
 
       {/* Price */}
       <div className="flex items-center gap-3 flex-wrap">
-        <span className="text-2xl font-bold text-ink">
+        <span
+          className="tracking-[.28em] text-es-ink"
+          style={{ fontSize: "15px" }}
+        >
           {formatKES(product.base_price)}
         </span>
         {product.compare_price && product.compare_price > product.base_price && (
           <>
-            <span className="text-base text-ink-muted line-through">
+            <span
+              className="tracking-[.28em] text-es-mute line-through"
+              style={{ fontSize: "15px" }}
+            >
               {formatKES(product.compare_price)}
             </span>
-            <span className="rounded-full bg-brand-100 px-2.5 py-0.5 text-xs font-bold text-brand-700">
-              -{discount}%
-            </span>
+            {discount && (
+              <span className="text-[11px] tracking-[.2em] uppercase text-es-gold">
+                -{discount}%
+              </span>
+            )}
           </>
         )}
       </div>
@@ -99,9 +119,12 @@ export function ProductInfo({ product }: Props) {
       {/* Color selector */}
       {uniqueColors.length > 0 && (
         <div>
-          <p className="text-sm font-semibold text-ink mb-2">
+          <p
+            className="text-es-ink mb-2"
+            style={{ fontSize: "13px", letterSpacing: ".12em" }}
+          >
             Colour:{" "}
-            <span className="font-normal text-ink-soft">
+            <span className="text-es-mute font-normal">
               {selectedColor ?? "Select"}
             </span>
           </p>
@@ -113,8 +136,8 @@ export function ProductInfo({ product }: Props) {
                 className={cn(
                   "w-8 h-8 rounded-full border-2 transition-all",
                   selectedColor === color
-                    ? "border-brand-500 scale-110 shadow-md"
-                    : "border-gray-200 hover:border-gray-400"
+                    ? "border-es-plum scale-110 shadow-md"
+                    : "border-es-bone hover:border-es-mute"
                 )}
                 style={{ backgroundColor: colorHex ?? color! }}
                 title={color!}
@@ -128,17 +151,18 @@ export function ProductInfo({ product }: Props) {
       {/* Size selector */}
       {uniqueSizes.length > 0 && (
         <div>
-          <p className="text-sm font-semibold text-ink mb-2">
+          <p
+            className="text-es-ink mb-2"
+            style={{ fontSize: "13px", letterSpacing: ".12em" }}
+          >
             Size:{" "}
-            <span className="font-normal text-ink-soft">
+            <span className="text-es-mute font-normal">
               {selectedSize ?? "Select"}
             </span>
           </p>
           <div className="flex gap-2 flex-wrap">
             {uniqueSizes.map((size) => {
-              const skuForSize = product.skus?.find(
-                (s) => s.size === size
-              );
+              const skuForSize = product.skus?.find((s) => s.size === size);
               const available = (skuForSize?.stock_quantity ?? 0) > 0;
               return (
                 <button
@@ -146,13 +170,18 @@ export function ProductInfo({ product }: Props) {
                   onClick={() => available && setSelectedSize(size)}
                   disabled={!available}
                   className={cn(
-                    "min-w-[44px] rounded-xl border-2 px-3 py-2 text-sm font-medium transition-all",
+                    "min-w-[44px] min-h-[44px] border px-3 py-2 text-sm font-medium transition-all",
                     selectedSize === size
-                      ? "border-brand-500 bg-brand-50 text-brand-700"
+                      ? "border-es-plum text-es-plum"
                       : available
-                      ? "border-gray-200 text-ink hover:border-brand-300"
-                      : "border-gray-100 text-gray-300 line-through cursor-not-allowed"
+                      ? "border-es-bone text-es-ink hover:border-es-plum"
+                      : "border-es-bone text-es-mute line-through cursor-not-allowed opacity-40"
                   )}
+                  style={
+                    selectedSize === size
+                      ? { backgroundColor: "#f1e9f5" }
+                      : undefined
+                  }
                 >
                   {size}
                 </button>
@@ -167,19 +196,20 @@ export function ProductInfo({ product }: Props) {
         <button
           onClick={handleAddToCart}
           disabled={adding || !inStock}
-          className="btn-primary flex-1 text-base"
+          className="es-btn-plum flex-1"
+          style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}
         >
           <ShoppingBag size={18} />
-          {!inStock ? "Out of Stock" : adding ? "Adding…" : "Add to Bag"}
+          {!inStock ? "OUT OF STOCK" : adding ? "ADDING…" : "ADD TO BAG"}
         </button>
         <button
-          className="rounded-full border-2 border-gray-200 p-3 hover:border-brand-300 hover:text-brand-500 transition-colors"
+          className="border border-es-bone p-3 hover:border-es-plum hover:text-es-plum transition-colors"
           aria-label="Save to wishlist"
         >
           <Heart size={20} />
         </button>
         <button
-          className="rounded-full border-2 border-gray-200 p-3 hover:border-brand-300 hover:text-brand-500 transition-colors"
+          className="border border-es-bone p-3 hover:border-es-plum hover:text-es-plum transition-colors"
           aria-label="Share product"
           onClick={() =>
             navigator.share?.({
@@ -193,53 +223,74 @@ export function ProductInfo({ product }: Props) {
       </div>
 
       {addedMessage && (
-        <p className={cn(
-          "text-sm font-medium",
-          addedMessage.includes("Please") ? "text-red-500" : "text-green-600"
-        )}>
+        <p
+          className={cn(
+            "text-[13px] tracking-[.15em]",
+            addedMessage.includes("Please") ? "text-red-500" : "text-es-gold"
+          )}
+        >
           {addedMessage}
         </p>
       )}
 
-      {/* Delivery options */}
-      <div className="rounded-2xl bg-surface-soft border border-surface-warm p-4 flex flex-col gap-3">
-        <div className="flex items-start gap-3">
-          <Store size={18} className="text-brand-500 mt-0.5 flex-shrink-0" />
-          <div>
-            <p className="text-sm font-semibold text-ink">Pickup — Free</p>
-            <p className="text-xs text-ink-muted">Westlands Flagship · Ready in 2hrs</p>
-          </div>
-        </div>
-        <div className="flex items-start gap-3">
-          <Truck size={18} className="text-ink-muted mt-0.5 flex-shrink-0" />
-          <div>
-            <p className="text-sm font-semibold text-ink">Door Delivery</p>
-            <p className="text-xs text-ink-muted">Nairobi from KES 250 · 1–2 days</p>
-          </div>
-        </div>
+      {/* Delivery / pickup */}
+      <div className="flex flex-col gap-2 pt-1">
+        <p
+          className="text-[11px] tracking-[.25em] uppercase text-es-mute"
+        >
+          <span className="text-es-gold">◆</span>
+          {" "}COMPLIMENTARY DELIVERY ACROSS KENYA
+        </p>
+        <p
+          className="text-[11px] tracking-[.25em] uppercase text-es-mute"
+        >
+          <span className="text-es-gold">◆</span>
+          {" "}PICKUP WESTLANDS · READY IN 2 HOURS
+        </p>
       </div>
 
       {/* Description */}
       {product.description && (
         <div>
-          <h2 className="font-semibold text-sm text-ink mb-2">About this piece</h2>
-          <p className="text-sm text-ink-soft leading-relaxed">{product.description}</p>
+          <h2
+            className="text-[11px] tracking-[.35em] uppercase text-es-ink mb-3"
+          >
+            About this piece
+          </h2>
+          <p
+            className="text-es-ink"
+            style={{
+              fontFamily: "var(--font-inter)",
+              fontSize: "15px",
+              lineHeight: 1.65,
+              color: "#171717",
+            }}
+          >
+            {product.description}
+          </p>
         </div>
       )}
 
       {/* Material / Care */}
       {(product.material ?? product.care_instructions) && (
-        <div className="grid grid-cols-2 gap-4 text-xs text-ink-soft border-t border-surface-warm pt-4">
+        <div
+          className="grid grid-cols-2 gap-4 text-[13px] text-es-mute border-t pt-4"
+          style={{ borderColor: "#e5e4df" }}
+        >
           {product.material && (
             <div>
-              <p className="font-semibold text-ink mb-1">Material</p>
-              <p>{product.material}</p>
+              <p className="text-[11px] tracking-[.3em] uppercase text-es-ink mb-1.5">
+                Material
+              </p>
+              <p style={{ lineHeight: 1.6 }}>{product.material}</p>
             </div>
           )}
           {product.care_instructions && (
             <div>
-              <p className="font-semibold text-ink mb-1">Care</p>
-              <p>{product.care_instructions}</p>
+              <p className="text-[11px] tracking-[.3em] uppercase text-es-ink mb-1.5">
+                Care
+              </p>
+              <p style={{ lineHeight: 1.6 }}>{product.care_instructions}</p>
             </div>
           )}
         </div>

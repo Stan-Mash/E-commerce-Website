@@ -1,4 +1,5 @@
 import { createServerClient } from "@supabase/ssr";
+import { createClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 import type { Database } from "@nairobi-fashion/lib";
 
@@ -33,8 +34,10 @@ export function createServerSupabaseClient() {
 
 /** Service-role client for admin operations only — never expose to client */
 export function createAdminSupabaseClient() {
-  const { createClient } = require("@supabase/supabase-js");
-  return createClient<Database>(
+  // Not typed with Database generic — checkout route uses complex join selects
+  // that the manually-authored Database type can't infer. Re-run
+  // `supabase gen types typescript` once the project is linked to fix this.
+  return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
     { auth: { autoRefreshToken: false, persistSession: false } }
