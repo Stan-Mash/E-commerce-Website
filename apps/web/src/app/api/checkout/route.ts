@@ -146,10 +146,36 @@ export async function POST(req: NextRequest) {
       description: "NairobiFashion Order",
     });
   } catch (err) {
-    // STK push failed — mark order as payment_failed
-    await supabase.from("orders").update({ status: "payment_failed" }).eq("id", order.order_id);
+    // Daraja timed out, went down, or rejected the payload.
+    // The webhook will NEVER fire in this case — Safaricom never accepted the
+    // request — so we must restore stock here immediately.
+    // (The webhook catch block handles the case where the customer cancels on
+    // their phone; this catch block handles the case where we never reached
+    // Safaricom at all.)
+    await supabase
+      .from("orders")
+      .update({ status: "payment_failed" })
+      .eq("id", order.order_id);
+
+    for (const item of rpcItems) {
+      await supabase.rpc("increment_sku_stock", {
+        p_sku_id: item.sku_id,
+        p_delta:  item.quantity,
+      });
+
+      await supabase.from("inventory_log").insert({
+        sku_id:    item.sku_id,
+        delta:     item.quantity,   // positive = stock returned
+        reason:    "payment_failed",
+        reference: order.order_id,
+      });
+    }
+
     console.error("STK Push error:", err);
-    return NextResponse.json({ error: "M-Pesa payment initiation failed. Please try again." }, { status: 502 });
+    return NextResponse.json(
+      { error: "M-Pesa payment initiation failed. Please try again." },
+      { status: 502 }
+    );
   }
 
   // Store mpesa transaction for idempotent callback matching
