@@ -12,6 +12,10 @@ const NAV_ITEMS = [
   { label: "Dashboard", href: "/admin" },
   { label: "Products", href: "/admin/products" },
   { label: "Orders", href: "/admin/orders" },
+  { label: "POS", href: "/admin/pos" },
+  { label: "Stock", href: "/admin/stock" },
+  { label: "Customers", href: "/admin/customers" },
+  { label: "Reports", href: "/admin/reports" },
 ] as const;
 
 export default function AdminLayout({
