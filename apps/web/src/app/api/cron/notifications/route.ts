@@ -22,6 +22,18 @@ import {
   orderShippedSMS,
   orderReadyForPickupSMS,
 } from "@/lib/africastalking/sms";
+import {
+  sendOrderConfirmationWA,
+  sendPaymentFailedWA,
+  sendOrderShippedWA,
+  sendOrderReadyForPickupWA,
+} from "@/lib/whatsapp/client";
+
+// WhatsApp is attempted first — higher open rates and free for 1k conversations/month.
+// If WhatsApp is not configured or fails, we fall back to SMS automatically.
+const WA_CONFIGURED =
+  !!process.env.WHATSAPP_ACCESS_TOKEN &&
+  !!process.env.WHATSAPP_PHONE_NUMBER_ID;
 
 // ── Auth ──────────────────────────────────────────────────────────────────────
 
@@ -98,41 +110,80 @@ export async function GET(req: NextRequest) {
 
       const order = orderData as OrderRow;
 
-      // ── Build SMS text based on job type ─────────────────────────────────
-      let smsText: string;
-      switch (job.job_type) {
-        case "order_confirmation":
-          smsText = orderConfirmationSMS(order.order_ref, order.total);
-          break;
-        case "payment_failed":
-          smsText = paymentFailedSMS(order.order_ref);
-          break;
-        case "order_shipped":
-          smsText = orderShippedSMS(order.order_ref);
-          break;
-        case "order_ready_for_pickup":
-          smsText = orderReadyForPickupSMS(order.order_ref);
-          break;
-        default:
-          await markFailed(supabase, job.id, `Unknown job type: ${job.job_type}`);
-          results.push({ id: job.id, job_type: job.job_type, success: false, error: "Unknown job type" });
-          continue;
+      // ── Dispatch: WhatsApp first, SMS fallback ────────────────────────────
+      let sent = false;
+      let dispatchError = "";
+
+      if (WA_CONFIGURED) {
+        let waResult;
+        switch (job.job_type) {
+          case "order_confirmation":
+            waResult = await sendOrderConfirmationWA(order.phone, "", order.order_ref, order.total);
+            break;
+          case "payment_failed":
+            waResult = await sendPaymentFailedWA(order.phone, order.order_ref);
+            break;
+          case "order_shipped":
+            waResult = await sendOrderShippedWA(order.phone, order.order_ref);
+            break;
+          case "order_ready_for_pickup":
+            waResult = await sendOrderReadyForPickupWA(order.phone, order.order_ref);
+            break;
+          default:
+            await markFailed(supabase, job.id, `Unknown job type: ${job.job_type}`);
+            results.push({ id: job.id, job_type: job.job_type, success: false, error: "Unknown job type" });
+            continue;
+        }
+
+        if (waResult.success) {
+          sent = true;
+        } else {
+          // WhatsApp failed — log and fall through to SMS
+          dispatchError = `WhatsApp: ${waResult.error ?? "failed"}`;
+          console.warn(`[notifications-cron] WhatsApp failed for job ${job.id}, falling back to SMS. Error: ${waResult.error}`);
+        }
       }
 
-      // ── Send SMS ──────────────────────────────────────────────────────────
-      const smsResult = await sendSMS(order.phone, smsText);
+      // ── SMS fallback ──────────────────────────────────────────────────────
+      if (!sent) {
+        let smsText: string;
+        switch (job.job_type) {
+          case "order_confirmation":
+            smsText = orderConfirmationSMS(order.order_ref, order.total);
+            break;
+          case "payment_failed":
+            smsText = paymentFailedSMS(order.order_ref);
+            break;
+          case "order_shipped":
+            smsText = orderShippedSMS(order.order_ref);
+            break;
+          case "order_ready_for_pickup":
+            smsText = orderReadyForPickupSMS(order.order_ref);
+            break;
+          default:
+            await markFailed(supabase, job.id, `Unknown job type: ${job.job_type}`);
+            results.push({ id: job.id, job_type: job.job_type, success: false, error: "Unknown job type" });
+            continue;
+        }
 
-      if (smsResult.success) {
-        // Worker is the ONLY thing that marks 'done' — after the API call succeeds
+        const smsResult = await sendSMS(order.phone, smsText);
+        if (smsResult.success) {
+          sent = true;
+        } else {
+          dispatchError += ` | SMS: ${smsResult.error ?? "failed"}`;
+        }
+      }
+
+      // ── Mark done or failed — worker ONLY sets this ───────────────────────
+      if (sent) {
         await supabase
           .from("notification_jobs")
           .update({ status: "done" })
           .eq("id", job.id);
-
         results.push({ id: job.id, job_type: job.job_type, success: true });
       } else {
-        await markFailed(supabase, job.id, smsResult.error ?? "SMS send failed");
-        results.push({ id: job.id, job_type: job.job_type, success: false, error: smsResult.error ?? "SMS send failed" });
+        await markFailed(supabase, job.id, dispatchError || "All delivery channels failed");
+        results.push({ id: job.id, job_type: job.job_type, success: false, error: dispatchError });
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : "Unexpected error";
