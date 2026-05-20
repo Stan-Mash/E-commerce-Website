@@ -1,24 +1,17 @@
-name: Deploy to Azure Static Web Apps
+name: Deploy to Azure App Service
 
 on:
   push:
     branches: [main]
-  pull_request:
-    types: [opened, synchronize, reopened, closed]
-    branches: [main]
 
 jobs:
-  # ── Build & Deploy ──────────────────────────────────────────────────────────
   build_and_deploy:
-    if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.action != 'closed')
     runs-on: ubuntu-latest
     name: Build and Deploy
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          submodules: true
 
       - name: Setup Node.js 20
         uses: actions/setup-node@v4
@@ -26,53 +19,43 @@ jobs:
           node-version: '20'
           cache: 'npm'
 
-      # Install from the monorepo root so workspace packages (packages/lib) are available
+      # Install from monorepo root so workspace packages (packages/lib) are available
       - name: Install dependencies
         run: npm ci
 
       # Build only the web app via Turborepo
-      - name: Build web app
+      - name: Build
         run: npx turbo run build --filter=web
         env:
-          # ── Supabase ──────────────────────────────────────────────────────
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-          # ── M-Pesa ────────────────────────────────────────────────────────
           MPESA_CONSUMER_KEY: ${{ secrets.MPESA_CONSUMER_KEY }}
           MPESA_CONSUMER_SECRET: ${{ secrets.MPESA_CONSUMER_SECRET }}
           MPESA_SHORTCODE: ${{ secrets.MPESA_SHORTCODE }}
           MPESA_PASSKEY: ${{ secrets.MPESA_PASSKEY }}
           MPESA_CALLBACK_URL: ${{ secrets.MPESA_CALLBACK_URL }}
           MPESA_ENVIRONMENT: ${{ secrets.MPESA_ENVIRONMENT }}
-          # ── Admin ─────────────────────────────────────────────────────────
           ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
-          # ── Cloudinary ────────────────────────────────────────────────────
           NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME: ${{ secrets.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME }}
           CLOUDINARY_API_KEY: ${{ secrets.CLOUDINARY_API_KEY }}
           CLOUDINARY_API_SECRET: ${{ secrets.CLOUDINARY_API_SECRET }}
-          # ── Site ──────────────────────────────────────────────────────────
           NEXT_PUBLIC_SITE_URL: ${{ secrets.NEXT_PUBLIC_SITE_URL }}
 
-      # Deploy the pre-built .next output to Azure Static Web Apps
-      - name: Deploy to Azure Static Web Apps
-        uses: Azure/static-web-apps-deploy@v1
-        with:
-          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          action: upload
-          app_location: apps/web        # Where the Next.js source lives
-          output_location: .next        # Built output, relative to app_location
-          skip_app_build: true          # We already built above with Turbo
+      # Assemble the standalone bundle:
+      # .next/standalone  → self-contained Node server (no npm install needed on server)
+      # .next/static      → hashed JS/CSS chunks (must be copied in)
+      # public/           → icons, manifest, etc.
+      - name: Assemble standalone bundle
+        run: |
+          cp -r apps/web/.next/static   apps/web/.next/standalone/.next/static
+          cp -r apps/web/public         apps/web/.next/standalone/public
 
-  # ── Close PR environment ────────────────────────────────────────────────────
-  close_pull_request:
-    if: github.event_name == 'pull_request' && github.event.action == 'closed'
-    runs-on: ubuntu-latest
-    name: Close Pull Request
-    steps:
-      - name: Close staging environment
-        uses: Azure/static-web-apps-deploy@v1
+      # Deploy the standalone folder to Azure App Service
+      # App Service will run:  node server.js  (created by Next.js standalone build)
+      - name: Deploy to Azure Web App
+        uses: azure/webapps-deploy@v3
         with:
-          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
-          action: close
+          app-name: ${{ secrets.AZURE_WEBAPP_NAME }}
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          package: apps/web/.next/standalone
