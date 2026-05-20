@@ -1,6 +1,8 @@
 "use client";
 
-import { createContext, useContext, useReducer, useCallback, useState } from "react";
+import { createContext, useContext, useReducer, useCallback, useState, useEffect } from "react";
+
+const CART_STORAGE_KEY = "es_cart_v1";
 
 export interface CartItem {
   productId: string;
@@ -67,9 +69,29 @@ interface CartContextValue {
 
 const CartContext = createContext<CartContextValue | null>(null);
 
+function loadCartFromStorage(): CartState {
+  if (typeof window === "undefined") return { items: [] };
+  try {
+    const raw = localStorage.getItem(CART_STORAGE_KEY);
+    if (!raw) return { items: [] };
+    return JSON.parse(raw) as CartState;
+  } catch {
+    return { items: [] };
+  }
+}
+
 export function CartProvider({ children }: { children: React.ReactNode }) {
-  const [state, dispatch] = useReducer(cartReducer, { items: [] });
+  const [state, dispatch] = useReducer(cartReducer, { items: [] }, loadCartFromStorage);
   const [isCartOpen, setIsCartOpen] = useState(false);
+
+  // Persist cart to localStorage whenever items change
+  useEffect(() => {
+    try {
+      localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(state));
+    } catch {
+      // localStorage unavailable (private browsing quota) — silently ignore
+    }
+  }, [state]);
 
   const addItem = useCallback((item: CartItem) => dispatch({ type: "ADD", item }), []);
   const removeItem = useCallback((skuId: string) => dispatch({ type: "REMOVE", skuId }), []);

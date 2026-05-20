@@ -123,6 +123,10 @@ export async function PUT(
   return NextResponse.json({ product });
 }
 
+// Products are NEVER hard-deleted — doing so would cascade to SKUs and break
+// order_items foreign keys, corrupting historical financial records.
+// Instead we archive: the product is hidden from the storefront (RLS policy
+// only exposes status='active') while all historical order data remains intact.
 export async function DELETE(
   request: NextRequest,
   { params }: { params: { id: string } }
@@ -136,7 +140,12 @@ export async function DELETE(
   }
 
   const supabase = getAdminClient();
-  const { error } = await supabase.from("products").delete().eq("id", params.id);
+
+  // Soft-delete: set status to 'archived' — never a hard DELETE
+  const { error } = await supabase
+    .from("products")
+    .update({ status: "archived" })
+    .eq("id", params.id);
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });

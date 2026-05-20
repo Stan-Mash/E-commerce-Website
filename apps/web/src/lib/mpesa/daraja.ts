@@ -5,7 +5,23 @@ const BASE_URL =
     ? "https://api.safaricom.co.ke"
     : "https://sandbox.safaricom.co.ke";
 
+const TOKEN_CACHE_KEY = "mpesa_access_token";
+const TOKEN_TTL_SECONDS = 3400; // Daraja tokens expire after 3599s; refresh at 3400s to be safe
+
 async function getAccessToken(): Promise<string> {
+  // Try Redis cache first (only if Upstash is configured)
+  if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
+    try {
+      const { Redis } = await import("@upstash/redis");
+      const redis = Redis.fromEnv();
+      const cached = await redis.get<string>(TOKEN_CACHE_KEY);
+      if (cached) return cached;
+    } catch {
+      // Redis unavailable — fall through to fresh token
+    }
+  }
+
+  // Fetch fresh token from Safaricom
   const credentials = Buffer.from(
     `${process.env.MPESA_CONSUMER_KEY}:${process.env.MPESA_CONSUMER_SECRET}`
   ).toString("base64");
@@ -14,7 +30,20 @@ async function getAccessToken(): Promise<string> {
     `${BASE_URL}/oauth/v1/generate?grant_type=client_credentials`,
     { headers: { Authorization: `Basic ${credentials}` } }
   );
-  return res.data.access_token;
+  const token = res.data.access_token;
+
+  // Cache in Redis for TOKEN_TTL_SECONDS
+  if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
+    try {
+      const { Redis } = await import("@upstash/redis");
+      const redis = Redis.fromEnv();
+      await redis.set(TOKEN_CACHE_KEY, token, { ex: TOKEN_TTL_SECONDS });
+    } catch {
+      // Cache failure is non-fatal
+    }
+  }
+
+  return token;
 }
 
 function getTimestamp(): string {
