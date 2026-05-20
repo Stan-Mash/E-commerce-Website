@@ -70,7 +70,7 @@ const ARTICLES = [
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const article = ARTICLES.find((a) => a.slug === params.slug);
   if (!article) return { title: "Article Not Found" };
-  return { title: article.title, description: article.body[0]?.slice(0, 160) };
+  return { title: article.title, description: article.body[0]?.slice(0, 160) ?? null };
 }
 
 export default function JournalArticlePage({ params }: Props) {
