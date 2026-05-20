@@ -59,12 +59,15 @@ export async function POST(req: NextRequest) {
 
   const supabase = createAdminSupabaseClient();
 
+  type SkuWithProduct = { id: string; stock_quantity: number; product: { name: string; base_price: number } | null };
+
   // Fetch SKU prices and validate stock
   const skuIds = items.map((i) => i.skuId);
-  const { data: skus, error: skuErr } = await supabase
+  const { data: rawSkus, error: skuErr } = await supabase
     .from("skus")
     .select("id, stock_quantity, product:products(name, base_price)")
     .in("id", skuIds);
+  const skus = rawSkus as unknown as SkuWithProduct[] | null;
 
   if (skuErr || !skus || skus.length !== items.length) {
     return NextResponse.json({ error: "One or more items not found" }, { status: 404 });
