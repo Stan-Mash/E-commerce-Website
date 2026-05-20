@@ -36,19 +36,25 @@ export async function POST(req: NextRequest) {
   }
 
   if (parsed.success && parsed.mpesaReceiptNumber) {
-    // 1. Mark mpesa_transaction as paid
+    // 1. Mark mpesa_transaction as paid.
+    // onConflict targets the unique index on checkout_request_id so Safaricom
+    // retries are safe — they update the row instead of crashing with a
+    // duplicate-key violation.
     await supabase
       .from("mpesa_transactions")
-      .upsert({
-        checkout_request_id: parsed.checkoutRequestId,
-        merchant_request_id: parsed.merchantRequestId,
-        status: "completed",
-        mpesa_receipt_number: parsed.mpesaReceiptNumber,
-        amount_paid: parsed.amount,
-        phone_number: parsed.phoneNumber,
-        transaction_date: parsed.transactionDate,
-        updated_at: new Date().toISOString(),
-      });
+      .upsert(
+        {
+          checkout_request_id: parsed.checkoutRequestId,
+          merchant_request_id: parsed.merchantRequestId,
+          status: "completed",
+          mpesa_receipt_number: parsed.mpesaReceiptNumber,
+          amount_paid: parsed.amount,
+          phone_number: parsed.phoneNumber,
+          transaction_date: parsed.transactionDate,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "checkout_request_id" }
+      );
 
     // 2. Update order status
     const { data: txn } = await supabase
@@ -63,8 +69,7 @@ export async function POST(req: NextRequest) {
         .update({ status: "paid", paid_at: new Date().toISOString() })
         .eq("id", txn.order_id);
 
-      // 3. Enqueue notification job (BullMQ worker picks it up)
-      // Worker reads from the same Redis; we write a lightweight trigger record
+      // 3. Enqueue notification job — Vercel Cron picks it up within a minute
       await supabase.from("notification_jobs").insert({
         order_id: txn.order_id,
         job_type: "order_confirmation",
@@ -72,16 +77,22 @@ export async function POST(req: NextRequest) {
       });
     }
   } else {
-    // Payment failed or cancelled
+    // Payment failed or cancelled.
+    // FIX — inventory black hole: restore reserved stock and log to inventory_log
+    // so the units aren't silently lost. This mirrors what the checkout RPC
+    // deducted when the order was first created.
     await supabase
       .from("mpesa_transactions")
-      .upsert({
-        checkout_request_id: parsed.checkoutRequestId,
-        merchant_request_id: parsed.merchantRequestId,
-        status: "failed",
-        result_desc: parsed.resultDesc,
-        updated_at: new Date().toISOString(),
-      });
+      .upsert(
+        {
+          checkout_request_id: parsed.checkoutRequestId,
+          merchant_request_id: parsed.merchantRequestId,
+          status: "failed",
+          result_desc: parsed.resultDesc,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "checkout_request_id" }
+      );
 
     const { data: txn } = await supabase
       .from("mpesa_transactions")
@@ -94,6 +105,37 @@ export async function POST(req: NextRequest) {
         .from("orders")
         .update({ status: "payment_failed" })
         .eq("id", txn.order_id);
+
+      // Restore stock for every line item on this order
+      const { data: orderItems } = await supabase
+        .from("order_items")
+        .select("sku_id, quantity")
+        .eq("order_id", txn.order_id);
+
+      if (orderItems && orderItems.length > 0) {
+        for (const item of orderItems) {
+          // Increment stock_quantity back
+          await supabase.rpc("increment_sku_stock", {
+            p_sku_id: item.sku_id,
+            p_delta: item.quantity,
+          });
+
+          // Audit trail
+          await supabase.from("inventory_log").insert({
+            sku_id: item.sku_id,
+            delta: item.quantity,          // positive = stock returned
+            reason: "payment_failed",
+            reference: txn.order_id,
+          });
+        }
+
+        // Enqueue payment-failed notification so the customer knows to retry
+        await supabase.from("notification_jobs").insert({
+          order_id: txn.order_id,
+          job_type: "payment_failed",
+          status: "queued",
+        });
+      }
     }
   }
 
