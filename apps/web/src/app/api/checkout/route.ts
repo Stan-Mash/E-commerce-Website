@@ -12,21 +12,29 @@ const ratelimit = new Ratelimit({
   analytics: true,
 });
 
-const CheckoutSchema = z.object({
-  phone: z.string().min(9).max(15),
-  items: z
-    .array(
-      z.object({
-        skuId: z.string().uuid(),
-        quantity: z.number().int().positive().max(10),
-      })
-    )
-    .min(1)
-    .max(20),
-  deliveryType: z.enum(["pickup", "door"]),
-  deliveryAddress: z.string().optional(),
-  notes: z.string().max(200).optional(),
-});
+const CheckoutSchema = z
+  .object({
+    phone: z.string().min(9).max(15),
+    items: z
+      .array(
+        z.object({
+          skuId: z.string().uuid(),
+          quantity: z.number().int().positive().max(10),
+        })
+      )
+      .min(1)
+      .max(20),
+    deliveryType: z.enum(["pickup", "door"]),
+    deliveryAddress: z.string().min(10).max(300).optional(),
+    notes: z.string().max(200).optional(),
+  })
+  .refine(
+    (data) => data.deliveryType !== "door" || !!data.deliveryAddress,
+    {
+      message: "A delivery address is required for door deliveries.",
+      path: ["deliveryAddress"],
+    }
+  );
 
 export async function POST(req: NextRequest) {
   // Rate limit per IP
