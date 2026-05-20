@@ -61,7 +61,7 @@ export async function POST(req: NextRequest) {
 
   type SkuWithProduct = { id: string; stock_quantity: number; product: { name: string; base_price: number } | null };
 
-  // Fetch SKU prices and validate stock
+  // Fetch SKU prices (needed for total calculation before calling RPC)
   const skuIds = items.map((i) => i.skuId);
   const { data: rawSkus, error: skuErr } = await supabase
     .from("skus")
@@ -71,14 +71,6 @@ export async function POST(req: NextRequest) {
 
   if (skuErr || !skus || skus.length !== items.length) {
     return NextResponse.json({ error: "One or more items not found" }, { status: 404 });
-  }
-
-  // Check stock
-  for (const item of items) {
-    const sku = skus.find((s) => s.id === item.skuId);
-    if (!sku || sku.stock_quantity < item.quantity) {
-      return NextResponse.json({ error: `Insufficient stock for item ${item.skuId}` }, { status: 409 });
-    }
   }
 
   // Calculate total
@@ -91,42 +83,41 @@ export async function POST(req: NextRequest) {
   const deliveryFee = deliveryType === "door" ? 250 : 0;
   const total = subtotal + deliveryFee;
 
-  // Create order record (status: pending_payment)
+  // Build RPC payload — stock check, order creation, and stock decrement
+  // happen atomically inside a single Postgres transaction with row locks.
+  // This prevents overselling when two customers buy the last item simultaneously.
   const orderRef = generateOrderRef();
-  const { data: order, error: orderErr } = await supabase
-    .from("orders")
-    .insert({
-      order_ref: orderRef,
-      status: "pending_payment",
-      subtotal,
-      delivery_fee: deliveryFee,
-      total,
-      delivery_type: deliveryType,
-      delivery_address: deliveryAddress,
-      phone: normalisedPhone,
-      notes,
-    })
-    .select("id")
-    .single();
+  const rpcItems = items.map((item) => {
+    const sku = skus.find((s) => s.id === item.skuId)!;
+    const price = (sku.product as { base_price: number } | null)?.base_price ?? 0;
+    return { sku_id: item.skuId, quantity: item.quantity, unit_price: price };
+  });
 
-  if (orderErr || !order) {
+  const { data: rpcResult, error: rpcErr } = await supabase.rpc("checkout_and_reserve_stock", {
+    p_order_ref:        orderRef,
+    p_phone:            normalisedPhone,
+    p_subtotal:         subtotal,
+    p_delivery_fee:     deliveryFee,
+    p_total:            total,
+    p_delivery_type:    deliveryType,
+    p_delivery_address: deliveryAddress ?? null,
+    p_notes:            notes ?? null,
+    p_items:            rpcItems,
+  });
+
+  if (rpcErr) {
+    // Postgres error codes set in the RPC
+    if (rpcErr.message.includes("Insufficient stock")) {
+      return NextResponse.json({ error: "One or more items is out of stock" }, { status: 409 });
+    }
+    if (rpcErr.message.includes("not found")) {
+      return NextResponse.json({ error: "One or more items not found" }, { status: 404 });
+    }
+    console.error("checkout_and_reserve_stock RPC error:", rpcErr);
     return NextResponse.json({ error: "Failed to create order" }, { status: 500 });
   }
 
-  // Create order items
-  await supabase.from("order_items").insert(
-    items.map((item) => {
-      const sku = skus.find((s) => s.id === item.skuId)!;
-      const price = (sku.product as { base_price: number } | null)?.base_price ?? 0;
-      return {
-        order_id: order.id,
-        sku_id: item.skuId,
-        quantity: item.quantity,
-        unit_price: price,
-        subtotal: price * item.quantity,
-      };
-    })
-  );
+  const order = rpcResult as { order_id: string; order_ref: string };
 
   // Initiate M-Pesa STK Push
   let stkResult;
@@ -139,14 +130,14 @@ export async function POST(req: NextRequest) {
     });
   } catch (err) {
     // STK push failed — mark order as payment_failed
-    await supabase.from("orders").update({ status: "payment_failed" }).eq("id", order.id);
+    await supabase.from("orders").update({ status: "payment_failed" }).eq("id", order.order_id);
     console.error("STK Push error:", err);
     return NextResponse.json({ error: "M-Pesa payment initiation failed. Please try again." }, { status: 502 });
   }
 
   // Store mpesa transaction for idempotent callback matching
   await supabase.from("mpesa_transactions").insert({
-    order_id: order.id,
+    order_id: order.order_id,
     checkout_request_id: stkResult.CheckoutRequestID,
     merchant_request_id: stkResult.MerchantRequestID,
     amount: total,
@@ -155,7 +146,7 @@ export async function POST(req: NextRequest) {
   });
 
   return NextResponse.json({
-    orderId: order.id,
+    orderId: order.order_id,
     orderRef,
     checkoutRequestId: stkResult.CheckoutRequestID,
     customerMessage: stkResult.CustomerMessage,
