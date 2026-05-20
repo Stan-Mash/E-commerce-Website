@@ -81,15 +81,22 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "One or more items not found" }, { status: 404 });
   }
 
-  // Calculate total
+  // Calculate total.
+  // Math.round() is applied to every money value before it touches the database
+  // or Daraja. Safaricom's STK Push API requires a strict integer — any decimal
+  // (e.g. from a future percentage-based discount like 15% off KES 8,500 =
+  // KES 7,225.50) would be silently truncated or rejected by the API.
+  // Rounding here keeps financial records in Supabase perfectly aligned with
+  // the amount Safaricom actually charges the customer.
   let subtotal = 0;
   for (const item of items) {
     const sku = skus.find((s) => s.id === item.skuId)!;
     const price = (sku.product as { base_price: number } | null)?.base_price ?? 0;
     subtotal += price * item.quantity;
   }
-  const deliveryFee = deliveryType === "door" ? 250 : 0;
-  const total = subtotal + deliveryFee;
+  subtotal = Math.round(subtotal);
+  const deliveryFee = deliveryType === "door" ? 250 : 0;  // always a whole number
+  const total = Math.round(subtotal + deliveryFee);
 
   // Build RPC payload — stock check, order creation, and stock decrement
   // happen atomically inside a single Postgres transaction with row locks.
@@ -98,7 +105,9 @@ export async function POST(req: NextRequest) {
   const rpcItems = items.map((item) => {
     const sku = skus.find((s) => s.id === item.skuId)!;
     const price = (sku.product as { base_price: number } | null)?.base_price ?? 0;
-    return { sku_id: item.skuId, quantity: item.quantity, unit_price: price };
+    // Round unit_price so order_items.subtotal (unit_price × quantity) is also
+    // a whole number — keeps the DB ledger consistent with the Daraja charge.
+    return { sku_id: item.skuId, quantity: item.quantity, unit_price: Math.round(price) };
   });
 
   const { data: rpcResult, error: rpcErr } = await supabase.rpc("checkout_and_reserve_stock", {
