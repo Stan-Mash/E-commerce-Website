@@ -4,5 +4,7 @@
       "path": "/api/cron/notifications",
       "schedule": "0 0 * * *"
     }
-  ]
+  ],
+  "outputDirectory": "apps/web/.next",
+  "buildCommand": "npx turbo run build --filter=@nairobi-fashion/web"
 }
