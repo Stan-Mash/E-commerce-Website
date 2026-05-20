@@ -32,6 +32,19 @@ export function createServerSupabaseClient() {
   );
 }
 
+/**
+ * Cookie-less client for fetching PUBLIC data (product pages, category pages).
+ * Does NOT call cookies() — keeps Next.js in static/ISR rendering mode so
+ * revalidate = 60 is honoured. Uses anon key + RLS for access control.
+ */
+export function createPublicSupabaseClient() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    { auth: { autoRefreshToken: false, persistSession: false } }
+  );
+}
+
 /** Service-role client for admin operations only — never expose to client */
 export function createAdminSupabaseClient() {
   // Not typed with Database generic — checkout route uses complex join selects
