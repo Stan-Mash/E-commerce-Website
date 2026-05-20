@@ -1,29 +1,28 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
-
-function getAdminClient() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { autoRefreshToken: false, persistSession: false } }
-  );
-}
+import { createAdminSupabaseClient } from "@/lib/supabase/server";
+import { normaliseKenyanPhone, generateOrderRef } from "@/lib/utils";
+import { applyDiscounts, type Promotion, type CartLineItem } from "@/lib/promotions/engine";
+import { initiateSTKPush } from "@/lib/mpesa/daraja";
 
 function checkAuth(request: NextRequest): boolean {
   const session = request.cookies.get("admin_session");
   return session?.value === "elite-admin-2024";
 }
 
-function generateOrderRef(): string {
-  const ts = Date.now().toString(36).toUpperCase();
-  const rand = Math.random().toString(36).slice(2, 6).toUpperCase();
-  return `POS-${ts}-${rand}`;
+interface PosItem {
+  sku_id:     string;
+  quantity:   number;
+  unit_price: number;
 }
 
-interface CartItem {
-  sku_id: string;
-  quantity: number;
-  unit_price: number;
+interface PosBody {
+  phone:          string;
+  payment_method: "cash" | "mpesa_stk" | "mpesa_c2b";
+  location_id:    string;
+  cashier_name:   string;
+  items:          PosItem[];
+  promo_code?:    string;
+  notes?:         string;
 }
 
 export async function POST(request: NextRequest) {
@@ -31,105 +30,181 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
-    return NextResponse.json({ error: "Supabase not configured" }, { status: 503 });
-  }
-
-  const body = await request.json();
-  const {
-    phone,
-    payment_method,
-    items,
-  }: {
-    phone: string;
-    payment_method: "mpesa" | "cash";
-    items: CartItem[];
-  } = body;
+  const body = (await request.json()) as PosBody;
+  const { phone, payment_method, location_id, cashier_name, items, promo_code, notes } = body;
 
   if (!items || items.length === 0) {
     return NextResponse.json({ error: "No items in order" }, { status: 400 });
   }
-
-  const supabase = getAdminClient();
-
-  // Upsert customer
-  let customer_id: string | null = null;
-  if (phone) {
-    const { data: customer } = await supabase
-      .from("customers")
-      .upsert({ phone }, { onConflict: "phone" })
-      .select("id")
-      .single();
-    customer_id = customer?.id ?? null;
+  if (!location_id) {
+    return NextResponse.json({ error: "location_id is required" }, { status: 400 });
   }
 
-  // Verify stock & compute totals
-  const subtotal = items.reduce((sum, item) => sum + item.unit_price * item.quantity, 0);
-  const total = subtotal; // No delivery fee for pickup
+  const supabase = createAdminSupabaseClient();
 
-  const order_ref = generateOrderRef();
-
-  // Create order
-  const { data: order, error: orderError } = await supabase
-    .from("orders")
-    .insert({
-      order_ref,
-      customer_id,
-      status: "paid",
-      subtotal,
-      delivery_fee: 0,
-      total,
-      delivery_type: "pickup",
-      phone: phone || "N/A",
-      notes: `POS sale — payment: ${payment_method}`,
-      paid_at: new Date().toISOString(),
-    })
-    .select()
-    .single();
-
-  if (orderError) {
-    return NextResponse.json({ error: orderError.message }, { status: 500 });
-  }
-
-  // Insert order items
-  const orderItems = items.map((item) => ({
-    order_id: order.id,
-    sku_id: item.sku_id,
-    quantity: item.quantity,
-    unit_price: item.unit_price,
-    subtotal: item.unit_price * item.quantity,
-  }));
-
-  const { error: itemsError } = await supabase.from("order_items").insert(orderItems);
-  if (itemsError) {
-    return NextResponse.json({ error: itemsError.message }, { status: 500 });
-  }
-
-  // Deduct stock via inventory_log and update skus
-  for (const item of items) {
-    // Log inventory change
-    await supabase.from("inventory_log").insert({
-      sku_id: item.sku_id,
-      delta: -item.quantity,
-      reason: "sale",
-      reference: order.id,
-    });
-
-    // Fetch current stock and decrement
-    const { data: skuData } = await supabase
-      .from("skus")
-      .select("stock_quantity")
-      .eq("id", item.sku_id)
-      .single();
-
-    if (skuData) {
-      const newQty = Math.max(0, skuData.stock_quantity - item.quantity);
-      await supabase
-        .from("skus")
-        .update({ stock_quantity: newQty })
-        .eq("id", item.sku_id);
+  // Normalise phone (allow empty — walk-in with no phone)
+  let normalisedPhone = "";
+  if (phone && phone.trim()) {
+    try {
+      normalisedPhone = normaliseKenyanPhone(phone);
+    } catch {
+      return NextResponse.json({ error: "Invalid Kenyan phone number" }, { status: 422 });
     }
   }
 
-  return NextResponse.json({ order, order_ref: order.order_ref }, { status: 201 });
+  // Fetch active promotions for discount calculation
+  const { data: promoRows } = await supabase
+    .from("promotions")
+    .select("*")
+    .eq("active", true);
+
+  const promotions = (promoRows ?? []) as Promotion[];
+
+  // Build cart lines with rounded prices
+  const cartItems: CartLineItem[] = items.map((item) => ({
+    sku_id:     item.sku_id,
+    quantity:   item.quantity,
+    unit_price: Math.round(item.unit_price),
+  }));
+
+  const { subtotal, discountAmount, total, appliedPromotion } = applyDiscounts(
+    cartItems,
+    0,           // no delivery fee for POS (always pickup)
+    promotions,
+    promo_code
+  );
+
+  const orderRef = `POS-${generateOrderRef()}`;
+
+  // Call pos_checkout RPC — atomic stock check + order creation
+  const rpcItems = cartItems.map((c) => ({
+    sku_id:     c.sku_id,
+    quantity:   c.quantity,
+    unit_price: c.unit_price,
+  }));
+
+  const { data: rpcResult, error: rpcErr } = await supabase.rpc("pos_checkout", {
+    p_order_ref:       orderRef,
+    p_phone:           normalisedPhone || null,
+    p_location_id:     location_id,
+    p_payment_method:  payment_method,
+    p_cashier_name:    cashier_name || "Staff",
+    p_subtotal:        subtotal,
+    p_discount_amount: discountAmount,
+    p_total:           total,
+    p_notes:           notes ?? null,
+    p_items:           rpcItems,
+  });
+
+  if (rpcErr) {
+    if (rpcErr.message.includes("Insufficient stock")) {
+      return NextResponse.json({ error: "One or more items is out of stock at this location" }, { status: 409 });
+    }
+    if (rpcErr.message.includes("not found")) {
+      return NextResponse.json({ error: "One or more items not found" }, { status: 404 });
+    }
+    console.error("[pos] RPC error:", rpcErr);
+    return NextResponse.json({ error: "Failed to create order" }, { status: 500 });
+  }
+
+  const order = rpcResult as { order_id: string; order_ref: string };
+
+  // Redeem promotion usage counter
+  if (appliedPromotion) {
+    await supabase.rpc("redeem_promotion", { p_promotion_id: appliedPromotion.id });
+    await supabase
+      .from("orders")
+      .update({ promotion_id: appliedPromotion.id })
+      .eq("id", order.order_id);
+  }
+
+  // ── Payment-specific handling ──────────────────────────────────────────────
+
+  if (payment_method === "cash") {
+    // Cash: order already marked paid by RPC. Nothing else to do.
+    return NextResponse.json({
+      order_id:          order.order_id,
+      order_ref:         orderRef,
+      total,
+      discount_amount:   discountAmount,
+      applied_promotion: appliedPromotion?.name ?? null,
+      payment_method:    "cash",
+    }, { status: 201 });
+  }
+
+  if (payment_method === "mpesa_stk") {
+    // STK Push: send payment prompt to customer's phone
+    if (!normalisedPhone) {
+      return NextResponse.json({ error: "Phone number required for M-Pesa STK Push" }, { status: 422 });
+    }
+
+    let stkResult;
+    try {
+      stkResult = await initiateSTKPush({
+        phone:       normalisedPhone,
+        amount:      total,
+        orderId:     orderRef,
+        description: "Elite Style Co — In-Store",
+      });
+    } catch (err) {
+      // STK failed — restore stock (webhook won't fire)
+      await supabase.from("orders").update({ status: "payment_failed" }).eq("id", order.order_id);
+      for (const item of cartItems) {
+        await supabase.rpc("increment_location_stock", {
+          p_sku_id:      item.sku_id,
+          p_location_id: location_id,
+          p_delta:       item.quantity,
+        });
+        await supabase.from("inventory_log").insert({
+          sku_id:    item.sku_id,
+          delta:     item.quantity,
+          reason:    "payment_failed",
+          reference: order.order_id,
+        });
+      }
+      console.error("[pos] STK Push error:", err);
+      return NextResponse.json({ error: "M-Pesa payment initiation failed. Please try again." }, { status: 502 });
+    }
+
+    // Record transaction for webhook matching
+    await supabase.from("mpesa_transactions").insert({
+      order_id:            order.order_id,
+      checkout_request_id: stkResult.CheckoutRequestID,
+      merchant_request_id: stkResult.MerchantRequestID,
+      amount:              total,
+      phone_number:        normalisedPhone,
+      status:              "pending",
+    });
+
+    return NextResponse.json({
+      order_id:            order.order_id,
+      order_ref:           orderRef,
+      total,
+      payment_method:      "mpesa_stk",
+      checkout_request_id: stkResult.CheckoutRequestID,
+      customer_message:    stkResult.CustomerMessage,
+    }, { status: 201 });
+  }
+
+  if (payment_method === "mpesa_c2b") {
+    // C2B: customer pays the Till. Create a c2b_payments row so the webhook
+    // can match the incoming Safaricom callback to this order by order_ref.
+    await supabase.from("c2b_payments").insert({
+      order_id:        order.order_id,
+      order_ref:       orderRef,
+      expected_amount: total,
+      status:          "pending",
+    });
+
+    return NextResponse.json({
+      order_id:       order.order_id,
+      order_ref:      orderRef,
+      total,
+      payment_method: "mpesa_c2b",
+      // Cashier shows this ref to the customer — they enter it as Account Ref
+      instruction: `Ask customer to pay KES ${total.toLocaleString()} to our Till and enter reference: ${orderRef}`,
+    }, { status: 201 });
+  }
+
+  return NextResponse.json({ error: "Unknown payment method" }, { status: 400 });
 }
