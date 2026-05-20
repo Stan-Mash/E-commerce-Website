@@ -87,7 +87,9 @@ export async function initiateSTKPush(params: STKPushParams): Promise<STKPushRes
     PartyA: params.phone,
     PartyB: process.env.MPESA_SHORTCODE,
     PhoneNumber: params.phone,
-    CallBackURL: process.env.MPESA_CALLBACK_URL,
+    // Append secret token so the webhook can verify the callback is genuine.
+    // Anyone can spoof IP headers; they cannot guess this secret.
+    CallBackURL: `${process.env.MPESA_CALLBACK_URL}?secret=${process.env.MPESA_WEBHOOK_SECRET}`,
     AccountReference: params.orderId.slice(0, 12),
     TransactionDesc: params.description.slice(0, 20),
   };

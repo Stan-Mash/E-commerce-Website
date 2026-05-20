@@ -2,32 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { parseSTKCallback, type STKCallbackBody } from "@/lib/mpesa/daraja";
 import { createAdminSupabaseClient } from "@/lib/supabase/server";
 
-// Safaricom Daraja callback IP ranges (sandbox + production)
-const ALLOWED_IPS = new Set([
-  "196.201.214.200",
-  "196.201.214.206",
-  "196.201.213.114",
-  "196.201.214.207",
-  "196.201.214.208",
-  "196.201.213.44",
-  "196.201.212.127",
-  "196.201.212.128",
-  "196.201.212.129",
-  "196.201.212.132",
-  "196.201.212.136",
-  "196.201.212.138",
-  // Sandbox
-  "196.201.214.200",
-]);
-
 export async function POST(req: NextRequest) {
-  // IP allowlist check
-  const ip =
-    req.headers.get("x-real-ip") ??
-    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
-    "";
-
-  if (process.env.MPESA_ENVIRONMENT === "production" && !ALLOWED_IPS.has(ip)) {
+  // ── Secret token verification ────────────────────────────────────────
+  // The CallbackURL registered with Safaricom includes a secret query param:
+  //   https://yourdomain.com/api/webhooks/mpesa?secret=MPESA_WEBHOOK_SECRET
+  // IP headers (x-forwarded-for) are trivially spoofable and NOT used here.
+  // This secret is the only gate — any request missing it is rejected.
+  const secret = req.nextUrl.searchParams.get("secret");
+  if (!secret || secret !== process.env.MPESA_WEBHOOK_SECRET) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

@@ -23,8 +23,10 @@ async function getProduct(slug: string): Promise<ProductDetail | null> {
   // Try Supabase if configured
   if (process.env.NEXT_PUBLIC_SUPABASE_URL) {
     try {
-      const { createServerSupabaseClient } = await import("@/lib/supabase/server");
-      const supabase = createServerSupabaseClient();
+      // Use cookie-less client so ISR (revalidate = 60) is not broken.
+      // cookies() forces dynamic rendering — public product data never needs it.
+      const { createPublicSupabaseClient } = await import("@/lib/supabase/server");
+      const supabase = createPublicSupabaseClient();
       const { data, error } = await supabase
         .from("products")
         .select(
