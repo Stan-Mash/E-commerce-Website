@@ -85,6 +85,7 @@ export default function EditProductPage({ params }: Props) {
       setLoading(true);
       try {
         const res = await fetch(`/api/admin/products/${params.id}`);
+        if (res.status === 401) { window.location.href = "/admin/login"; return; }
         if (!res.ok) {
           setNotFound(true);
           return;

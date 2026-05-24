@@ -25,7 +25,7 @@ export default function ShiftsPage() {
 
   useEffect(() => {
     fetch("/api/admin/pos/shifts")
-      .then((r) => r.json())
+      .then((r) => { if (r.status === 401) { window.location.href = "/admin/login"; throw new Error("401"); } return r.json(); })
       .then((j: { shift: Shift | null }) => {
         // Endpoint returns the currently open shift; for history we'd need a separate endpoint.
         // For now show any returned shift.

@@ -20,7 +20,8 @@ export default function AdminLoginPage() {
       });
 
       if (res.ok) {
-        window.location.href = "/admin";
+        const params = new URLSearchParams(window.location.search);
+        window.location.href = params.get("from") ?? "/admin";
       } else {
         setError("Incorrect password.");
       }
