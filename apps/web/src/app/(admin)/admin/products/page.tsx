@@ -45,6 +45,10 @@ export default function AdminProductsPage() {
     setLoading(true);
     try {
       const res = await fetch("/api/admin/products");
+      if (res.status === 401) {
+        window.location.href = "/admin/login";
+        return;
+      }
       if (res.ok) {
         const json = await res.json() as { products: ProductRow[] };
         setProducts(json.products ?? []);

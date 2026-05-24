@@ -53,6 +53,7 @@ export default function AdminOrdersPage() {
     setLoading(true);
     try {
       const res = await fetch("/api/admin/orders");
+      if (res.status === 401) { window.location.href = "/admin/login"; return; }
       if (res.ok) {
         const json = await res.json() as { orders: OrderRow[] };
         setOrders(json.orders ?? []);
