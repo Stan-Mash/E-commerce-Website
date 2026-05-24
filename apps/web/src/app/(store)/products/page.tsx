@@ -1,93 +1,44 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import { ProductFilterTabs } from "@/components/es/ProductFilterTabs";
+import { createPublicSupabaseClient } from "@/lib/supabase/server";
 
 // ---------------------------------------------------------------------------
-// Static seed data — used as fallback when Supabase is not connected
+// Types
 // ---------------------------------------------------------------------------
-const PRODUCTS = [
-  {
-    id: "1",
-    name: "Kikoy Wrap Dress",
-    slug: "kikoy-wrap-dress",
-    base_price: 8500,
-    compare_price: 11000,
-    category: "Woman",
-    skus: [
-      { id: "s1", size: "S", stock_quantity: 4 },
-      { id: "s2", size: "M", stock_quantity: 6 },
-      { id: "s3", size: "L", stock_quantity: 3 },
-    ],
-    product_images: [] as { url: string; alt: string }[],
-  },
-  {
-    id: "2",
-    name: "Maasai Bead Collar Shirt",
-    slug: "maasai-bead-collar-shirt",
-    base_price: 6200,
-    compare_price: null,
-    category: "Man",
-    skus: [
-      { id: "s4", size: "S", stock_quantity: 2 },
-      { id: "s5", size: "M", stock_quantity: 5 },
-      { id: "s6", size: "L", stock_quantity: 4 },
-    ],
-    product_images: [] as { url: string; alt: string }[],
-  },
-  {
-    id: "3",
-    name: "Ankara Print Jumpsuit",
-    slug: "ankara-print-kids-jumpsuit",
-    base_price: 4800,
-    compare_price: null,
-    category: "Children",
-    skus: [
-      { id: "s7", size: "2Y", stock_quantity: 8 },
-      { id: "s8", size: "4Y", stock_quantity: 6 },
-      { id: "s9", size: "6Y", stock_quantity: 4 },
-    ],
-    product_images: [] as { url: string; alt: string }[],
-  },
-  {
-    id: "4",
-    name: "Nairobi Linen Co-ord",
-    slug: "nairobi-linen-co-ord",
-    base_price: 12400,
-    compare_price: null,
-    category: "Woman",
-    skus: [
-      { id: "s10", size: "S", stock_quantity: 3 },
-      { id: "s11", size: "M", stock_quantity: 4 },
-    ],
-    product_images: [] as { url: string; alt: string }[],
-  },
-  {
-    id: "5",
-    name: "Kitenge Baraza Shirt",
-    slug: "kitenge-baraza-shirt",
-    base_price: 5800,
-    compare_price: null,
-    category: "Man",
-    skus: [
-      { id: "s13", size: "M", stock_quantity: 5 },
-      { id: "s14", size: "L", stock_quantity: 4 },
-    ],
-    product_images: [] as { url: string; alt: string }[],
-  },
-  {
-    id: "6",
-    name: "Shuka Check Romper",
-    slug: "shuka-check-romper",
-    base_price: 3200,
-    compare_price: null,
-    category: "Children",
-    skus: [
-      { id: "s16", size: "2Y", stock_quantity: 6 },
-      { id: "s17", size: "4Y", stock_quantity: 5 },
-    ],
-    product_images: [] as { url: string; alt: string }[],
-  },
-];
+interface ProductRow {
+  id: string;
+  name: string;
+  slug: string;
+  base_price: number;
+  compare_price: number | null;
+  category: string;
+  product_images: { url: string; alt: string | null; sort_order: number }[];
+  skus: { size: string; stock_quantity: number }[];
+}
+
+// ---------------------------------------------------------------------------
+// Data fetching
+// ---------------------------------------------------------------------------
+async function getProducts(): Promise<ProductRow[]> {
+  try {
+    const supabase = createPublicSupabaseClient();
+    const { data, error } = await supabase
+      .from("products")
+      .select(
+        `id, name, slug, base_price, compare_price, category,
+         product_images(url, alt, sort_order),
+         skus(size, stock_quantity)`
+      )
+      .eq("status", "active")
+      .order("created_at", { ascending: true });
+
+    if (error || !data) return [];
+    return data as unknown as ProductRow[];
+  } catch {
+    return [];
+  }
+}
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -100,7 +51,7 @@ function formatKES(amount: number) {
   }).format(amount);
 }
 
-// Gradient palettes for placeholder images — cycles through products
+// Gradient palettes for products without images — cycles through
 const PLACEHOLDER_GRADIENTS = [
   "from-[#e8dff0] to-[#c9a96130]",
   "from-[#e6e0d8] to-[#d4b88030]",
@@ -110,6 +61,14 @@ const PLACEHOLDER_GRADIENTS = [
   "from-[#e8ddd8] to-[#bf9a8f30]",
 ];
 
+// Map DB category values to display labels
+const CATEGORY_LABELS: Record<string, string> = {
+  women: "Woman",
+  men: "Man",
+  children: "Children",
+  accessories: "Accessories",
+};
+
 // ---------------------------------------------------------------------------
 // Page
 // ---------------------------------------------------------------------------
@@ -117,13 +76,20 @@ interface PageProps {
   searchParams: { category?: string };
 }
 
-export default function ProductsPage({ searchParams }: PageProps) {
+export const revalidate = 60; // ISR — refresh every 60 seconds
+
+export default async function ProductsPage({ searchParams }: PageProps) {
   const activeCategory = searchParams.category ?? "All";
+  const products = await getProducts();
 
   const filtered =
     activeCategory === "All"
-      ? PRODUCTS
-      : PRODUCTS.filter((p) => p.category === activeCategory);
+      ? products
+      : products.filter(
+          (p) =>
+            CATEGORY_LABELS[p.category.toLowerCase()] === activeCategory ||
+            p.category.toLowerCase() === activeCategory.toLowerCase()
+        );
 
   return (
     <main className="min-h-screen bg-es-paper">
@@ -158,14 +124,21 @@ export default function ProductsPage({ searchParams }: PageProps) {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-10">
             {filtered.map((product, index) => {
-              const primaryImage = product.product_images?.[0];
-              const sizeCount = [...new Set(product.skus.map((s) => s.size))]
-                .length;
+              const sortedImages = [...(product.product_images ?? [])].sort(
+                (a, b) => a.sort_order - b.sort_order
+              );
+              const primaryImage = sortedImages[0];
+              const sizeCount = [
+                ...new Set(product.skus.map((s) => s.size)),
+              ].length;
               const hasCompare =
                 product.compare_price &&
                 product.compare_price > product.base_price;
               const gradient =
                 PLACEHOLDER_GRADIENTS[index % PLACEHOLDER_GRADIENTS.length];
+              const categoryLabel =
+                CATEGORY_LABELS[product.category.toLowerCase()] ??
+                product.category;
 
               return (
                 <Link
@@ -195,7 +168,7 @@ export default function ProductsPage({ searchParams }: PageProps) {
                   <div className="flex flex-col gap-1">
                     {/* Category label */}
                     <p className="text-[10px] tracking-[.4em] uppercase text-es-mute">
-                      {product.category}
+                      {categoryLabel}
                     </p>
 
                     {/* Name + sizes row */}
@@ -206,9 +179,11 @@ export default function ProductsPage({ searchParams }: PageProps) {
                       >
                         {product.name}
                       </p>
-                      <span className="mt-1 shrink-0 text-[10px] tracking-[.34em] uppercase text-es-mute whitespace-nowrap">
-                        {sizeCount} SIZES
-                      </span>
+                      {sizeCount > 0 && (
+                        <span className="mt-1 shrink-0 text-[10px] tracking-[.34em] uppercase text-es-mute whitespace-nowrap">
+                          {sizeCount} {sizeCount === 1 ? "SIZE" : "SIZES"}
+                        </span>
+                      )}
                     </div>
 
                     {/* Price */}
@@ -229,7 +204,6 @@ export default function ProductsPage({ searchParams }: PageProps) {
           </div>
         )}
       </div>
-
     </main>
   );
 }
