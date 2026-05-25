@@ -4,22 +4,21 @@
 
 @layer base {
   :root {
-    --font-inter:     'Urbanist', 'Century Gothic', CenturyGothic, AppleGothic, sans-serif;
-    --font-bodoni:    'Bodoni Moda', Georgia, serif;
-    --font-cormorant: 'Cormorant Garamond', Georgia, serif;
+    /* Primary UI font — Inter first, Urbanist fallback */
+    --font-inter: 'Inter', 'Urbanist', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 
-    /* Elite Style Co. design tokens as CSS vars for inline-style parity */
+    /* Design tokens */
     --es-white:   #ffffff;
-    --es-paper:   #f6f5f2;
-    --es-bone:    #ecebe6;
-    --es-ink:     #0a0a0a;
-    --es-char:    #171717;
-    --es-mute:    #717171;
-    --es-faint:   #a8a8a8;
-    --es-hair:    rgba(10,10,10,0.10);
+    --es-paper:   #f7f7f7;
+    --es-bone:    #eeeeee;
+    --es-ink:     #111111;
+    --es-char:    #222222;
+    --es-mute:    #666666;
+    --es-faint:   #aaaaaa;
+    --es-hair:    rgba(0,0,0,0.08);
     --es-plum:    #3d1a4a;
     --es-plum-dk: #2a1135;
-    --es-plum-lt: #f1e9f5;
+    --es-plum-lt: #f5eeff;
     --es-gold:    #c9a961;
     --es-gold-dk: #9b7b3f;
   }
@@ -32,9 +31,11 @@
   }
 
   body {
-    @apply bg-es-white text-es-ink antialiased;
+    background: #ffffff;
+    color: #111111;
     font-family: var(--font-inter);
     -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
   /* Tap targets */
@@ -47,44 +48,52 @@
 }
 
 @layer components {
-  /* ── Elite Style Co. button system ───────────────────────── */
+  /* ── Button system — clean, modern ──────────────────────── */
   .es-btn-plum {
     @apply inline-flex items-center justify-center gap-2
-           bg-es-plum text-white
-           px-8 py-[18px]
-           font-sans text-[11px] tracking-wide uppercase
+           bg-[#111] text-white
+           px-8 py-4
+           font-sans text-[12px] font-bold tracking-[0.06em] uppercase
            border-0 cursor-pointer
-           transition-colors hover:bg-es-plum-dk
+           transition-all duration-150
+           hover:bg-[#333]
            disabled:opacity-50 disabled:cursor-not-allowed;
+    font-family: var(--font-inter);
   }
 
   .es-btn-outline-ink {
     @apply inline-flex items-center justify-center gap-2
-           bg-transparent text-es-ink
-           px-8 py-[18px]
-           font-sans text-[11px] tracking-wide uppercase
-           border border-es-ink cursor-pointer
-           transition-colors hover:bg-es-ink hover:text-white
+           bg-transparent text-[#111]
+           px-8 py-4
+           font-sans text-[12px] font-bold tracking-[0.06em] uppercase
+           border-2 border-[#111] cursor-pointer
+           transition-all duration-150
+           hover:bg-[#111] hover:text-white
            disabled:opacity-50;
+    font-family: var(--font-inter);
   }
 
   .es-btn-outline-white {
     @apply inline-flex items-center justify-center gap-2
            bg-transparent text-white
-           px-8 py-[18px]
-           font-sans text-[11px] tracking-wide uppercase
-           border border-white cursor-pointer
-           transition-colors hover:bg-white hover:text-es-ink
+           px-8 py-4
+           font-sans text-[12px] font-bold tracking-[0.06em] uppercase
+           border-2 border-white cursor-pointer
+           transition-all duration-150
+           hover:bg-white hover:text-[#111]
            disabled:opacity-50;
+    font-family: var(--font-inter);
   }
 
   /* ── Typography helpers ──────────────────────────────────── */
   .es-eyebrow {
-    @apply font-sans text-[11px] tracking-super uppercase text-es-gold-dk;
+    font-family: var(--font-inter);
+    @apply text-[11px] font-semibold tracking-[0.15em] uppercase text-[#888];
   }
 
   .es-overline {
-    @apply font-sans text-[10px] tracking-super uppercase;
+    font-family: var(--font-inter);
+    @apply text-[10px] font-semibold tracking-[0.12em] uppercase;
   }
 
   /* ── Card / skeleton ─────────────────────────────────────── */
@@ -102,19 +111,14 @@
            animate-shimmer;
   }
 
-  /* ── Nav link with plum underline active state ───────────── */
+  /* ── Nav link ───────────────────────────────────────────── */
   .es-nav-link {
-    @apply font-sans text-[11px] tracking-wide uppercase text-es-ink
-           pb-1.5 cursor-pointer transition-colors
-           hover:text-es-plum;
+    font-family: var(--font-inter);
+    @apply text-[13px] font-medium text-[#111]
+           cursor-pointer transition-colors
+           hover:text-[#555];
   }
   .es-nav-link--active {
-    @apply border-b-2 border-es-plum text-es-ink;
-  }
-
-  /* ── Gold diamond bullet ─────────────────────────────────── */
-  .es-diamond::before {
-    content: "";
-    @apply inline-block w-1.5 h-1.5 bg-es-gold rotate-45 mr-3 flex-none;
+    @apply border-b-2 border-[#111] text-[#111];
   }
 }

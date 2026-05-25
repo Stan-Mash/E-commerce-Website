@@ -3,123 +3,141 @@
 import { useState } from "react";
 import Link from "next/link";
 import { ShoppingBag, Search, User, Menu, X } from "lucide-react";
-import { GoldCrown } from "@/components/es/GoldCrown";
 import { useCart } from "@/components/checkout/CartProvider";
 
-const NAV_LEFT  = ["WOMAN", "MAN", "CHILDREN", "NEW IN", "JOURNAL"] as const;
-const HAIR      = "rgba(10,10,10,0.10)";
+const NAV = [
+  { label: "Women",    href: "/woman" },
+  { label: "Men",      href: "/man" },
+  { label: "Children", href: "/children" },
+  { label: "New In",   href: "/products" },
+  { label: "Journal",  href: "/journal" },
+] as const;
+
+const FONT = "'Inter','Urbanist',sans-serif";
 
 export function SiteHeader() {
-  const [active, setActive] = useState("WOMAN");
   const [mobileOpen, setMobileOpen] = useState(false);
   const { itemCount, openCart } = useCart();
 
   return (
-    <header
-      style={{
-        background: "#ffffff",
-        borderBottom: `1px solid ${HAIR}`,
-        position: "sticky",
-        top: 0,
-        zIndex: 50,
-      }}
-    >
-      {/* Desktop — 3-col grid */}
+    <header style={{
+      background: "#fff",
+      borderBottom: "1px solid #e8e8e8",
+      position: "sticky",
+      top: 0,
+      zIndex: 50,
+    }}>
+      {/* Desktop */}
       <div
-        className="hidden md:grid"
+        className="hidden md:flex"
         style={{
-          gridTemplateColumns: "1fr auto 1fr",
           alignItems: "center",
-          padding: "22px 64px",
+          justifyContent: "space-between",
+          padding: "0 40px",
+          height: 64,
+          maxWidth: 1400,
+          margin: "0 auto",
+          width: "100%",
         }}
       >
-        {/* Left nav */}
-        <nav style={{ display: "flex", gap: 30 }}>
-          {NAV_LEFT.map((item) => {
-            const href =
-              item === "NEW IN" ? "/products" :
-              item === "JOURNAL" ? "/journal" :
-              `/${item.toLowerCase()}`;
-            return (
-              <Link
-                key={item}
-                href={href}
-                onClick={() => setActive(item)}
-                style={{
-                  fontFamily: "var(--font-inter), sans-serif",
-                  fontSize: 11,
-                  letterSpacing: ".34em",
-                  color: "#0a0a0a",
-                  textDecoration: "none",
-                  paddingBottom: 6,
-                  borderBottom: active === item ? "2px solid #3d1a4a" : "2px solid transparent",
-                  transition: "border-color .15s",
-                }}
-              >
-                {item}
-              </Link>
-            );
-          })}
-        </nav>
-
-        {/* Centre logo */}
-        <Link href="/" style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, textDecoration: "none" }}>
-          <GoldCrown size={24} />
-          <span
-            style={{
-              fontFamily: "var(--font-bodoni), Georgia, serif",
-              fontOpticalSizing: "auto",
-              fontSize: 22,
-              fontWeight: 800,
-              color: "#0a0a0a",
-              letterSpacing: "-.005em",
-              lineHeight: 1,
-            }}
-          >
-            Elite Style Co.
+        {/* Logo */}
+        <Link href="/" style={{ textDecoration: "none", flexShrink: 0 }}>
+          <span style={{
+            fontFamily: FONT,
+            fontSize: 20,
+            fontWeight: 900,
+            color: "#111",
+            letterSpacing: "-0.03em",
+          }}>
+            Elite<span style={{ color: "#3d1a4a" }}>Style</span>
           </span>
         </Link>
 
-        {/* Right actions */}
-        <div
-          style={{
-            display: "flex",
-            gap: 24,
-            justifyContent: "flex-end",
-            alignItems: "center",
-            fontFamily: "var(--font-inter), sans-serif",
-            fontSize: 11,
-            letterSpacing: ".34em",
-            color: "#0a0a0a",
-          }}
-        >
-          <span>EN · KES</span>
-          <Link href="/search" style={{ color: "inherit", lineHeight: 0 }} aria-label="Search">
-            <Search size={16} strokeWidth={1.5} />
+        {/* Nav */}
+        <nav style={{ display: "flex", gap: 32, alignItems: "center" }}>
+          {NAV.map((item) => (
+            <Link
+              key={item.label}
+              href={item.href}
+              style={{
+                fontFamily: FONT,
+                fontSize: 13,
+                fontWeight: 500,
+                color: "#111",
+                textDecoration: "none",
+                letterSpacing: "0.01em",
+                transition: "color .15s",
+              }}
+              onMouseEnter={e => (e.currentTarget.style.color = "#3d1a4a")}
+              onMouseLeave={e => (e.currentTarget.style.color = "#111")}
+            >
+              {item.label}
+            </Link>
+          ))}
+        </nav>
+
+        {/* Actions */}
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <Link
+            href="/search"
+            aria-label="Search"
+            style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 40, height: 40, color: "#111", borderRadius: 6, transition: "background .15s" }}
+            onMouseEnter={e => (e.currentTarget.style.background = "#f5f5f5")}
+            onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
+          >
+            <Search size={18} strokeWidth={2} />
           </Link>
-          <Link href="/account" style={{ color: "inherit", lineHeight: 0 }} aria-label="Account">
-            <User size={16} strokeWidth={1.5} />
+          <Link
+            href="/account"
+            aria-label="Account"
+            style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 40, height: 40, color: "#111", borderRadius: 6, transition: "background .15s" }}
+            onMouseEnter={e => (e.currentTarget.style.background = "#f5f5f5")}
+            onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
+          >
+            <User size={18} strokeWidth={2} />
           </Link>
           <button
             onClick={openCart}
-            aria-label={`Open bag, ${itemCount} item${itemCount !== 1 ? "s" : ""}`}
+            aria-label={`Bag — ${itemCount} item${itemCount !== 1 ? "s" : ""}`}
             style={{
+              position: "relative",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              width: 40,
+              height: 40,
               background: "none",
               border: "none",
               cursor: "pointer",
-              color: "inherit",
-              fontFamily: "var(--font-inter), sans-serif",
-              fontSize: 11,
-              letterSpacing: ".34em",
-              display: "flex",
-              alignItems: "center",
-              gap: 6,
-              borderBottom: "1px solid #0a0a0a",
-              paddingBottom: 2,
-              padding: 0,
+              color: "#111",
+              borderRadius: 6,
+              transition: "background .15s",
             }}
+            onMouseEnter={e => (e.currentTarget.style.background = "#f5f5f5")}
+            onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
           >
-            BAG&nbsp;·&nbsp;{itemCount}
+            <ShoppingBag size={18} strokeWidth={2} />
+            {itemCount > 0 && (
+              <span style={{
+                position: "absolute",
+                top: 4,
+                right: 4,
+                background: "#3d1a4a",
+                color: "#fff",
+                borderRadius: "50%",
+                width: 16,
+                height: 16,
+                fontSize: 9,
+                fontFamily: FONT,
+                fontWeight: 800,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                lineHeight: 1,
+              }}>
+                {itemCount > 9 ? "9+" : itemCount}
+              </span>
+            )}
           </button>
         </div>
       </div>
@@ -127,45 +145,39 @@ export function SiteHeader() {
       {/* Mobile */}
       <div
         className="flex md:hidden"
-        style={{ alignItems: "center", justifyContent: "space-between", padding: "16px 20px" }}
+        style={{ alignItems: "center", justifyContent: "space-between", padding: "0 16px", height: 56 }}
       >
-        <button onClick={() => setMobileOpen(!mobileOpen)} style={{ background: "none", border: "none", cursor: "pointer", padding: 4 }} aria-label="Toggle menu">
+        <button
+          onClick={() => setMobileOpen(!mobileOpen)}
+          style={{ background: "none", border: "none", cursor: "pointer", padding: 8, color: "#111" }}
+          aria-label="Toggle menu"
+        >
           {mobileOpen ? <X size={22} /> : <Menu size={22} />}
         </button>
-        <Link href="/" style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2, textDecoration: "none" }}>
-          <GoldCrown size={18} />
-          <span style={{ fontFamily: "var(--font-bodoni), Georgia, serif", fontSize: 16, fontWeight: 800, color: "#0a0a0a", letterSpacing: "-.005em" }}>
-            Elite Style Co.
+
+        <Link href="/" style={{ textDecoration: "none" }}>
+          <span style={{ fontFamily: FONT, fontSize: 18, fontWeight: 900, color: "#111", letterSpacing: "-0.03em" }}>
+            Elite<span style={{ color: "#3d1a4a" }}>Style</span>
           </span>
         </Link>
-        <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
-          <Link href="/search" aria-label="Search" style={{ color: "#0a0a0a" }}><Search size={18} strokeWidth={1.5} /></Link>
+
+        <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
+          <Link href="/search" aria-label="Search" style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 40, height: 40, color: "#111" }}>
+            <Search size={18} strokeWidth={2} />
+          </Link>
           <button
             onClick={openCart}
-            aria-label={`Open bag, ${itemCount} item${itemCount !== 1 ? "s" : ""}`}
-            style={{ background: "none", border: "none", cursor: "pointer", color: "#0a0a0a", lineHeight: 0, padding: 0, position: "relative" }}
+            style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center", width: 40, height: 40, background: "none", border: "none", cursor: "pointer", color: "#111" }}
+            aria-label="Bag"
           >
-            <ShoppingBag size={18} strokeWidth={1.5} />
+            <ShoppingBag size={18} strokeWidth={2} />
             {itemCount > 0 && (
-              <span
-                style={{
-                  position: "absolute",
-                  top: -5,
-                  right: -5,
-                  background: "#e53e3e",
-                  color: "#ffffff",
-                  borderRadius: "50%",
-                  width: 14,
-                  height: 14,
-                  fontSize: 9,
-                  fontFamily: "var(--font-inter), sans-serif",
-                  fontWeight: 700,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  lineHeight: 1,
-                }}
-              >
+              <span style={{
+                position: "absolute", top: 4, right: 4,
+                background: "#3d1a4a", color: "#fff", borderRadius: "50%",
+                width: 16, height: 16, fontSize: 9, fontFamily: FONT, fontWeight: 800,
+                display: "flex", alignItems: "center", justifyContent: "center",
+              }}>
                 {itemCount}
               </span>
             )}
@@ -173,43 +185,31 @@ export function SiteHeader() {
         </div>
       </div>
 
-      {/* Mobile nav drawer */}
+      {/* Mobile drawer */}
       {mobileOpen && (
         <nav
           className="flex md:hidden"
-          style={{
-            flexDirection: "column",
-            borderTop: `1px solid ${HAIR}`,
-            background: "#ffffff",
-          }}
+          style={{ flexDirection: "column", borderTop: "1px solid #e8e8e8", background: "#fff" }}
         >
-          {NAV_LEFT.map((item) => {
-            const href =
-              item === "NEW IN" ? "/products" :
-              item === "JOURNAL" ? "/journal" :
-              `/${item.toLowerCase()}`;
-            return (
-              <Link
-                key={item}
-                href={href}
-                onClick={() => setMobileOpen(false)}
-                style={{
-                  fontFamily: "var(--font-inter), sans-serif",
-                  fontSize: 11,
-                  letterSpacing: ".34em",
-                  color: "#0a0a0a",
-                  textDecoration: "none",
-                  padding: "16px 20px",
-                  borderBottom: `1px solid ${HAIR}`,
-                }}
-              >
-                {item}
-              </Link>
-            );
-          })}
-          <div style={{ padding: "16px 20px", fontFamily: "var(--font-inter), sans-serif", fontSize: 11, letterSpacing: ".34em", color: "#717171" }}>
-            EN · KES
-          </div>
+          {NAV.map((item) => (
+            <Link
+              key={item.label}
+              href={item.href}
+              onClick={() => setMobileOpen(false)}
+              style={{
+                fontFamily: FONT,
+                fontSize: 15,
+                fontWeight: 600,
+                color: "#111",
+                textDecoration: "none",
+                padding: "16px 20px",
+                borderBottom: "1px solid #f0f0f0",
+                display: "block",
+              }}
+            >
+              {item.label}
+            </Link>
+          ))}
         </nav>
       )}
     </header>

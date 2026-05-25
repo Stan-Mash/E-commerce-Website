@@ -1,92 +1,56 @@
-const PILLARS = [
-  ["01", "Globally sourced",  "We find the best styles from top suppliers worldwide and bring them straight to Nairobi."],
-  ["02", "Always KES",        "Every price in Kenyan shillings — no forex surprises, no hidden conversion fees."],
-  ["03", "Sizes for everyone","Woman, man, and children. A full range of sizes so the whole family is covered."],
-  ["04", "Fast delivery",     "Complimentary delivery across Kenya. Order today and receive it at your door."],
+const FONT = "'Inter','Urbanist',sans-serif";
+
+const PERKS = [
+  {
+    icon: "🚚",
+    title: "Free Delivery",
+    body: "Complimentary delivery across all of Kenya on every order.",
+  },
+  {
+    icon: "💳",
+    title: "Pay with M-Pesa",
+    body: "Checkout instantly with M-Pesa — no card required.",
+  },
+  {
+    icon: "📦",
+    title: "New Arrivals Weekly",
+    body: "Fresh styles added every week from global suppliers.",
+  },
+  {
+    icon: "↩️",
+    title: "Easy Returns",
+    body: "Hassle-free returns within 14 days of delivery.",
+  },
 ] as const;
 
 export function HousePrinciple() {
   return (
-    <section style={{ background: "#f6f5f2", padding: "120px 64px", textAlign: "center" }}>
-      <div
-        style={{
-          fontFamily: "var(--font-inter), sans-serif",
-          fontSize: 11,
-          letterSpacing: ".45em",
-          color: "#9b7b3f",
-          marginBottom: 22,
-          textTransform: "uppercase",
-        }}
-      >
-        WHY ELITE STYLE CO.
-      </div>
-
-      <h2
-        style={{
-          fontFamily: "var(--font-bodoni), Georgia, serif",
-          fontOpticalSizing: "auto",
-          fontSize: "clamp(40px, 6vw, 72px)",
-          fontWeight: 700,
-          color: "#0a0a0a",
-          letterSpacing: "-.025em",
-          lineHeight: 1.05,
-          margin: "0 auto",
-          maxWidth: 1100,
-        }}
-      >
-        International style. Nairobi prices.
-        <em style={{ color: "#3d1a4a", fontWeight: 700 }}> Delivered to your door.</em>
-      </h2>
-
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(4, 1fr)",
-          gap: 48,
-          marginTop: 88,
-          textAlign: "left",
-        }}
-        className="!grid-cols-2 lg:!grid-cols-4"
-      >
-        {PILLARS.map(([n, h, b]) => (
-          <div key={n}>
-            <div
-              style={{
-                fontFamily: "var(--font-bodoni), Georgia, serif",
-                fontSize: 14,
-                fontStyle: "italic",
-                color: "#9b7b3f",
-                letterSpacing: ".2em",
-              }}
-            >
-              № {n}
+    <section style={{ background: "#f7f7f7", borderBottom: "1px solid #e8e8e8" }}>
+      <div style={{ maxWidth: 1400, margin: "0 auto", padding: "56px 40px" }}>
+        <div
+          style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 32 }}
+          className="!grid-cols-2 lg:!grid-cols-4"
+        >
+          {PERKS.map((p) => (
+            <div key={p.title} style={{ display: "flex", gap: 16, alignItems: "flex-start" }}>
+              <span style={{ fontSize: 28, flexShrink: 0, lineHeight: 1 }}>{p.icon}</span>
+              <div>
+                <p style={{
+                  fontFamily: FONT, fontSize: 14, fontWeight: 800, color: "#111",
+                  margin: "0 0 6px", letterSpacing: "-0.01em",
+                }}>
+                  {p.title}
+                </p>
+                <p style={{
+                  fontFamily: FONT, fontSize: 13, color: "#666",
+                  margin: 0, lineHeight: 1.55,
+                }}>
+                  {p.body}
+                </p>
+              </div>
             </div>
-            <div
-              style={{
-                fontFamily: "var(--font-bodoni), Georgia, serif",
-                fontOpticalSizing: "auto",
-                fontSize: 22,
-                fontWeight: 600,
-                color: "#0a0a0a",
-                marginTop: 10,
-                letterSpacing: "-.005em",
-              }}
-            >
-              {h}
-            </div>
-            <p
-              style={{
-                fontFamily: "var(--font-inter), sans-serif",
-                fontSize: 14,
-                color: "#717171",
-                marginTop: 8,
-                lineHeight: 1.55,
-              }}
-            >
-              {b}
-            </p>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     </section>
   );
