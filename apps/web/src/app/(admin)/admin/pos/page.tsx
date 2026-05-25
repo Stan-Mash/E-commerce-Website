@@ -633,7 +633,11 @@ export default function POSPage() {
   return (
     <div>
       {showShiftModal && (
-        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.55)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 200 }}>
+        /* stopPropagation blocks global keydown shortcuts from interfering with typing */
+        <div
+          onKeyDown={e => e.stopPropagation()}
+          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.55)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 200 }}
+        >
           <div style={{ background: "#fff", borderRadius: 12, padding: 40, width: 400, maxWidth: "90vw", boxShadow: "0 20px 60px rgba(0,0,0,0.2)" }}>
             <h2 style={{ fontFamily: FONT, fontSize: 22, fontWeight: 800, color: "#111", margin: "0 0 24px" }}>
               {shiftAction === "open" ? "Open Shift" : "Close Shift"}
@@ -643,6 +647,7 @@ export default function POSPage() {
                 <label style={labelStyle}>Cashier Name</label>
                 <input
                   ref={nameRef}
+                  autoFocus
                   value={cashierName}
                   onChange={e => setCashierName(e.target.value)}
                   onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); floatRef.current?.focus(); } }}
@@ -668,8 +673,10 @@ export default function POSPage() {
                 <label style={labelStyle}>Closing Cash Count (KES)</label>
                 <input
                   ref={closeRef}
+                  autoFocus
                   value={closingFloat}
                   onChange={e => setClosingFloat(e.target.value)}
+                  onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); void closeShift(); } }}
                   type="number"
                   placeholder="0"
                   style={inputStyle}
