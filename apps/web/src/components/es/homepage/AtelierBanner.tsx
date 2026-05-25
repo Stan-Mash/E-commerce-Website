@@ -1,154 +1,90 @@
 import Link from "next/link";
-import { ElitePlate } from "@/components/es/ElitePlate";
 
-const PROMISES = [
-  ["Free delivery", "Across all of Kenya — no minimum order"],
-  ["M-Pesa checkout", "Pay with your Safaricom number in seconds"],
-  ["Easy returns", "7-day hassle-free return policy"],
-  ["New arrivals weekly", "Fresh styles added every week"],
+const FONT = "'Inter','Urbanist',sans-serif";
+
+const STEPS = [
+  { n: "01", title: "Browse", detail: "Explore thousands of curated styles for women, men and children — all KES priced." },
+  { n: "02", title: "Add to bag", detail: "Select your size and add to cart. No account required to shop." },
+  { n: "03", title: "Pay with M-Pesa", detail: "Enter your Safaricom number at checkout. Confirm the push prompt. Done." },
+  { n: "04", title: "We deliver", detail: "Your order ships free to your door anywhere in Kenya. Track it in real time." },
 ] as const;
 
 export function AtelierBanner() {
   return (
-    <section style={{ background: "#f6f5f2", padding: "120px 64px" }}>
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "1fr 1fr",
-          gap: 80,
-          alignItems: "center",
-        }}
-        className="!grid-cols-1 lg:!grid-cols-2"
-      >
-        {/* Image */}
-        <div style={{ aspectRatio: "5/4", position: "relative" }}>
-          <ElitePlate kind="abstract" tone="bone" />
-          <div
+    <section style={{ background: "#f7f7f7", borderTop: "1px solid #e8e8e8", borderBottom: "1px solid #e8e8e8", padding: "80px 40px" }}>
+      <div style={{ maxWidth: 1400, margin: "0 auto" }}>
+
+        {/* Header */}
+        <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", marginBottom: 56, flexWrap: "wrap", gap: 16 }}>
+          <div>
+            <p style={{ fontFamily: FONT, fontSize: 11, fontWeight: 700, color: "#888", textTransform: "uppercase", letterSpacing: "0.15em", margin: "0 0 8px" }}>
+              How it works
+            </p>
+            <h2 style={{ fontFamily: FONT, fontSize: "clamp(26px, 3vw, 38px)", fontWeight: 900, color: "#111", margin: 0, letterSpacing: "-0.03em" }}>
+              From browse to your door in 4 steps
+            </h2>
+          </div>
+          <Link
+            href="/products"
             style={{
-              position: "absolute",
-              left: 28,
-              top: 28,
-              fontFamily: "var(--font-inter), sans-serif",
-              fontSize: 10,
-              letterSpacing: ".4em",
-              color: "#0a0a0a",
-              textTransform: "uppercase",
+              display: "inline-flex", alignItems: "center", justifyContent: "center",
+              background: "#111", color: "#fff",
+              fontFamily: FONT, fontSize: 11, fontWeight: 700,
+              letterSpacing: "0.08em", textTransform: "uppercase",
+              padding: "13px 28px", textDecoration: "none",
             }}
           >
-            NAIROBI&nbsp;·&nbsp;FREE DELIVERY NATIONWIDE
-          </div>
+            Start Shopping →
+          </Link>
         </div>
 
-        {/* Text */}
-        <div>
-          <div
-            style={{
-              fontFamily: "var(--font-inter), sans-serif",
-              fontSize: 11,
-              letterSpacing: ".45em",
-              color: "#9b7b3f",
-              textTransform: "uppercase",
-            }}
-          >
-            HOW WE WORK
-          </div>
-
-          <h2
-            style={{
-              fontFamily: "var(--font-bodoni), Georgia, serif",
-              fontOpticalSizing: "auto",
-              fontSize: "clamp(40px, 5vw, 64px)",
-              fontWeight: 800,
-              lineHeight: 1,
-              letterSpacing: "-.025em",
-              color: "#0a0a0a",
-              margin: "22px 0 0",
-            }}
-          >
-            Shop online.
-            <br />
-            <em style={{ fontWeight: 700, color: "#3d1a4a" }}>We deliver to you.</em>
-          </h2>
-
-          <p
-            style={{
-              fontFamily: "var(--font-inter), sans-serif",
-              fontSize: 16,
-              color: "#171717",
-              marginTop: 26,
-              maxWidth: 520,
-              lineHeight: 1.6,
-            }}
-          >
-            Browse thousands of curated styles for women, men, and children.
-            Add to bag, pay with M-Pesa, and we&apos;ll handle the rest. No fuss,
-            no queues — just great fashion at your door.
-          </p>
-
-          <ul
-            style={{
-              listStyle: "none",
-              padding: 0,
-              margin: "34px 0 0",
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr",
-              gap: "16px 28px",
-            }}
-          >
-            {PROMISES.map(([title, sub]) => (
-              <li
-                key={title}
-                style={{
-                  display: "flex",
-                  alignItems: "baseline",
-                  gap: 12,
-                  paddingBottom: 14,
-                  borderBottom: "1px solid rgba(10,10,10,0.10)",
-                }}
-              >
-                <span
-                  style={{
-                    width: 6,
-                    height: 6,
-                    background: "#c9a961",
-                    transform: "rotate(45deg)",
-                    flexShrink: 0,
-                    display: "inline-block",
-                  }}
-                />
-                <span style={{ flex: 1 }}>
-                  <span
-                    style={{
-                      fontFamily: "var(--font-bodoni), Georgia, serif",
-                      fontOpticalSizing: "auto",
-                      fontSize: 16,
-                      fontWeight: 600,
-                      color: "#0a0a0a",
-                      display: "block",
-                    }}
-                  >
-                    {title}
-                  </span>
-                  <span
-                    style={{
-                      fontFamily: "var(--font-inter), sans-serif",
-                      fontSize: 12,
-                      color: "#717171",
-                      letterSpacing: ".08em",
-                      display: "block",
-                      marginTop: 2,
-                    }}
-                  >
-                    {sub}
-                  </span>
-                </span>
-              </li>
-            ))}
-          </ul>
-
-          <Link href="/products" className="es-btn-plum" style={{ display: "inline-block", marginTop: 38 }}>
-            BROWSE ALL STYLES
-          </Link>
+        {/* Steps grid */}
+        <div
+          style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 0 }}
+          className="!grid-cols-2 lg:!grid-cols-4"
+        >
+          {STEPS.map((s, i) => (
+            <div
+              key={s.n}
+              style={{
+                padding: "32px 28px",
+                borderRight: i < STEPS.length - 1 ? "1px solid #e0e0e0" : "none",
+                borderTop: "3px solid transparent",
+              }}
+              className="step-card"
+            >
+              <span style={{
+                fontFamily: FONT,
+                fontSize: 11,
+                fontWeight: 800,
+                color: "#c9a961",
+                letterSpacing: "0.15em",
+                display: "block",
+                marginBottom: 16,
+              }}>
+                {s.n}
+              </span>
+              <h3 style={{
+                fontFamily: FONT,
+                fontSize: 16,
+                fontWeight: 800,
+                color: "#111",
+                margin: "0 0 10px",
+                letterSpacing: "-0.02em",
+              }}>
+                {s.title}
+              </h3>
+              <p style={{
+                fontFamily: FONT,
+                fontSize: 13,
+                color: "#666",
+                margin: 0,
+                lineHeight: 1.6,
+              }}>
+                {s.detail}
+              </p>
+            </div>
+          ))}
         </div>
       </div>
     </section>

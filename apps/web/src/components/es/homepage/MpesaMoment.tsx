@@ -41,18 +41,17 @@ export function MpesaMoment() {
 
           <h2
             style={{
-              fontFamily: "var(--font-bodoni), Georgia, serif",
-              fontOpticalSizing: "auto",
-              fontSize: "clamp(48px, 6vw, 72px)",
-              fontWeight: 800,
-              lineHeight: 0.96,
-              letterSpacing: "-.025em",
+              fontFamily: "var(--font-inter), 'Inter', sans-serif",
+              fontSize: "clamp(40px, 5.5vw, 64px)",
+              fontWeight: 900,
+              lineHeight: 1.0,
+              letterSpacing: "-.04em",
               margin: "0 0 32px",
             }}
           >
             Tap once.
             <br />
-            <em style={{ color: "#c9a961", fontWeight: 700 }}>Your order is placed.</em>
+            <span style={{ color: "#c9a961" }}>Your order is placed.</span>
           </h2>
 
           <p
@@ -116,12 +115,13 @@ export function MpesaMoment() {
             >
               <div
                 style={{
-                  fontFamily: "var(--font-bodoni), Georgia, serif",
-                  fontSize: 36,
-                  fontWeight: 700,
-                  color: "rgba(201,169,97,.35)",
+                  fontFamily: "var(--font-inter), 'Inter', sans-serif",
+                  fontSize: 28,
+                  fontWeight: 900,
+                  color: "rgba(201,169,97,.3)",
                   lineHeight: 1,
                   paddingTop: 2,
+                  letterSpacing: "-0.03em",
                 }}
               >
                 {s.n}
