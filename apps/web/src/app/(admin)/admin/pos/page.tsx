@@ -220,7 +220,7 @@ async function printReceipt(params: {
 interface ShiftModalProps {
   action:     "open" | "close";
   locationId: string;
-  shiftId?:   string;
+  shiftId:    string | undefined;
   canCancel:  boolean;
   onSuccess:  (cashierName: string) => void;
   onCancel:   () => void;
@@ -250,7 +250,7 @@ function ShiftModal({ action, locationId, shiftId, canCancel, onSuccess, onCance
       });
       const j = await r.json() as { shift?: { cashier_name?: string; variance?: number }; error?: string };
       if (!r.ok) { setErr(j.error ?? "Request failed"); return; }
-      onSuccess((j.shift?.cashier_name) ?? name.trim() || "Staff");
+      onSuccess(j.shift?.cashier_name ?? (name.trim() || "Staff"));
     } catch {
       setErr("Network error — try again");
     } finally {
