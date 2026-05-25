@@ -215,6 +215,111 @@ async function printReceipt(params: {
   await port.close();
 }
 
+// ── Shift Modal — standalone component, zero dependency on POSPage state ──────
+
+interface ShiftModalProps {
+  action:     "open" | "close";
+  locationId: string;
+  shiftId?:   string;
+  canCancel:  boolean;
+  onSuccess:  (cashierName: string) => void;
+  onCancel:   () => void;
+}
+
+function ShiftModal({ action, locationId, shiftId, canCancel, onSuccess, onCancel }: ShiftModalProps) {
+  const [name,    setName]    = useState("");
+  const [float,   setFloat]   = useState("0");
+  const [busy,    setBusy]    = useState(false);
+  const [err,     setErr]     = useState("");
+  const nameRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => { nameRef.current?.focus(); }, []);
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    setBusy(true); setErr("");
+    try {
+      const body = action === "open"
+        ? { action: "open",  location_id: locationId, cashier_name: name.trim() || "Staff", opening_float: parseFloat(float) || 0 }
+        : { action: "close", shift_id: shiftId, closing_float: parseFloat(float) || 0 };
+
+      const r = await fetch("/api/admin/pos/shifts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      const j = await r.json() as { shift?: { cashier_name?: string; variance?: number }; error?: string };
+      if (!r.ok) { setErr(j.error ?? "Request failed"); return; }
+      onSuccess((j.shift?.cashier_name) ?? name.trim() || "Staff");
+    } catch {
+      setErr("Network error — try again");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const inp: React.CSSProperties = {
+    display: "block", width: "100%", padding: "11px 14px",
+    border: "1px solid #e0e0e0", borderRadius: 6,
+    fontFamily: FONT, fontSize: 14, color: "#111",
+    outline: "none", boxSizing: "border-box", marginBottom: 16,
+  };
+
+  return (
+    <div
+      onKeyDown={e => e.stopPropagation()}
+      style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.55)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 200 }}
+    >
+      <div style={{ background: "#fff", borderRadius: 12, padding: 40, width: 400, maxWidth: "90vw", boxShadow: "0 20px 60px rgba(0,0,0,0.2)" }}>
+        <h2 style={{ fontFamily: FONT, fontSize: 22, fontWeight: 800, color: "#111", margin: "0 0 24px" }}>
+          {action === "open" ? "Open Shift" : "Close Shift"}
+        </h2>
+        <form onSubmit={submit}>
+          {action === "open" && (
+            <>
+              <label style={{ fontFamily: FONT, fontSize: 10, letterSpacing: "0.25em", textTransform: "uppercase", color: "#888", display: "block", marginBottom: 6 }}>
+                Cashier Name
+              </label>
+              <input
+                ref={nameRef}
+                value={name}
+                onChange={e => setName(e.target.value)}
+                onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); (e.currentTarget.form?.elements[1] as HTMLInputElement)?.focus(); } }}
+                placeholder="Your name"
+                style={inp}
+              />
+            </>
+          )}
+          <label style={{ fontFamily: FONT, fontSize: 10, letterSpacing: "0.25em", textTransform: "uppercase", color: "#888", display: "block", marginBottom: 6 }}>
+            {action === "open" ? "Opening Cash Float (KES)" : "Closing Cash Count (KES)"}
+          </label>
+          <input
+            value={float}
+            onChange={e => setFloat(e.target.value)}
+            type="number"
+            placeholder="0"
+            style={inp}
+            ref={action === "close" ? nameRef : undefined}
+          />
+          {err && <p style={{ fontFamily: FONT, fontSize: 12, color: "#c0392b", margin: "-8px 0 12px" }}>{err}</p>}
+          <button
+            type="submit"
+            disabled={busy}
+            style={{ fontFamily: FONT, fontSize: 12, letterSpacing: "0.2em", textTransform: "uppercase", background: busy ? "#ccc" : action === "open" ? "#7c3aed" : "#c0392b", color: "#fff", border: "none", borderRadius: 4, padding: "13px 0", cursor: busy ? "not-allowed" : "pointer", width: "100%", fontWeight: 700 }}
+          >
+            {busy ? "Please wait…" : action === "open" ? "Open Shift" : "Close Shift"}
+          </button>
+        </form>
+        {canCancel && (
+          <button onClick={onCancel} style={{ fontFamily: FONT, fontSize: 12, background: "none", color: "#888", border: "none", cursor: "pointer", width: "100%", marginTop: 8, padding: "10px 0" }}>
+            Cancel
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ── Main component ────────────────────────────────────────────────────────────
 
 export default function POSPage() {
@@ -602,7 +707,7 @@ export default function POSPage() {
     );
   }
 
-  // (shift modal is inlined directly in the return below)
+  // (shift modal rendered as standalone component below)
 
   // ── Held carts drawer ───────────────────────────────────────────────────────
   const HeldDrawer = () => (
@@ -635,63 +740,23 @@ export default function POSPage() {
   return (
     <div>
       {showShiftModal && (
-        /* stopPropagation blocks global keydown shortcuts from interfering with typing */
-        <div
-          onKeyDown={e => e.stopPropagation()}
-          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.55)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 200 }}
-        >
-          <div style={{ background: "#fff", borderRadius: 12, padding: 40, width: 400, maxWidth: "90vw", boxShadow: "0 20px 60px rgba(0,0,0,0.2)" }}>
-            <h2 style={{ fontFamily: FONT, fontSize: 22, fontWeight: 800, color: "#111", margin: "0 0 24px" }}>
-              {shiftAction === "open" ? "Open Shift" : "Close Shift"}
-            </h2>
-            {shiftAction === "open" ? (
-              <form onSubmit={e => { e.preventDefault(); void openShift(); }}>
-                <label style={labelStyle}>Cashier Name</label>
-                <input
-                  ref={nameRef}
-                  autoFocus
-                  defaultValue=""
-                  onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); floatRef.current?.focus(); } }}
-                  placeholder="Your name"
-                  style={inputStyle}
-                />
-                <label style={labelStyle}>Opening Cash Float (KES)</label>
-                <input
-                  ref={floatRef}
-                  defaultValue="0"
-                  onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); void openShift(); } }}
-                  type="number"
-                  placeholder="0"
-                  style={inputStyle}
-                />
-                <button type="submit" style={{ fontFamily: FONT, fontSize: 12, letterSpacing: "0.2em", textTransform: "uppercase", background: "#7c3aed", color: "#fff", border: "none", borderRadius: 4, padding: "13px 0", cursor: "pointer", width: "100%", marginTop: 4, fontWeight: 700 }}>
-                  Open Shift
-                </button>
-              </form>
-            ) : (
-              <form onSubmit={e => { e.preventDefault(); void closeShift(); }}>
-                <label style={labelStyle}>Closing Cash Count (KES)</label>
-                <input
-                  ref={closeRef}
-                  autoFocus
-                  defaultValue="0"
-                  onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); void closeShift(); } }}
-                  type="number"
-                  placeholder="0"
-                  style={inputStyle}
-                />
-                <button type="submit" style={{ fontFamily: FONT, fontSize: 12, letterSpacing: "0.2em", textTransform: "uppercase", background: "#c0392b", color: "#fff", border: "none", borderRadius: 4, padding: "13px 0", cursor: "pointer", width: "100%", marginTop: 4, fontWeight: 700 }}>
-                  Close Shift
-                </button>
-              </form>
-            )}
-            {shift && (
-              <button onClick={() => setShowShiftModal(false)} style={{ fontFamily: FONT, fontSize: 12, background: "none", color: "#888", border: "none", cursor: "pointer", width: "100%", marginTop: 8, padding: "10px 0" }}>
-                Cancel
-              </button>
-            )}
-          </div>
-        </div>
+        <ShiftModal
+          action={shiftAction}
+          locationId={locationId}
+          shiftId={shift?.id}
+          canCancel={!!shift}
+          onSuccess={name => {
+            if (shiftAction === "open") {
+              void loadShift(locationId);
+              setCashierName(name);
+            } else {
+              setShift(null);
+              clearCart();
+            }
+            setShowShiftModal(false);
+          }}
+          onCancel={() => setShowShiftModal(false)}
+        />
       )}
       {showHeld && <HeldDrawer />}
 
