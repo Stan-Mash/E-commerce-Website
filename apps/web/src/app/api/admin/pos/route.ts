@@ -19,6 +19,7 @@ interface PosBody {
   phone:          string;
   payment_method: "cash" | "mpesa_stk" | "mpesa_c2b";
   location_id:    string;
+  shift_id:       string;   // required — no sale without an open shift
   cashier_name:   string;
   items:          PosItem[];
   promo_code?:    string;
@@ -31,7 +32,7 @@ export async function POST(request: NextRequest) {
   }
 
   const body = (await request.json()) as PosBody;
-  const { phone, payment_method, location_id, cashier_name, items, promo_code, notes } = body;
+  const { phone, payment_method, location_id, shift_id, cashier_name, items, promo_code, notes } = body;
 
   if (!items || items.length === 0) {
     return NextResponse.json({ error: "No items in order" }, { status: 400 });
@@ -39,8 +40,28 @@ export async function POST(request: NextRequest) {
   if (!location_id) {
     return NextResponse.json({ error: "location_id is required" }, { status: 400 });
   }
+  if (!shift_id) {
+    return NextResponse.json({ error: "shift_id is required — open a shift before processing sales" }, { status: 400 });
+  }
 
   const supabase = createAdminSupabaseClient();
+
+  // ── Shift guard: verify shift exists, is open, and belongs to this location ─
+  const { data: shift, error: shiftErr } = await supabase
+    .from("shifts")
+    .select("id, status, location_id, cashier_name")
+    .eq("id", shift_id)
+    .maybeSingle();
+
+  if (shiftErr || !shift) {
+    return NextResponse.json({ error: "Shift not found" }, { status: 404 });
+  }
+  if (shift.status !== "open") {
+    return NextResponse.json({ error: "Shift is closed — reopen or start a new shift before processing sales" }, { status: 409 });
+  }
+  if (shift.location_id !== location_id) {
+    return NextResponse.json({ error: "shift_id does not belong to the specified location_id" }, { status: 422 });
+  }
 
   // Normalise phone (allow empty — walk-in with no phone)
   let normalisedPhone = "";
@@ -83,12 +104,17 @@ export async function POST(request: NextRequest) {
     unit_price: c.unit_price,
   }));
 
+  // Cash resolves immediately; M-Pesa methods stay pending until callback confirms
+  const initialStatus = payment_method === "cash" ? "paid" : "pending_payment";
+
   const { data: rpcResult, error: rpcErr } = await supabase.rpc("pos_checkout", {
     p_order_ref:       orderRef,
     p_phone:           normalisedPhone || null,
     p_location_id:     location_id,
+    p_shift_id:        shift_id,
     p_payment_method:  payment_method,
-    p_cashier_name:    cashier_name || "Staff",
+    p_initial_status:  initialStatus,
+    p_cashier_name:    cashier_name || shift.cashier_name,
     p_subtotal:        subtotal,
     p_discount_amount: discountAmount,
     p_total:           total,
