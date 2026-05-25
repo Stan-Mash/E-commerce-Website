@@ -59,7 +59,9 @@ export async function POST(request: NextRequest) {
 }
 
 function incrementMonth(ym: string): string {
-  const [y, m] = ym.split("-").map(Number);
+  const parts = ym.split("-").map(Number);
+  const y = parts[0] ?? 2024;
+  const m = parts[1] ?? 1;
   const next = m === 12 ? `${y + 1}-01` : `${y}-${String(m + 1).padStart(2, "0")}`;
   return `${next}-01`;
 }

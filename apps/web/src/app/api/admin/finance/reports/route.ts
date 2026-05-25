@@ -6,7 +6,9 @@ function checkOwner(req: NextRequest) {
 }
 
 function nextMonth(ym: string): string {
-  const [y, m] = ym.split("-").map(Number);
+  const parts = ym.split("-").map(Number);
+  const y = parts[0] ?? 2024;
+  const m = parts[1] ?? 1;
   return m === 12 ? `${y + 1}-01-01` : `${y}-${String(m + 1).padStart(2, "0")}-01`;
 }
 
@@ -50,7 +52,10 @@ export async function GET(request: NextRequest) {
   const expensesByCategory: Record<string, number> = {};
   let totalExpenses = 0;
   for (const e of expRows ?? []) {
-    const cat = (e.expense_categories as { name: string } | null)?.name ?? "Other";
+    const catRaw = e.expense_categories;
+    const cat = Array.isArray(catRaw)
+      ? ((catRaw[0] as { name: string } | undefined)?.name ?? "Other")
+      : ((catRaw as { name: string } | null)?.name ?? "Other");
     expensesByCategory[cat] = (expensesByCategory[cat] ?? 0) + e.amount;
     totalExpenses += e.amount;
   }

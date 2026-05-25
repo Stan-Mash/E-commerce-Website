@@ -404,7 +404,7 @@ export default function POSPage() {
     if (cart.length === 0) return;
     setHeldCarts(prev => [...prev, {
       id: Date.now().toString(),
-      label: `${cart[0].product_name}${cart.length > 1 ? ` +${cart.length - 1}` : ""}`,
+      label: `${cart[0]?.product_name ?? "Item"}${cart.length > 1 ? ` +${cart.length - 1}` : ""}`,
       items: [...cart], phone,
     }]);
     clearCart();
