@@ -28,16 +28,15 @@ export function SaleBand() {
         </span>
         <span
           style={{
-            fontFamily: "var(--font-bodoni), Georgia, serif",
-            fontOpticalSizing: "auto",
-            fontSize: 26,
-            fontWeight: 600,
+            fontFamily: "'Inter','Urbanist',sans-serif",
+            fontSize: 22,
+            fontWeight: 800,
             color: "#0a0a0a",
-            letterSpacing: "-.005em",
+            letterSpacing: "-.03em",
           }}
         >
           The Equinox Edit —{" "}
-          <em style={{ color: "#3d1a4a" }}>10 days only, by invitation.</em>
+          <span style={{ color: "#3d1a4a" }}>10 days only, by invitation.</span>
         </span>
       </div>
       <button className="es-btn-plum">RESERVE ACCESS →</button>
