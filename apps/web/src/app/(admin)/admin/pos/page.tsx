@@ -674,7 +674,7 @@ export default function POSPage() {
   // ── Main render ─────────────────────────────────────────────────────────────
   return (
     <div>
-      {showShiftModal && <ShiftModal />}
+      {showShiftModal && ShiftModal()}
       {showHeld && <HeldDrawer />}
 
       {/* Header */}
