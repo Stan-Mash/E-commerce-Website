@@ -18,6 +18,10 @@ const NAV_ITEMS = [
   { label: "Reports", href: "/admin/reports" },
 ] as const;
 
+const OWNER_NAV = [
+  { label: "Finance", href: "/admin/finance" },
+] as const;
+
 export default function AdminLayout({
   children,
 }: {
@@ -112,6 +116,21 @@ export default function AdminLayout({
             color: #e53e3e !important;
           }
         `}</style>
+
+        {/* Owner-only nav */}
+        <div style={{ margin: "24px 0 0", borderTop: "1px solid #222", paddingTop: 16 }}>
+          <span style={{ display: "block", padding: "0 28px 8px", fontFamily: "var(--font-inter)", fontSize: 9, letterSpacing: "0.3em", textTransform: "uppercase", color: "#333" }}>
+            Owner Only
+          </span>
+          {OWNER_NAV.map(item => (
+            <Link key={item.href} href={item.href}
+              style={{ display: "block", padding: "10px 28px", fontFamily: "var(--font-inter)", fontSize: 11, letterSpacing: "0.3em", textTransform: "uppercase", color: "#c9a961", textDecoration: "none" }}
+              className="admin-nav-link"
+            >
+              {item.label} 🔒
+            </Link>
+          ))}
+        </div>
 
         {/* Logout */}
         <div style={{ marginTop: "auto", padding: "32px 28px 0" }}>
