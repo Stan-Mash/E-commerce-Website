@@ -439,22 +439,24 @@ export default function POSPage() {
 
   // ── Shift management ────────────────────────────────────────────────────────
   async function openShift() {
+    const name  = nameRef.current?.value.trim()  || "Staff";
+    const float = parseFloat(floatRef.current?.value ?? "0") || 0;
     const r = await fetch("/api/admin/pos/shifts", {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         action: "open", location_id: locationId,
-        cashier_name: cashierName || "Staff",
-        opening_float: parseFloat(openingFloat) || 0,
+        cashier_name: name,
+        opening_float: float,
       }),
     });
     const j = await r.json() as { shift?: Shift; error?: string };
-    if (r.ok) { setShift(j.shift ?? null); setShowShiftModal(false); setCashierName(j.shift?.cashier_name ?? cashierName); }
+    if (r.ok) { setShift(j.shift ?? null); setShowShiftModal(false); setCashierName(j.shift?.cashier_name ?? name); }
     else setErrorMsg(j.error ?? "Failed to open shift");
   }
 
   async function closeShift() {
     if (!shift) return;
-    const float = parseFloat(closingFloat) || 0;
+    const float = parseFloat(closeRef.current?.value ?? "0") || 0;
     const r = await fetch("/api/admin/pos/shifts", {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ action: "close", shift_id: shift.id, closing_float: float }),
@@ -648,8 +650,7 @@ export default function POSPage() {
                 <input
                   ref={nameRef}
                   autoFocus
-                  value={cashierName}
-                  onChange={e => setCashierName(e.target.value)}
+                  defaultValue=""
                   onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); floatRef.current?.focus(); } }}
                   placeholder="Your name"
                   style={inputStyle}
@@ -657,8 +658,7 @@ export default function POSPage() {
                 <label style={labelStyle}>Opening Cash Float (KES)</label>
                 <input
                   ref={floatRef}
-                  value={openingFloat}
-                  onChange={e => setOpeningFloat(e.target.value)}
+                  defaultValue="0"
                   onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); void openShift(); } }}
                   type="number"
                   placeholder="0"
@@ -674,8 +674,7 @@ export default function POSPage() {
                 <input
                   ref={closeRef}
                   autoFocus
-                  value={closingFloat}
-                  onChange={e => setClosingFloat(e.target.value)}
+                  defaultValue="0"
                   onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); void closeShift(); } }}
                   type="number"
                   placeholder="0"
