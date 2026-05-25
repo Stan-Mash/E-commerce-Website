@@ -595,23 +595,42 @@ export default function POSPage() {
           {shiftAction === "open" ? "Open Shift" : "Close Shift"}
         </h2>
         {shiftAction === "open" ? (
-          <>
+          <form onSubmit={e => { e.preventDefault(); void openShift(); }}>
             <label style={labelStyle}>Cashier Name</label>
-            <input value={cashierName} onChange={e => setCashierName(e.target.value)} placeholder="Your name" style={inputStyle} />
+            <input
+              autoFocus
+              value={cashierName}
+              onChange={e => setCashierName(e.target.value)}
+              placeholder="Your name"
+              style={inputStyle}
+            />
             <label style={labelStyle}>Opening Cash Float (KES)</label>
-            <input value={openingFloat} onChange={e => setOpeningFloat(e.target.value)} type="number" placeholder="0" style={inputStyle} />
-            <button onClick={() => void openShift()} style={{ fontFamily: FONT, fontSize: 12, letterSpacing: "0.2em", textTransform: "uppercase", background: "#7c3aed", color: "#fff", border: "none", borderRadius: 4, padding: "13px 0", cursor: "pointer", width: "100%", marginTop: 4, fontWeight: 700 }}>
+            <input
+              value={openingFloat}
+              onChange={e => setOpeningFloat(e.target.value)}
+              type="number"
+              placeholder="0"
+              style={inputStyle}
+            />
+            <button type="submit" style={{ fontFamily: FONT, fontSize: 12, letterSpacing: "0.2em", textTransform: "uppercase", background: "#7c3aed", color: "#fff", border: "none", borderRadius: 4, padding: "13px 0", cursor: "pointer", width: "100%", marginTop: 4, fontWeight: 700 }}>
               Open Shift
             </button>
-          </>
+          </form>
         ) : (
-          <>
+          <form onSubmit={e => { e.preventDefault(); void closeShift(); }}>
             <label style={labelStyle}>Closing Cash Count (KES)</label>
-            <input value={closingFloat} onChange={e => setClosingFloat(e.target.value)} type="number" placeholder="0" style={inputStyle} />
-            <button onClick={() => void closeShift()} style={{ fontFamily: FONT, fontSize: 12, letterSpacing: "0.2em", textTransform: "uppercase", background: "#c0392b", color: "#fff", border: "none", borderRadius: 4, padding: "13px 0", cursor: "pointer", width: "100%", marginTop: 4, fontWeight: 700 }}>
+            <input
+              autoFocus
+              value={closingFloat}
+              onChange={e => setClosingFloat(e.target.value)}
+              type="number"
+              placeholder="0"
+              style={inputStyle}
+            />
+            <button type="submit" style={{ fontFamily: FONT, fontSize: 12, letterSpacing: "0.2em", textTransform: "uppercase", background: "#c0392b", color: "#fff", border: "none", borderRadius: 4, padding: "13px 0", cursor: "pointer", width: "100%", marginTop: 4, fontWeight: 700 }}>
               Close Shift
             </button>
-          </>
+          </form>
         )}
         {shift && (
           <button onClick={() => setShowShiftModal(false)} style={{ fontFamily: FONT, fontSize: 12, background: "none", color: "#888", border: "none", cursor: "pointer", width: "100%", marginTop: 8, padding: "10px 0" }}>
