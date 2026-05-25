@@ -258,7 +258,8 @@ export default function POSPage() {
     amountPaid: number; changeDue: number;
   } | null>(null);
 
-  const searchRef = useRef<HTMLInputElement>(null);
+  const searchRef    = useRef<HTMLInputElement>(null);
+  const floatRef     = useRef<HTMLInputElement>(null);
 
   // ── Load locations ──────────────────────────────────────────────────────────
   useEffect(() => {
@@ -601,11 +602,13 @@ export default function POSPage() {
               autoFocus
               value={cashierName}
               onChange={e => setCashierName(e.target.value)}
+              onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); floatRef.current?.focus(); } }}
               placeholder="Your name"
               style={inputStyle}
             />
             <label style={labelStyle}>Opening Cash Float (KES)</label>
             <input
+              ref={floatRef}
               value={openingFloat}
               onChange={e => setOpeningFloat(e.target.value)}
               type="number"
