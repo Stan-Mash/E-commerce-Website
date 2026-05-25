@@ -49,7 +49,7 @@ export default function ExpensesPage() {
   const router = useRouter();
 
   // Form state
-  const [category,   setCategory]   = useState(CATEGORIES[0].id);
+  const [category,   setCategory]   = useState(CATEGORIES[0]?.id ?? "rent");
   const [desc,       setDesc]        = useState("");
   const [amount,     setAmount]      = useState("");
   const [date,       setDate]        = useState(new Date().toISOString().slice(0, 10));
