@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { GoldCrown } from "@/components/es/GoldCrown";
 
 const COLS = [
   { h: "COMPANY",     items: ["About Us", "How It Works", "Contact Us", "Press"] },
@@ -25,18 +24,8 @@ export function SiteFooter() {
       >
         {/* Brand */}
         <div>
-          <GoldCrown size={28} />
-          <div
-            style={{
-              fontFamily: "var(--font-bodoni), Georgia, serif",
-              fontOpticalSizing: "auto",
-              fontSize: 26,
-              fontWeight: 800,
-              marginTop: 12,
-              letterSpacing: "-.005em",
-            }}
-          >
-            Elite Style Co.
+          <div style={{ fontFamily: "var(--font-inter)", fontSize: 22, fontWeight: 900, letterSpacing: "-0.03em" }}>
+            Elite<span style={{ color: "#c9a961" }}>Style</span>
           </div>
           <p
             style={{

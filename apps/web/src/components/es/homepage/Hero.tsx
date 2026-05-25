@@ -1,183 +1,226 @@
 import Link from "next/link";
-import { ElitePlate } from "@/components/es/ElitePlate";
 
-const DEPTS = [
-  { dept: "WOMAN",    line: "The styles she's been waiting for.",  tone: "warm"  as const, kind: "woman" as const },
-  { dept: "MAN",      line: "Sharp looks. Straight to your door.", tone: "smoke" as const, kind: "man"   as const },
-  { dept: "CHILDREN", line: "Great fits for small grown-ups.",     tone: "sand"  as const, kind: "child" as const },
+const FONT = "'Inter','Urbanist',sans-serif";
+
+const CATS = [
+  { label: "Women",       sub: "New arrivals",     href: "/woman" },
+  { label: "Men",         sub: "Sharp looks",      href: "/man" },
+  { label: "Children",    sub: "Mini style",       href: "/children" },
+  { label: "New In",      sub: "Just dropped",     href: "/products" },
 ];
 
 export function Hero() {
   return (
-    <section style={{ background: "#ffffff", padding: "88px 64px 40px" }}>
-      {/* Headline + body */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "1fr 1fr",
-          gap: 56,
-          alignItems: "end",
-          marginBottom: 56,
-        }}
-        className="!grid-cols-1 md:!grid-cols-2"
-      >
-        <div>
-          <div
+    <section>
+      {/* ── Main hero — split layout ──────────────────────── */}
+      <div style={{
+        display: "grid",
+        gridTemplateColumns: "1fr 1fr",
+        minHeight: "86vh",
+      }} className="!grid-cols-1 md:!grid-cols-2">
+
+        {/* Image panel */}
+        <div style={{
+          position: "relative",
+          overflow: "hidden",
+          background: "#f0ebe3",
+          minHeight: 520,
+        }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/products/tweed-set-black-white.jpg"
+            alt="New collection — Tweed Jacket & Skirt Set"
             style={{
-              fontFamily: "var(--font-inter), sans-serif",
-              fontSize: 11,
-              letterSpacing: ".45em",
-              color: "#9b7b3f",
-              textTransform: "uppercase",
+              position: "absolute",
+              inset: 0,
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+              objectPosition: "top center",
             }}
-          >
-            NEW SEASON&nbsp;&nbsp;·&nbsp;&nbsp;NAIROBI'S FAVOURITE FASHION STORE
+          />
+          {/* Season badge */}
+          <div style={{
+            position: "absolute",
+            top: 24,
+            left: 24,
+            background: "#111",
+            color: "#fff",
+            fontFamily: FONT,
+            fontSize: 10,
+            fontWeight: 700,
+            letterSpacing: "0.14em",
+            textTransform: "uppercase",
+            padding: "7px 16px",
+          }}>
+            New Season 2026
           </div>
-          <h1
-            style={{
-              fontFamily: "var(--font-bodoni), Georgia, serif",
-              fontOpticalSizing: "auto",
-              fontSize: "clamp(64px, 8vw, 112px)",
-              fontWeight: 800,
-              lineHeight: 0.92,
-              letterSpacing: "-.03em",
-              color: "#0a0a0a",
-              margin: "24px 0 0",
-            }}
-          >
-            Style,
-            <br />
-            <em style={{ fontWeight: 700 }}>delivered</em>
-            <br />
-            to your door.
-          </h1>
+          {/* Delivery badge */}
+          <div style={{
+            position: "absolute",
+            bottom: 24,
+            right: 24,
+            background: "rgba(255,255,255,0.96)",
+            padding: "12px 20px",
+            backdropFilter: "blur(8px)",
+          }}>
+            <p style={{ fontFamily: FONT, fontSize: 10, color: "#888", margin: "0 0 3px", letterSpacing: "0.1em", textTransform: "uppercase" }}>
+              Free delivery
+            </p>
+            <p style={{ fontFamily: FONT, fontSize: 13, fontWeight: 700, color: "#111", margin: 0 }}>
+              Across all of Kenya 🇰🇪
+            </p>
+          </div>
         </div>
 
-        <div style={{ paddingBottom: 12 }}>
-          <p
-            style={{
-              fontFamily: "var(--font-inter), sans-serif",
-              fontSize: 16,
-              color: "#171717",
-              lineHeight: 1.6,
-              maxWidth: 460,
-              fontWeight: 400,
-            }}
-          >
-            Curated fashion for the whole family — sourced from the world&apos;s
-            best suppliers and priced in KES. Shop woman, man, and children. Pay
-            with M-Pesa. Delivered free across Kenya.
+        {/* Text panel */}
+        <div style={{
+          padding: "72px 64px",
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "center",
+          background: "#fff",
+        }} className="!p-8 md:!p-16">
+          <span style={{
+            display: "inline-block",
+            fontFamily: FONT,
+            fontSize: 11,
+            fontWeight: 700,
+            color: "#3d1a4a",
+            letterSpacing: "0.18em",
+            textTransform: "uppercase",
+            marginBottom: 24,
+          }}>
+            Elite Style Co. · Nairobi
+          </span>
+
+          <h1 style={{
+            fontFamily: FONT,
+            fontSize: "clamp(42px, 5.5vw, 76px)",
+            fontWeight: 900,
+            lineHeight: 1.02,
+            letterSpacing: "-0.04em",
+            color: "#111",
+            margin: "0 0 24px",
+          }}>
+            Dressed<br />for every<br />moment.
+          </h1>
+
+          <p style={{
+            fontFamily: FONT,
+            fontSize: 15,
+            fontWeight: 400,
+            color: "#555",
+            lineHeight: 1.75,
+            maxWidth: 400,
+            margin: "0 0 40px",
+          }}>
+            Curated fashion for the whole family — KES pricing,
+            M-Pesa checkout, free delivery across Kenya.
           </p>
-          <div
-            style={{
-              display: "flex",
-              flexWrap: "wrap",
-              gap: 12,
-              marginTop: 28,
-            }}
-          >
-            <Link href="/products" className="es-btn-plum">
-              SHOP NEW ARRIVALS
+
+          <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+            <Link
+              href="/products"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                background: "#111",
+                color: "#fff",
+                fontFamily: FONT,
+                fontSize: 12,
+                fontWeight: 700,
+                letterSpacing: "0.08em",
+                textTransform: "uppercase",
+                padding: "15px 36px",
+                textDecoration: "none",
+                transition: "background .15s",
+              }}
+            >
+              Shop New Arrivals
             </Link>
-            <Link href="/products" className="es-btn-outline-ink">
-              VIEW ALL STYLES
+            <Link
+              href="/woman"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                background: "#fff",
+                color: "#111",
+                fontFamily: FONT,
+                fontSize: 12,
+                fontWeight: 700,
+                letterSpacing: "0.08em",
+                textTransform: "uppercase",
+                padding: "15px 36px",
+                border: "2px solid #111",
+                textDecoration: "none",
+                transition: "all .15s",
+              }}
+            >
+              Women&apos;s Edit
             </Link>
+          </div>
+
+          {/* Social proof */}
+          <div style={{ display: "flex", gap: 32, marginTop: 48 }}>
+            {[
+              { num: "500+", label: "Styles" },
+              { num: "Free", label: "Delivery" },
+              { num: "M-Pesa", label: "Accepted" },
+            ].map((s) => (
+              <div key={s.label}>
+                <p style={{ fontFamily: FONT, fontSize: 22, fontWeight: 900, color: "#111", margin: "0 0 2px", letterSpacing: "-0.03em" }}>
+                  {s.num}
+                </p>
+                <p style={{ fontFamily: FONT, fontSize: 11, color: "#888", margin: 0, letterSpacing: "0.05em" }}>
+                  {s.label}
+                </p>
+              </div>
+            ))}
           </div>
         </div>
       </div>
 
-      {/* Department triptych */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(3, 1fr)",
-          gap: 16,
-        }}
-        className="!grid-cols-1 sm:!grid-cols-3"
-      >
-        {DEPTS.map((d) => {
-          const isLight = d.tone === "sand";
-          const textColor = isLight ? "#0a0a0a" : "#ffffff";
-          return (
-            <Link
-              key={d.dept}
-              href={`/${d.dept.toLowerCase()}`}
-              style={{ aspectRatio: "4/5", position: "relative", overflow: "hidden", display: "block", textDecoration: "none" }}
-            >
-              <ElitePlate kind={d.kind} tone={d.tone} />
-              <div
-                style={{
-                  position: "absolute",
-                  inset: 0,
-                  padding: "28px 30px",
-                  display: "flex",
-                  flexDirection: "column",
-                  justifyContent: "space-between",
-                  color: textColor,
-                }}
-              >
-                <div>
-                  <div
-                    style={{
-                      fontFamily: "var(--font-inter), sans-serif",
-                      fontSize: 10,
-                      letterSpacing: ".45em",
-                      opacity: 0.85,
-                      textTransform: "uppercase",
-                    }}
-                  >
-                    SHOP
-                  </div>
-                  <div
-                    style={{
-                      fontFamily: "var(--font-bodoni), Georgia, serif",
-                      fontOpticalSizing: "auto",
-                      fontSize: 42,
-                      fontWeight: 700,
-                      marginTop: 8,
-                      letterSpacing: "-.01em",
-                    }}
-                  >
-                    {d.dept}
-                  </div>
-                </div>
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "flex-end",
-                    gap: 12,
-                  }}
-                >
-                  <div
-                    style={{
-                      fontFamily: "var(--font-cormorant), Georgia, serif",
-                      fontStyle: "italic",
-                      fontSize: 18,
-                      maxWidth: 220,
-                      lineHeight: 1.35,
-                    }}
-                  >
-                    {d.line}
-                  </div>
-                  <div
-                    style={{
-                      fontFamily: "var(--font-inter), sans-serif",
-                      fontSize: 10,
-                      letterSpacing: ".34em",
-                      borderBottom: "1px solid currentColor",
-                      paddingBottom: 3,
-                      whiteSpace: "nowrap",
-                      textTransform: "uppercase",
-                    }}
-                  >
-                    SHOP NOW →
-                  </div>
-                </div>
-              </div>
-            </Link>
-          );
-        })}
+      {/* ── Category strip ───────────────────────────────────── */}
+      <div style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(4, 1fr)",
+        borderTop: "1px solid #e8e8e8",
+        borderBottom: "1px solid #e8e8e8",
+        background: "#fff",
+      }} className="!grid-cols-2 md:!grid-cols-4">
+        {CATS.map((cat, i) => (
+          <Link
+            key={cat.label}
+            href={cat.href}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              padding: "20px 28px",
+              textDecoration: "none",
+              borderRight: i < CATS.length - 1 ? "1px solid #e8e8e8" : "none",
+              transition: "background .15s",
+              background: "#fff",
+            }}
+            onMouseEnter={e => (e.currentTarget.style.background = "#fafafa")}
+            onMouseLeave={e => (e.currentTarget.style.background = "#fff")}
+          >
+            <div>
+              <p style={{ fontFamily: FONT, fontSize: 10, fontWeight: 600, color: "#888", textTransform: "uppercase", letterSpacing: "0.12em", margin: "0 0 4px" }}>
+                {cat.sub}
+              </p>
+              <p style={{ fontFamily: FONT, fontSize: 16, fontWeight: 800, color: "#111", margin: 0, letterSpacing: "-0.02em" }}>
+                {cat.label}
+              </p>
+            </div>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M5 12h14M12 5l7 7-7 7"/>
+            </svg>
+          </Link>
+        ))}
       </div>
     </section>
   );
