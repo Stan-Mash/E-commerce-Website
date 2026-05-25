@@ -259,7 +259,19 @@ export default function POSPage() {
   } | null>(null);
 
   const searchRef    = useRef<HTMLInputElement>(null);
+  const nameRef      = useRef<HTMLInputElement>(null);
   const floatRef     = useRef<HTMLInputElement>(null);
+  const closeRef     = useRef<HTMLInputElement>(null);
+
+  // Focus the first field whenever the shift modal opens
+  useEffect(() => {
+    if (!showShiftModal) return;
+    const t = setTimeout(() => {
+      if (shiftAction === "open") nameRef.current?.focus();
+      else closeRef.current?.focus();
+    }, 50);
+    return () => clearTimeout(t);
+  }, [showShiftModal, shiftAction]);
 
   // ── Load locations ──────────────────────────────────────────────────────────
   useEffect(() => {
@@ -588,61 +600,7 @@ export default function POSPage() {
     );
   }
 
-  // ── Shift modal ─────────────────────────────────────────────────────────────
-  const ShiftModal = () => (
-    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.55)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 200 }}>
-      <div style={{ background: "#fff", borderRadius: 12, padding: 40, width: 400, maxWidth: "90vw", boxShadow: "0 20px 60px rgba(0,0,0,0.2)" }}>
-        <h2 style={{ fontFamily: FONT, fontSize: 22, fontWeight: 800, color: "#111", margin: "0 0 24px" }}>
-          {shiftAction === "open" ? "Open Shift" : "Close Shift"}
-        </h2>
-        {shiftAction === "open" ? (
-          <form onSubmit={e => { e.preventDefault(); void openShift(); }}>
-            <label style={labelStyle}>Cashier Name</label>
-            <input
-              autoFocus
-              value={cashierName}
-              onChange={e => setCashierName(e.target.value)}
-              onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); floatRef.current?.focus(); } }}
-              placeholder="Your name"
-              style={inputStyle}
-            />
-            <label style={labelStyle}>Opening Cash Float (KES)</label>
-            <input
-              ref={floatRef}
-              value={openingFloat}
-              onChange={e => setOpeningFloat(e.target.value)}
-              type="number"
-              placeholder="0"
-              style={inputStyle}
-            />
-            <button type="submit" style={{ fontFamily: FONT, fontSize: 12, letterSpacing: "0.2em", textTransform: "uppercase", background: "#7c3aed", color: "#fff", border: "none", borderRadius: 4, padding: "13px 0", cursor: "pointer", width: "100%", marginTop: 4, fontWeight: 700 }}>
-              Open Shift
-            </button>
-          </form>
-        ) : (
-          <form onSubmit={e => { e.preventDefault(); void closeShift(); }}>
-            <label style={labelStyle}>Closing Cash Count (KES)</label>
-            <input
-              autoFocus
-              value={closingFloat}
-              onChange={e => setClosingFloat(e.target.value)}
-              type="number"
-              placeholder="0"
-              style={inputStyle}
-            />
-            <button type="submit" style={{ fontFamily: FONT, fontSize: 12, letterSpacing: "0.2em", textTransform: "uppercase", background: "#c0392b", color: "#fff", border: "none", borderRadius: 4, padding: "13px 0", cursor: "pointer", width: "100%", marginTop: 4, fontWeight: 700 }}>
-              Close Shift
-            </button>
-          </form>
-        )}
-        {shift && (
-          <button onClick={() => setShowShiftModal(false)} style={{ fontFamily: FONT, fontSize: 12, background: "none", color: "#888", border: "none", cursor: "pointer", width: "100%", marginTop: 8, padding: "10px 0" }}>
-            Cancel
-          </button>
-        )}
-      </div>
-    </div>
-  );
+  // (shift modal is inlined directly in the return below)
 
   // ── Held carts drawer ───────────────────────────────────────────────────────
   const HeldDrawer = () => (
@@ -674,7 +632,61 @@ export default function POSPage() {
   // ── Main render ─────────────────────────────────────────────────────────────
   return (
     <div>
-      {showShiftModal && ShiftModal()}
+      {showShiftModal && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.55)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 200 }}>
+          <div style={{ background: "#fff", borderRadius: 12, padding: 40, width: 400, maxWidth: "90vw", boxShadow: "0 20px 60px rgba(0,0,0,0.2)" }}>
+            <h2 style={{ fontFamily: FONT, fontSize: 22, fontWeight: 800, color: "#111", margin: "0 0 24px" }}>
+              {shiftAction === "open" ? "Open Shift" : "Close Shift"}
+            </h2>
+            {shiftAction === "open" ? (
+              <form onSubmit={e => { e.preventDefault(); void openShift(); }}>
+                <label style={labelStyle}>Cashier Name</label>
+                <input
+                  ref={nameRef}
+                  value={cashierName}
+                  onChange={e => setCashierName(e.target.value)}
+                  onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); floatRef.current?.focus(); } }}
+                  placeholder="Your name"
+                  style={inputStyle}
+                />
+                <label style={labelStyle}>Opening Cash Float (KES)</label>
+                <input
+                  ref={floatRef}
+                  value={openingFloat}
+                  onChange={e => setOpeningFloat(e.target.value)}
+                  onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); void openShift(); } }}
+                  type="number"
+                  placeholder="0"
+                  style={inputStyle}
+                />
+                <button type="submit" style={{ fontFamily: FONT, fontSize: 12, letterSpacing: "0.2em", textTransform: "uppercase", background: "#7c3aed", color: "#fff", border: "none", borderRadius: 4, padding: "13px 0", cursor: "pointer", width: "100%", marginTop: 4, fontWeight: 700 }}>
+                  Open Shift
+                </button>
+              </form>
+            ) : (
+              <form onSubmit={e => { e.preventDefault(); void closeShift(); }}>
+                <label style={labelStyle}>Closing Cash Count (KES)</label>
+                <input
+                  ref={closeRef}
+                  value={closingFloat}
+                  onChange={e => setClosingFloat(e.target.value)}
+                  type="number"
+                  placeholder="0"
+                  style={inputStyle}
+                />
+                <button type="submit" style={{ fontFamily: FONT, fontSize: 12, letterSpacing: "0.2em", textTransform: "uppercase", background: "#c0392b", color: "#fff", border: "none", borderRadius: 4, padding: "13px 0", cursor: "pointer", width: "100%", marginTop: 4, fontWeight: 700 }}>
+                  Close Shift
+                </button>
+              </form>
+            )}
+            {shift && (
+              <button onClick={() => setShowShiftModal(false)} style={{ fontFamily: FONT, fontSize: 12, background: "none", color: "#888", border: "none", cursor: "pointer", width: "100%", marginTop: 8, padding: "10px 0" }}>
+                Cancel
+              </button>
+            )}
+          </div>
+        </div>
+      )}
       {showHeld && <HeldDrawer />}
 
       {/* Header */}
