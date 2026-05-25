@@ -131,7 +131,8 @@ export async function POST(request: NextRequest) {
   for (const sql of statements) {
     let error: { message: string; code?: string } | null = null;
     try {
-      const res = await (sb.rpc("exec_sql" as never, { query: sql }).single() as Promise<{ data: unknown; error: typeof error }>);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const res = await (sb.rpc("exec_sql" as never, { query: sql }).single() as any) as { data: unknown; error: { message: string; code?: string } | null };
       error = res.error;
     } catch {
       // RPC doesn't exist or threw — treat as no-op (migration already applied)
