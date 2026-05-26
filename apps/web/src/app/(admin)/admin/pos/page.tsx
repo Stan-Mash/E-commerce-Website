@@ -224,12 +224,13 @@ interface ShiftModalProps {
   shiftAction:  "open" | "close";
   cashierName:  string;                                   // pre-fills cashier input
   shift:        Shift | null;                             // shows Cancel button when set
+  errorMsg:     string | null;                            // shown inside modal
   onOpen:       (name: string, float: number) => void;
   onClose:      (float: number) => void;
   onCancel:     () => void;
 }
 
-const ShiftModalComponent = memo(function ShiftModalComponent({ shiftAction, cashierName, shift, onOpen, onClose, onCancel }: ShiftModalProps) {
+const ShiftModalComponent = memo(function ShiftModalComponent({ shiftAction, cashierName, shift, errorMsg, onOpen, onClose, onCancel }: ShiftModalProps) {
   // Controlled local state — typing updates local state only, completely isolated
   // from POSPage re-renders. This is the correct pattern for modal inputs.
   const [nameVal,    setNameVal]    = useState(cashierName);
@@ -264,6 +265,11 @@ const ShiftModalComponent = memo(function ShiftModalComponent({ shiftAction, cas
         <h2 style={{ fontFamily: FONT, fontSize: 22, fontWeight: 800, color: "#111", margin: "0 0 24px" }}>
           {shiftAction === "open" ? "Open Shift" : "Close Shift"}
         </h2>
+        {errorMsg && (
+          <div style={{ background: "#fde8e8", border: "1px solid #f5c6cb", borderRadius: 4, padding: "10px 12px", marginBottom: 16, fontFamily: FONT, fontSize: 13, color: "#c0392b" }}>
+            {errorMsg}
+          </div>
+        )}
         {shiftAction === "open" ? (
           <div>
             <label style={labelStyle}>Cashier Name</label>
@@ -385,7 +391,7 @@ export default function POSPage() {
   // ── Load active shift ───────────────────────────────────────────────────────
   const loadShift = useCallback(async (locId: string) => {
     if (!locId) return;
-    const r = await fetch(`/api/admin/pos/shifts?location_id=${locId}`);
+    const r = await fetch(`/api/admin/pos/shifts?location_id=${locId}`, { credentials: "include" });
     const j = await r.json() as { shift: Shift | null };
     setShift(j.shift ?? null);
     if (!j.shift) setShowShiftModal(true);
@@ -547,7 +553,7 @@ export default function POSPage() {
       }),
     });
     const j = await r.json() as { shift?: Shift; error?: string };
-    if (r.ok) { setShift(j.shift ?? null); setShowShiftModal(false); setCashierName(j.shift?.cashier_name ?? cashierNameVal); }
+    if (r.ok) { setShift(j.shift ?? null); setShowShiftModal(false); setCashierName(j.shift?.cashier_name ?? cashierNameVal); setErrorMsg(null); }
     else setErrorMsg(j.error ?? "Failed to open shift");
   }
 
@@ -741,6 +747,7 @@ export default function POSPage() {
           shiftAction={shiftAction}
           cashierName={cashierName}
           shift={shift}
+          errorMsg={errorMsg}
           onOpen={handleOpenShift}
           onClose={handleCloseShift}
           onCancel={handleCancelShift}
