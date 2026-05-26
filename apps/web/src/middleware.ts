@@ -13,10 +13,14 @@ export function middleware(req: NextRequest) {
     }
   }
 
-  // Staff: all other /admin routes require admin_session
+  // Staff: all other /admin routes require admin_session OR admin_token
+  // admin_session is the HttpOnly cookie set by the server.
+  // admin_token is a non-HttpOnly fallback set via document.cookie on login.
   if (pathname.startsWith("/admin") && !pathname.startsWith("/admin/login") && !pathname.startsWith("/admin/finance")) {
     const session = req.cookies.get("admin_session");
-    if (!session || session.value !== "elite-admin-2024") {
+    const token   = req.cookies.get("admin_token");
+    const valid = session?.value === "elite-admin-2024" || token?.value === "elite-admin-2024";
+    if (!valid) {
       const loginUrl = new URL("/admin/login", req.url);
       loginUrl.searchParams.set("from", pathname);
       return NextResponse.redirect(loginUrl);

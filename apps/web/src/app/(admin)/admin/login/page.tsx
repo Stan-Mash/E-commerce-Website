@@ -20,13 +20,19 @@ export default function AdminLoginPage() {
       });
 
       if (res.ok) {
-        // Set the cookie client-side as primary mechanism.
         const maxAge = 60 * 60 * 8; // 8 hours
+
+        // admin_session — primary HttpOnly cookie set by the server (Set-Cookie header).
+        // We also try to set it client-side in case the server header was stripped.
         document.cookie =
           `admin_session=elite-admin-2024; path=/; max-age=${maxAge}; SameSite=Lax; Secure`;
 
-        // Also persist to localStorage as a fallback for browsers where
-        // the Set-Cookie / document.cookie approach is unreliable.
+        // admin_token — non-HttpOnly fallback cookie readable by the middleware.
+        // Uses a different name so it is never blocked by the HttpOnly admin_session.
+        document.cookie =
+          `admin_token=elite-admin-2024; path=/; max-age=${maxAge}; SameSite=Lax; Secure`;
+
+        // Also persist to localStorage so API fetch calls can send it as a header.
         try { localStorage.setItem("esc_admin_token", "elite-admin-2024"); } catch {}
 
         const params = new URLSearchParams(window.location.search);
