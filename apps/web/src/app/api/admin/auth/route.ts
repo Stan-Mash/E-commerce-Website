@@ -12,6 +12,7 @@ export async function POST(req: NextRequest) {
   const res = NextResponse.json({ ok: true });
   res.cookies.set("admin_session", "elite-admin-2024", {
     httpOnly: true,
+    secure: true,
     path: "/",
     maxAge: 60 * 60 * 8, // 8 hours
     sameSite: "lax",
