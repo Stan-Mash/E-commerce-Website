@@ -1,7 +1,5 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { cookies, headers } from "next/headers";
-import { redirect } from "next/navigation";
 
 export const metadata: Metadata = {
   title: {
@@ -24,24 +22,14 @@ const OWNER_NAV = [
   { label: "Finance", href: "/admin/finance" },
 ] as const;
 
-export default async function AdminLayout({
+export default function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  // Server-side auth guard — runs in Node.js runtime (more reliable than Edge middleware).
-  // Skip for the login page itself to avoid an infinite redirect loop.
-  const pathname = headers().get("x-pathname") ?? "";
-  if (!pathname.startsWith("/admin/login")) {
-    const jar = cookies();
-    const session = jar.get("admin_session");
-    const token   = jar.get("admin_token");
-    const valid   = session?.value === "elite-admin-2024" || token?.value === "elite-admin-2024";
-    if (!valid) {
-      redirect(`/admin/login?from=${encodeURIComponent(pathname || "/admin")}`);
-    }
-  }
-
+  // Auth is enforced exclusively by middleware.ts (Edge Middleware).
+  // A duplicate cookies() check here breaks RSC client-side navigation in
+  // Next.js 14 because cookies() returns empty during partial renders.
   return (
     <div
       style={{
