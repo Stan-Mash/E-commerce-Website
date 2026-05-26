@@ -20,6 +20,20 @@
 import React, { useState, useEffect, useCallback, useRef, memo } from "react";
 import { createClient } from "@supabase/supabase-js";
 
+// ── Auth helper ───────────────────────────────────────────────────────────────
+// Wraps fetch to always include the X-Admin-Token header from localStorage.
+// This is a fallback for browsers where the session cookie is not reliably
+// sent with API requests (observed with SameSite=Lax on some Vercel deployments).
+function adminFetch(url: string, init: RequestInit = {}): Promise<Response> {
+  let token = "";
+  try { token = localStorage.getItem("esc_admin_token") ?? ""; } catch {}
+  return fetch(url, {
+    ...init,
+    credentials: "include",
+    headers: { ...(init.headers as Record<string, string> | undefined), "x-admin-token": token },
+  });
+}
+
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 interface SKU {
@@ -378,7 +392,7 @@ export default function POSPage() {
 
   // ── Load locations ──────────────────────────────────────────────────────────
   useEffect(() => {
-    fetch("/api/admin/locations")
+    adminFetch("/api/admin/locations")
       .then(r => r.json())
       .then((j: { locations: Location[] }) => {
         setLocations(j.locations ?? []);
@@ -391,7 +405,7 @@ export default function POSPage() {
   // ── Load active shift ───────────────────────────────────────────────────────
   const loadShift = useCallback(async (locId: string) => {
     if (!locId) return;
-    const r = await fetch(`/api/admin/pos/shifts?location_id=${locId}`, { credentials: "include" });
+    const r = await adminFetch(`/api/admin/pos/shifts?location_id=${locId}`);
     const j = await r.json() as { shift: Shift | null };
     setShift(j.shift ?? null);
     if (!j.shift) setShowShiftModal(true);
@@ -405,7 +419,7 @@ export default function POSPage() {
   const loadProducts = useCallback(async () => {
     setLoading(true);
     try {
-      const r = await fetch("/api/admin/products");
+      const r = await adminFetch("/api/admin/products");
       if (r.ok) {
         const j = await r.json() as { products: Product[] };
         setProducts((j.products ?? []).filter(p => p.skus.some(s => s.stock_quantity > 0)));
@@ -544,8 +558,8 @@ export default function POSPage() {
 
   // ── Shift management ────────────────────────────────────────────────────────
   async function openShift(cashierNameVal: string, openingFloatVal: number) {
-    const r = await fetch("/api/admin/pos/shifts", {
-      method: "POST", credentials: "include", headers: { "Content-Type": "application/json" },
+    const r = await adminFetch("/api/admin/pos/shifts", {
+      method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         action: "open", location_id: locationId,
         cashier_name: cashierNameVal || "Staff",
@@ -560,8 +574,8 @@ export default function POSPage() {
   async function closeShift(closingFloatVal: number) {
     if (!shift) return;
     const float = closingFloatVal;
-    const r = await fetch("/api/admin/pos/shifts", {
-      method: "POST", credentials: "include", headers: { "Content-Type": "application/json" },
+    const r = await adminFetch("/api/admin/pos/shifts", {
+      method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ action: "close", shift_id: shift.id, closing_float: float }),
     });
     const j = await r.json() as { shift?: { variance: number; expected_float: number }; error?: string };
@@ -579,7 +593,7 @@ export default function POSPage() {
     }
     setCompleting(true); setErrorMsg(null);
     try {
-      const r = await fetch("/api/admin/pos", {
+      const r = await adminFetch("/api/admin/pos", {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           phone,

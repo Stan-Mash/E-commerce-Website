@@ -20,13 +20,14 @@ export default function AdminLoginPage() {
       });
 
       if (res.ok) {
-        // Set the cookie client-side — this is the most reliable approach.
-        // The server validated the password; we set the cookie directly in the
-        // browser's cookie jar, bypassing any Service-Worker / CDN / Set-Cookie
-        // header issues that have plagued the server-side approach.
+        // Set the cookie client-side as primary mechanism.
         const maxAge = 60 * 60 * 8; // 8 hours
         document.cookie =
           `admin_session=elite-admin-2024; path=/; max-age=${maxAge}; SameSite=Lax; Secure`;
+
+        // Also persist to localStorage as a fallback for browsers where
+        // the Set-Cookie / document.cookie approach is unreliable.
+        try { localStorage.setItem("esc_admin_token", "elite-admin-2024"); } catch {}
 
         const params = new URLSearchParams(window.location.search);
         window.location.href = params.get("from") ?? "/admin";
