@@ -6,6 +6,17 @@ const withPWA = require("next-pwa")({
   skipWaiting: true,
   runtimeCaching: [
     {
+      // Admin routes must NEVER be served from SW cache — always go to network
+      // so authentication (cookies, middleware redirects) works correctly.
+      urlPattern: /\/admin(\/|$)/,
+      handler: "NetworkOnly",
+    },
+    {
+      // Admin API routes — also never cache
+      urlPattern: /\/api\/admin\//,
+      handler: "NetworkOnly",
+    },
+    {
       // App shell — cache first
       urlPattern: /^https:\/\/fonts\.(?:googleapis|gstatic)\.com\/.*/i,
       handler: "CacheFirst",
