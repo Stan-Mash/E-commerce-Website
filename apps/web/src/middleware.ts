@@ -3,6 +3,10 @@ import { NextRequest, NextResponse } from "next/server";
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
+  // Forward the pathname as a header so Server Component layouts can read it.
+  const requestHeaders = new Headers(req.headers);
+  requestHeaders.set("x-pathname", pathname);
+
   // Owner-only: finance module requires owner_session cookie
   if (pathname.startsWith("/admin/finance") && !pathname.startsWith("/admin/finance/login")) {
     const ownerSession = req.cookies.get("owner_session");
@@ -27,7 +31,7 @@ export function middleware(req: NextRequest) {
     }
   }
 
-  return NextResponse.next();
+  return NextResponse.next({ request: { headers: requestHeaders } });
 }
 
 export const config = {
