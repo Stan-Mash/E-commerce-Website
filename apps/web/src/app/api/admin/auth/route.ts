@@ -2,10 +2,19 @@ import { NextRequest, NextResponse } from "next/server";
 
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD ?? "elite2024";
 
-const COOKIE_HEADER = [
+const SESSION_COOKIE = [
   "admin_session=elite-admin-2024",
   "Path=/",
   "HttpOnly",
+  "Secure",
+  "SameSite=Lax",
+  "Max-Age=28800",
+].join("; ");
+
+// Non-HttpOnly fallback — readable by Edge Middleware
+const TOKEN_COOKIE = [
+  "admin_token=elite-admin-2024",
+  "Path=/",
   "Secure",
   "SameSite=Lax",
   "Max-Age=28800",
@@ -36,7 +45,8 @@ export async function POST(req: NextRequest) {
 
     const dest = new URL(from.startsWith("/") ? from : "/admin", req.url);
     const response = NextResponse.redirect(dest, { status: 303 });
-    response.headers.set("Set-Cookie", COOKIE_HEADER);
+    response.headers.append("Set-Cookie", SESSION_COOKIE);
+    response.headers.append("Set-Cookie", TOKEN_COOKIE);
     return response;
   }
 
@@ -48,6 +58,7 @@ export async function POST(req: NextRequest) {
   }
 
   const response = NextResponse.json({ ok: true });
-  response.headers.set("Set-Cookie", COOKIE_HEADER);
+  response.headers.append("Set-Cookie", SESSION_COOKIE);
+  response.headers.append("Set-Cookie", TOKEN_COOKIE);
   return response;
 }
