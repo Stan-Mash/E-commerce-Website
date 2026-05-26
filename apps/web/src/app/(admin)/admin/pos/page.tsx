@@ -539,7 +539,7 @@ export default function POSPage() {
   // ── Shift management ────────────────────────────────────────────────────────
   async function openShift(cashierNameVal: string, openingFloatVal: number) {
     const r = await fetch("/api/admin/pos/shifts", {
-      method: "POST", headers: { "Content-Type": "application/json" },
+      method: "POST", credentials: "include", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         action: "open", location_id: locationId,
         cashier_name: cashierNameVal || "Staff",
@@ -555,7 +555,7 @@ export default function POSPage() {
     if (!shift) return;
     const float = closingFloatVal;
     const r = await fetch("/api/admin/pos/shifts", {
-      method: "POST", headers: { "Content-Type": "application/json" },
+      method: "POST", credentials: "include", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ action: "close", shift_id: shift.id, closing_float: float }),
     });
     const j = await r.json() as { shift?: { variance: number; expected_float: number }; error?: string };
