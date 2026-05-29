@@ -10,9 +10,10 @@ function getAdminClient() {
 }
 
 function checkAuth(request: NextRequest): boolean {
-  const cookieOk = request.cookies.get("admin_session")?.value === "elite-admin-2024";
-  const headerOk = request.headers.get("x-admin-token") === "elite-admin-2024";
-  return cookieOk || headerOk;
+  const session = request.cookies.get("admin_session")?.value === "elite-admin-2024";
+  const token   = request.cookies.get("admin_token")?.value   === "elite-admin-2024";
+  const header  = request.headers.get("x-admin-token")        === "elite-admin-2024";
+  return session || token || header;
 }
 
 export async function GET(request: NextRequest) {

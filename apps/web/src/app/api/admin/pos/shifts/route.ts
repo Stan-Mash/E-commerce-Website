@@ -2,9 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { createAdminSupabaseClient } from "@/lib/supabase/server";
 
 function checkAuth(req: NextRequest): boolean {
-  const cookieOk = req.cookies.get("admin_session")?.value === "elite-admin-2024";
-  const headerOk = req.headers.get("x-admin-token") === "elite-admin-2024";
-  return cookieOk || headerOk;
+  const session = req.cookies.get("admin_session")?.value === "elite-admin-2024";
+  const token   = req.cookies.get("admin_token")?.value   === "elite-admin-2024";
+  const header  = req.headers.get("x-admin-token")        === "elite-admin-2024";
+  return session || token || header;
 }
 
 // GET /api/admin/pos/shifts?location_id=xxx
