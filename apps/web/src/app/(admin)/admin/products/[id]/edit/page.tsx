@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
@@ -60,11 +60,11 @@ interface Props {
 
 export default function EditProductPage({ params }: Props) {
   const router = useRouter();
-  const [loading, setLoading] = useState(true);
-  const [notFound, setNotFound] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [apiError, setApiError] = useState<string | null>(null);
-  const [saved, setSaved] = useState(false);
+  const [loading, setLoading]     = useState(true);
+  const [notFound, setNotFound]   = useState(false);
+  const [saving, setSaving]       = useState(false);
+  const [apiError, setApiError]   = useState<string | null>(null);
+  const [saved, setSaved]         = useState(false);
 
   const [form, setForm] = useState<FormState>({
     name: "",
@@ -80,16 +80,21 @@ export default function EditProductPage({ params }: Props) {
   });
   const [skus, setSkus] = useState<SkuForm[]>([]);
 
+  // Image state
+  const [imageUrl, setImageUrl]               = useState<string>("");
+  const [imagePreview, setImagePreview]       = useState<string>("");
+  const [imageUploading, setImageUploading]   = useState(false);
+  const [imageError, setImageError]           = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   useEffect(() => {
     async function load() {
       setLoading(true);
       try {
         const res = await fetch(`/api/admin/products/${params.id}`);
         if (res.status === 401) { window.location.href = "/admin/login"; return; }
-        if (!res.ok) {
-          setNotFound(true);
-          return;
-        }
+        if (!res.ok) { setNotFound(true); return; }
+
         const json = await res.json() as {
           product: {
             id: string;
@@ -103,6 +108,7 @@ export default function EditProductPage({ params }: Props) {
             care_instructions: string | null;
             is_featured: boolean;
             status: string;
+            image_url: string | null;
             skus: Array<{
               id: string;
               sku_code: string;
@@ -115,24 +121,29 @@ export default function EditProductPage({ params }: Props) {
         };
         const p = json.product;
         setForm({
-          name: p.name,
-          slug: p.slug,
-          category: p.category,
-          description: p.description ?? "",
-          base_price: String(p.base_price),
-          compare_price: p.compare_price != null ? String(p.compare_price) : "",
-          material: p.material ?? "",
+          name:              p.name,
+          slug:              p.slug,
+          category:          p.category,
+          description:       p.description ?? "",
+          base_price:        String(p.base_price),
+          compare_price:     p.compare_price != null ? String(p.compare_price) : "",
+          material:          p.material ?? "",
           care_instructions: p.care_instructions ?? "",
-          status: p.status,
-          is_featured: p.is_featured,
+          status:            p.status,
+          is_featured:       p.is_featured,
         });
+        // Load existing image
+        if (p.image_url) {
+          setImageUrl(p.image_url);
+          setImagePreview(p.image_url);
+        }
         setSkus(
           (p.skus ?? []).map((s) => ({
-            id: s.id,
-            sku_code: s.sku_code,
-            size: s.size,
-            color: s.color ?? "",
-            color_hex: s.color_hex ?? "#000000",
+            id:             s.id,
+            sku_code:       s.sku_code,
+            size:           s.size,
+            color:          s.color ?? "",
+            color_hex:      s.color_hex ?? "#000000",
             stock_quantity: String(s.stock_quantity),
           }))
         );
@@ -149,6 +160,53 @@ export default function EditProductPage({ params }: Props) {
     setForm((f) => ({ ...f, [key]: value }));
     setSaved(false);
   }, []);
+
+  // ── Image upload ─────────────────────────────────────────────────────────────
+  async function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const localPreview = URL.createObjectURL(file);
+    setImagePreview(localPreview);
+    setImageError(null);
+    setImageUploading(true);
+
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+
+      const res = await fetch("/api/admin/products/upload-image", {
+        method: "POST",
+        credentials: "include",
+        headers: { "x-admin-token": localStorage.getItem("esc_admin_token") ?? "" },
+        body: fd,
+      });
+
+      const json = await res.json() as { url?: string; error?: string };
+
+      if (!res.ok || !json.url) {
+        setImageError(json.error ?? "Upload failed.");
+        // Restore old preview if there was one
+        setImagePreview(imageUrl);
+      } else {
+        setImageUrl(json.url);
+        setImagePreview(json.url);
+      }
+    } catch {
+      setImageError("Network error during upload.");
+      setImagePreview(imageUrl);
+    } finally {
+      setImageUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  }
+
+  function removeImage() {
+    setImageUrl("");
+    setImagePreview("");
+    setImageError(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  }
 
   function addSku() {
     setSkus((prev) => [
@@ -174,23 +232,24 @@ export default function EditProductPage({ params }: Props) {
 
     try {
       const payload = {
-        name: form.name,
-        slug: form.slug,
-        description: form.description || null,
-        category: form.category,
-        base_price: Number(form.base_price),
-        compare_price: form.compare_price ? Number(form.compare_price) : null,
-        material: form.material || null,
+        name:              form.name,
+        slug:              form.slug,
+        description:       form.description || null,
+        category:          form.category,
+        base_price:        Number(form.base_price),
+        compare_price:     form.compare_price ? Number(form.compare_price) : null,
+        material:          form.material || null,
         care_instructions: form.care_instructions || null,
-        is_featured: form.is_featured,
-        status: form.status,
+        is_featured:       form.is_featured,
+        status:            form.status,
+        image_url:         imageUrl || null,
         skus: skus
           .filter((s) => s.sku_code.trim() && s.size.trim())
           .map((s) => ({
-            sku_code: s.sku_code,
-            size: s.size,
-            color: s.color || null,
-            color_hex: s.color_hex || null,
+            sku_code:       s.sku_code,
+            size:           s.size,
+            color:          s.color || null,
+            color_hex:      s.color_hex || null,
             stock_quantity: Number(s.stock_quantity),
           })),
       };
@@ -202,11 +261,7 @@ export default function EditProductPage({ params }: Props) {
       });
 
       const json = await res.json() as { error?: string };
-
-      if (!res.ok) {
-        setApiError(json.error ?? "Failed to save.");
-        return;
-      }
+      if (!res.ok) { setApiError(json.error ?? "Failed to save."); return; }
 
       setSaved(true);
       setTimeout(() => router.push("/admin/products"), 800);
@@ -228,13 +283,8 @@ export default function EditProductPage({ params }: Props) {
   if (notFound) {
     return (
       <div style={{ textAlign: "center", padding: "80px 0" }}>
-        <p style={{ fontFamily: "var(--font-inter)", color: "var(--es-mute)" }}>
-          Product not found.
-        </p>
-        <Link
-          href="/admin/products"
-          style={{ color: "var(--es-plum)", fontFamily: "var(--font-inter)", fontSize: 13 }}
-        >
+        <p style={{ fontFamily: "var(--font-inter)", color: "var(--es-mute)" }}>Product not found.</p>
+        <Link href="/admin/products" style={{ color: "var(--es-plum)", fontFamily: "var(--font-inter)", fontSize: 13 }}>
           ← Back to products
         </Link>
       </div>
@@ -290,6 +340,154 @@ export default function EditProductPage({ params }: Props) {
 
       <form onSubmit={(e) => void handleSave(e)}>
         <div style={{ display: "flex", flexDirection: "column", gap: 28 }}>
+
+          {/* ── Product Image ── */}
+          <div>
+            <label style={LABEL_STYLE}>Product Image</label>
+            <div style={{ display: "flex", gap: 20, alignItems: "flex-start", flexWrap: "wrap" }}>
+              {/* Preview box */}
+              <div
+                style={{
+                  width: 160,
+                  height: 160,
+                  border: "2px dashed var(--es-bone)",
+                  borderRadius: 8,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  overflow: "hidden",
+                  flexShrink: 0,
+                  background: "var(--es-white)",
+                  position: "relative",
+                }}
+              >
+                {imagePreview ? (
+                  <>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={imagePreview}
+                      alt="Product preview"
+                      style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                    />
+                    {imageUploading && (
+                      <div
+                        style={{
+                          position: "absolute",
+                          inset: 0,
+                          background: "rgba(255,255,255,0.75)",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          fontFamily: "var(--font-inter)",
+                          fontSize: 12,
+                          color: "var(--es-mute)",
+                        }}
+                      >
+                        Uploading…
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div style={{ textAlign: "center", padding: 16 }}>
+                    <svg
+                      width="32"
+                      height="32"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="var(--es-bone)"
+                      strokeWidth="1.5"
+                      style={{ display: "block", margin: "0 auto 8px" }}
+                    >
+                      <rect x="3" y="3" width="18" height="18" rx="2" />
+                      <circle cx="8.5" cy="8.5" r="1.5" />
+                      <polyline points="21 15 16 10 5 21" />
+                    </svg>
+                    <span style={{ fontFamily: "var(--font-inter)", fontSize: 10, color: "var(--es-mute)", letterSpacing: "0.1em" }}>
+                      No image
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {/* Controls */}
+              <div style={{ flex: 1, minWidth: 200 }}>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/gif,image/avif"
+                  onChange={(e) => void handleImageChange(e)}
+                  style={{ display: "none" }}
+                  id="image-upload-input-edit"
+                />
+                <label
+                  htmlFor="image-upload-input-edit"
+                  style={{
+                    display: "inline-block",
+                    fontFamily: "var(--font-inter)",
+                    fontSize: 11,
+                    letterSpacing: "0.25em",
+                    textTransform: "uppercase",
+                    color: imageUploading ? "var(--es-mute)" : "var(--es-plum)",
+                    border: "1px solid currentColor",
+                    padding: "8px 18px",
+                    borderRadius: 3,
+                    cursor: imageUploading ? "not-allowed" : "pointer",
+                    marginBottom: 10,
+                  }}
+                >
+                  {imageUploading ? "Uploading…" : imagePreview ? "Change Image" : "Choose Image"}
+                </label>
+
+                {imagePreview && !imageUploading && (
+                  <button
+                    type="button"
+                    onClick={removeImage}
+                    style={{
+                      display: "block",
+                      fontFamily: "var(--font-inter)",
+                      fontSize: 11,
+                      letterSpacing: "0.2em",
+                      textTransform: "uppercase",
+                      color: "#c0392b",
+                      background: "none",
+                      border: "none",
+                      cursor: "pointer",
+                      padding: 0,
+                      marginBottom: 8,
+                    }}
+                  >
+                    Remove
+                  </button>
+                )}
+
+                <p
+                  style={{
+                    fontFamily: "var(--font-inter)",
+                    fontSize: 11,
+                    color: "var(--es-mute)",
+                    margin: 0,
+                    lineHeight: 1.6,
+                  }}
+                >
+                  JPEG, PNG, WebP or GIF · Max 10 MB<br />
+                  Recommended: square, at least 800×800 px
+                </p>
+
+                {imageError && (
+                  <p style={{ fontFamily: "var(--font-inter)", fontSize: 12, color: "#c0392b", marginTop: 8 }}>
+                    {imageError}
+                  </p>
+                )}
+
+                {imageUrl && !imageError && !imageUploading && imageUrl !== "" && (
+                  <p style={{ fontFamily: "var(--font-inter)", fontSize: 11, color: "#2e7d32", marginTop: 8 }}>
+                    ✓ Image saved
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+
           {/* Name + Slug */}
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
             <div>
@@ -297,21 +495,13 @@ export default function EditProductPage({ params }: Props) {
               <input
                 style={INPUT_STYLE}
                 value={form.name}
-                onChange={(e) => {
-                  set("name", e.target.value);
-                  set("slug", autoSlug(e.target.value));
-                }}
+                onChange={(e) => { set("name", e.target.value); set("slug", autoSlug(e.target.value)); }}
                 required
               />
             </div>
             <div>
               <label style={LABEL_STYLE}>Slug</label>
-              <input
-                style={INPUT_STYLE}
-                value={form.slug}
-                onChange={(e) => set("slug", e.target.value)}
-                required
-              />
+              <input style={INPUT_STYLE} value={form.slug} onChange={(e) => set("slug", e.target.value)} required />
             </div>
           </div>
 
@@ -319,11 +509,7 @@ export default function EditProductPage({ params }: Props) {
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
             <div>
               <label style={LABEL_STYLE}>Category</label>
-              <select
-                style={INPUT_STYLE}
-                value={form.category}
-                onChange={(e) => set("category", e.target.value)}
-              >
+              <select style={INPUT_STYLE} value={form.category} onChange={(e) => set("category", e.target.value)}>
                 <option value="Woman">Woman</option>
                 <option value="Man">Man</option>
                 <option value="Children">Children</option>
@@ -332,11 +518,7 @@ export default function EditProductPage({ params }: Props) {
             </div>
             <div>
               <label style={LABEL_STYLE}>Status</label>
-              <select
-                style={INPUT_STYLE}
-                value={form.status}
-                onChange={(e) => set("status", e.target.value)}
-              >
+              <select style={INPUT_STYLE} value={form.status} onChange={(e) => set("status", e.target.value)}>
                 <option value="active">Active</option>
                 <option value="draft">Draft</option>
                 <option value="archived">Archived</option>
@@ -358,25 +540,11 @@ export default function EditProductPage({ params }: Props) {
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
             <div>
               <label style={LABEL_STYLE}>Price (KES)</label>
-              <input
-                type="number"
-                style={INPUT_STYLE}
-                value={form.base_price}
-                onChange={(e) => set("base_price", e.target.value)}
-                min={0}
-                required
-              />
+              <input type="number" style={INPUT_STYLE} value={form.base_price} onChange={(e) => set("base_price", e.target.value)} min={0} required />
             </div>
             <div>
               <label style={LABEL_STYLE}>Compare Price (KES)</label>
-              <input
-                type="number"
-                style={INPUT_STYLE}
-                value={form.compare_price}
-                onChange={(e) => set("compare_price", e.target.value)}
-                min={0}
-                placeholder="Optional"
-              />
+              <input type="number" style={INPUT_STYLE} value={form.compare_price} onChange={(e) => set("compare_price", e.target.value)} min={0} placeholder="Optional" />
             </div>
           </div>
 
@@ -384,59 +552,30 @@ export default function EditProductPage({ params }: Props) {
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
             <div>
               <label style={LABEL_STYLE}>Material</label>
-              <input
-                style={INPUT_STYLE}
-                value={form.material}
-                onChange={(e) => set("material", e.target.value)}
-                placeholder="e.g. 100% Belgian Linen"
-              />
+              <input style={INPUT_STYLE} value={form.material} onChange={(e) => set("material", e.target.value)} placeholder="e.g. 100% Belgian Linen" />
             </div>
             <div>
               <label style={LABEL_STYLE}>Care Instructions</label>
-              <input
-                style={INPUT_STYLE}
-                value={form.care_instructions}
-                onChange={(e) => set("care_instructions", e.target.value)}
-                placeholder="e.g. Hand wash cold"
-              />
+              <input style={INPUT_STYLE} value={form.care_instructions} onChange={(e) => set("care_instructions", e.target.value)} placeholder="e.g. Hand wash cold" />
             </div>
           </div>
 
           {/* Featured toggle */}
           <div>
-            <label
-              style={{
-                ...LABEL_STYLE,
-                display: "flex",
-                alignItems: "center",
-                gap: 12,
-                cursor: "pointer",
-              }}
-            >
+            <label style={{ ...LABEL_STYLE, display: "flex", alignItems: "center", gap: 12, cursor: "pointer" }}>
               <div
                 onClick={() => set("is_featured", !form.is_featured)}
                 style={{
-                  width: 44,
-                  height: 24,
-                  borderRadius: 12,
+                  width: 44, height: 24, borderRadius: 12,
                   background: form.is_featured ? "var(--es-plum)" : "var(--es-bone)",
-                  position: "relative",
-                  cursor: "pointer",
-                  transition: "background 0.2s",
-                  flexShrink: 0,
+                  position: "relative", cursor: "pointer", transition: "background 0.2s", flexShrink: 0,
                 }}
               >
                 <div
                   style={{
-                    width: 18,
-                    height: 18,
-                    borderRadius: "50%",
-                    background: "#fff",
-                    position: "absolute",
-                    top: 3,
-                    left: form.is_featured ? 23 : 3,
-                    transition: "left 0.2s",
-                    boxShadow: "0 1px 3px rgba(0,0,0,0.2)",
+                    width: 18, height: 18, borderRadius: "50%", background: "#fff",
+                    position: "absolute", top: 3, left: form.is_featured ? 23 : 3,
+                    transition: "left 0.2s", boxShadow: "0 1px 3px rgba(0,0,0,0.2)",
                   }}
                 />
               </div>
@@ -446,40 +585,17 @@ export default function EditProductPage({ params }: Props) {
 
           {/* SKUs */}
           <div style={{ borderTop: "1px solid var(--es-bone)", paddingTop: 28 }}>
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                marginBottom: 20,
-              }}
-            >
-              <p
-                style={{
-                  fontFamily: "var(--font-inter)",
-                  fontSize: 11,
-                  letterSpacing: "0.35em",
-                  textTransform: "uppercase",
-                  color: "var(--es-mute)",
-                  margin: 0,
-                }}
-              >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+              <p style={{ fontFamily: "var(--font-inter)", fontSize: 11, letterSpacing: "0.35em", textTransform: "uppercase", color: "var(--es-mute)", margin: 0 }}>
                 SKUs (Size / Colour / Stock)
               </p>
               <button
                 type="button"
                 onClick={addSku}
                 style={{
-                  fontFamily: "var(--font-inter)",
-                  fontSize: 11,
-                  letterSpacing: "0.2em",
-                  textTransform: "uppercase",
-                  color: "var(--es-plum)",
-                  background: "none",
-                  border: "1px solid var(--es-plum)",
-                  padding: "6px 16px",
-                  cursor: "pointer",
-                  borderRadius: 2,
+                  fontFamily: "var(--font-inter)", fontSize: 11, letterSpacing: "0.2em",
+                  textTransform: "uppercase", color: "var(--es-plum)", background: "none",
+                  border: "1px solid var(--es-plum)", padding: "6px 16px", cursor: "pointer", borderRadius: 2,
                 }}
               >
                 + Add SKU
@@ -489,99 +605,33 @@ export default function EditProductPage({ params }: Props) {
             {skus.map((sku, index) => (
               <div
                 key={index}
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "1fr 1fr 1fr 80px 80px 40px",
-                  gap: 12,
-                  marginBottom: 12,
-                  alignItems: "start",
-                }}
+                style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 80px 80px 40px", gap: 12, marginBottom: 12, alignItems: "start" }}
               >
                 <div>
-                  {index === 0 && (
-                    <label style={{ ...LABEL_STYLE, marginBottom: 4 }}>SKU Code</label>
-                  )}
-                  <input
-                    type="text"
-                    value={sku.sku_code}
-                    onChange={(e) => updateSku(index, "sku_code", e.target.value)}
-                    style={{ ...INPUT_STYLE, padding: "8px 12px", fontSize: 13 }}
-                    placeholder="DRESS-BLK-S"
-                  />
+                  {index === 0 && <label style={{ ...LABEL_STYLE, marginBottom: 4 }}>SKU Code</label>}
+                  <input type="text" value={sku.sku_code} onChange={(e) => updateSku(index, "sku_code", e.target.value)} style={{ ...INPUT_STYLE, padding: "8px 12px", fontSize: 13 }} placeholder="DRESS-BLK-S" />
                 </div>
                 <div>
-                  {index === 0 && (
-                    <label style={{ ...LABEL_STYLE, marginBottom: 4 }}>Size</label>
-                  )}
-                  <input
-                    type="text"
-                    value={sku.size}
-                    onChange={(e) => updateSku(index, "size", e.target.value)}
-                    style={{ ...INPUT_STYLE, padding: "8px 12px", fontSize: 13 }}
-                    placeholder="S / M / L"
-                  />
+                  {index === 0 && <label style={{ ...LABEL_STYLE, marginBottom: 4 }}>Size</label>}
+                  <input type="text" value={sku.size} onChange={(e) => updateSku(index, "size", e.target.value)} style={{ ...INPUT_STYLE, padding: "8px 12px", fontSize: 13 }} placeholder="S / M / L" />
                 </div>
                 <div>
-                  {index === 0 && (
-                    <label style={{ ...LABEL_STYLE, marginBottom: 4 }}>Colour</label>
-                  )}
-                  <input
-                    type="text"
-                    value={sku.color}
-                    onChange={(e) => updateSku(index, "color", e.target.value)}
-                    style={{ ...INPUT_STYLE, padding: "8px 12px", fontSize: 13 }}
-                    placeholder="Black"
-                  />
+                  {index === 0 && <label style={{ ...LABEL_STYLE, marginBottom: 4 }}>Colour</label>}
+                  <input type="text" value={sku.color} onChange={(e) => updateSku(index, "color", e.target.value)} style={{ ...INPUT_STYLE, padding: "8px 12px", fontSize: 13 }} placeholder="Black" />
                 </div>
                 <div>
-                  {index === 0 && (
-                    <label style={{ ...LABEL_STYLE, marginBottom: 4 }}>Hex</label>
-                  )}
-                  <input
-                    type="color"
-                    value={sku.color_hex}
-                    onChange={(e) => updateSku(index, "color_hex", e.target.value)}
-                    style={{
-                      width: "100%",
-                      height: 38,
-                      border: "1px solid var(--es-bone)",
-                      borderRadius: 4,
-                      cursor: "pointer",
-                      padding: 2,
-                    }}
-                  />
+                  {index === 0 && <label style={{ ...LABEL_STYLE, marginBottom: 4 }}>Hex</label>}
+                  <input type="color" value={sku.color_hex} onChange={(e) => updateSku(index, "color_hex", e.target.value)} style={{ width: "100%", height: 38, border: "1px solid var(--es-bone)", borderRadius: 4, cursor: "pointer", padding: 2 }} />
                 </div>
                 <div>
-                  {index === 0 && (
-                    <label style={{ ...LABEL_STYLE, marginBottom: 4 }}>Stock</label>
-                  )}
-                  <input
-                    type="number"
-                    min={0}
-                    value={sku.stock_quantity}
-                    onChange={(e) => updateSku(index, "stock_quantity", e.target.value)}
-                    style={{ ...INPUT_STYLE, padding: "8px 12px", fontSize: 13 }}
-                  />
+                  {index === 0 && <label style={{ ...LABEL_STYLE, marginBottom: 4 }}>Stock</label>}
+                  <input type="number" min={0} value={sku.stock_quantity} onChange={(e) => updateSku(index, "stock_quantity", e.target.value)} style={{ ...INPUT_STYLE, padding: "8px 12px", fontSize: 13 }} />
                 </div>
-                <div
-                  style={{
-                    paddingTop: index === 0 ? 22 : 0,
-                    display: "flex",
-                    alignItems: "center",
-                  }}
-                >
+                <div style={{ paddingTop: index === 0 ? 22 : 0, display: "flex", alignItems: "center" }}>
                   <button
                     type="button"
                     onClick={() => removeSku(index)}
-                    style={{
-                      background: "none",
-                      border: "none",
-                      cursor: "pointer",
-                      color: "#c0392b",
-                      fontSize: 18,
-                      padding: "4px",
-                      lineHeight: 1,
-                    }}
+                    style={{ background: "none", border: "none", cursor: "pointer", color: "#c0392b", fontSize: 18, padding: "4px", lineHeight: 1 }}
                     title="Remove SKU"
                   >
                     ×
@@ -592,48 +642,25 @@ export default function EditProductPage({ params }: Props) {
           </div>
 
           {/* Actions */}
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 16,
-              paddingTop: 8,
-              borderTop: "1px solid var(--es-bone)",
-            }}
-          >
+          <div style={{ display: "flex", alignItems: "center", gap: 16, paddingTop: 8, borderTop: "1px solid var(--es-bone)" }}>
             <button
               type="submit"
-              disabled={saving}
+              disabled={saving || imageUploading}
               className="es-btn-plum"
-              style={{ opacity: saving ? 0.7 : 1, cursor: saving ? "not-allowed" : "pointer" }}
+              style={{ opacity: saving || imageUploading ? 0.7 : 1, cursor: saving || imageUploading ? "not-allowed" : "pointer" }}
             >
-              {saving ? "Saving…" : "Save Changes"}
+              {saving ? "Saving…" : imageUploading ? "Waiting for image…" : "Save Changes"}
             </button>
 
             {saved && (
-              <span
-                style={{
-                  fontFamily: "var(--font-inter)",
-                  fontSize: 13,
-                  color: "#2e7d32",
-                  letterSpacing: "0.05em",
-                }}
-              >
+              <span style={{ fontFamily: "var(--font-inter)", fontSize: 13, color: "#2e7d32", letterSpacing: "0.05em" }}>
                 Saved — redirecting…
               </span>
             )}
 
             <Link
               href="/admin/products"
-              style={{
-                marginLeft: "auto",
-                fontFamily: "var(--font-inter)",
-                fontSize: 12,
-                letterSpacing: "0.2em",
-                textTransform: "uppercase",
-                color: "var(--es-mute)",
-                textDecoration: "none",
-              }}
+              style={{ marginLeft: "auto", fontFamily: "var(--font-inter)", fontSize: 12, letterSpacing: "0.2em", textTransform: "uppercase", color: "var(--es-mute)", textDecoration: "none" }}
             >
               Cancel
             </Link>

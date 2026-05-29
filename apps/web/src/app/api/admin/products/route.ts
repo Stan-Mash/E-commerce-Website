@@ -59,6 +59,7 @@ export async function POST(request: NextRequest) {
     care_instructions,
     is_featured,
     status,
+    image_url,
     skus: skuList,
   } = body;
 
@@ -80,6 +81,7 @@ export async function POST(request: NextRequest) {
       care_instructions: care_instructions ?? null,
       is_featured: Boolean(is_featured),
       status: status ?? "draft",
+      image_url: image_url ?? null,
     })
     .select()
     .single();
