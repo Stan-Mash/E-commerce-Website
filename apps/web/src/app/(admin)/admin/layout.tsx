@@ -1,6 +1,10 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 
+// Force all admin pages to be dynamically rendered so Next.js never serves
+// a stale router-cache RSC response (e.g. a pre-login redirect to /admin/login).
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: {
     default: "Admin · Elite Style Co.",
