@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { isValidAdminToken } from "@/lib/adminAuth";
 
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
@@ -21,9 +22,9 @@ export function middleware(req: NextRequest) {
   // admin_session is the HttpOnly cookie set by the server.
   // admin_token is a non-HttpOnly fallback set via document.cookie on login.
   if (pathname.startsWith("/admin") && !pathname.startsWith("/admin/login") && !pathname.startsWith("/admin/finance")) {
-    const session = req.cookies.get("admin_session");
-    const token   = req.cookies.get("admin_token");
-    const valid = session?.value === "elite-admin-2024" || token?.value === "elite-admin-2024";
+    const valid =
+      isValidAdminToken(req.cookies.get("admin_session")?.value) ||
+      isValidAdminToken(req.cookies.get("admin_token")?.value);
     if (!valid) {
       const loginUrl = new URL("/admin/login", req.url);
       loginUrl.searchParams.set("from", pathname);

@@ -12,16 +12,14 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { isAuthenticatedAdminRequest } from "@/lib/adminAuth";
 
 const BUCKET   = "product-images";
 const MAX_SIZE = 10 * 1024 * 1024; // 10 MB
 const ALLOWED  = ["image/jpeg", "image/png", "image/webp", "image/gif", "image/avif"];
 
 function checkAuth(request: NextRequest): boolean {
-  const session = request.cookies.get("admin_session")?.value === "elite-admin-2024";
-  const token   = request.cookies.get("admin_token")?.value   === "elite-admin-2024";
-  const header  = request.headers.get("x-admin-token")        === "elite-admin-2024";
-  return session || token || header;
+  return isAuthenticatedAdminRequest(request);
 }
 
 function getAdminClient() {

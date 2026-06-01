@@ -1,14 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/components/checkout/CartProvider";
-import { generateOrderRef } from "@/lib/utils";
 
-type DeliveryType = "pickup" | "door";
+type DeliveryType = "pickup" | "cbd" | "outside_cbd";
+type PayMethod = "mpesa" | "paybill" | "card";
 
-const DELIVERY_FEE = 250;
+const OUTSIDE_CBD_FEE = Number(process.env.NEXT_PUBLIC_DELIVERY_FEE_OUTSIDE_CBD ?? 300) || 300;
 const PHONE_RE = /^(?:254|0)7\d{8}$/;
+const PAYBILL = process.env.NEXT_PUBLIC_MPESA_PAYBILL ?? "";
+const PAYBILL_NAME = process.env.NEXT_PUBLIC_MPESA_PAYBILL_NAME ?? "Elite Style Co.";
+const CARD_ENABLED = (process.env.NEXT_PUBLIC_FLUTTERWAVE_PUBLIC_KEY ?? "").startsWith("FLWPUBK");
 
 function formatKES(amount: number) {
   return new Intl.NumberFormat("en-KE", {
@@ -24,637 +27,317 @@ export default function CheckoutPage() {
   const { items, subtotal, clearCart } = useCart();
 
   const [phone, setPhone] = useState("");
-  const [delivery, setDelivery] = useState<DeliveryType>("pickup");
+  const [delivery, setDelivery] = useState<DeliveryType>("cbd");
+  const [address, setAddress] = useState("");
+  const [method, setMethod] = useState<PayMethod>("mpesa");
   const [phoneError, setPhoneError] = useState("");
+  const [addressError, setAddressError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [waiting, setWaiting] = useState(false);
+  const [statusMsg, setStatusMsg] = useState("");
   const [apiError, setApiError] = useState("");
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const deliveryFee = delivery === "door" ? DELIVERY_FEE : 0;
+  const deliveryFee = delivery === "outside_cbd" ? OUTSIDE_CBD_FEE : 0;
   const total = subtotal + deliveryFee;
+  const needsAddress = delivery === "cbd" || delivery === "outside_cbd";
 
-  function validatePhone(value: string) {
-    const raw = value.replace(/\s/g, "");
-    return PHONE_RE.test(raw);
+  function validate(): boolean {
+    let ok = true;
+    if (method !== "card" && !PHONE_RE.test(phone.replace(/\s/g, ""))) {
+      setPhoneError("Enter a valid Safaricom number");
+      ok = false;
+    } else setPhoneError("");
+    if (needsAddress && address.trim().length < 10) {
+      setAddressError("Please enter a delivery address (min 10 characters)");
+      ok = false;
+    } else setAddressError("");
+    return ok;
+  }
+
+  /** Poll the order-status endpoint until paid/failed or timeout. */
+  function pollStatus(orderRef: string) {
+    let elapsed = 0;
+    const INTERVAL = 4000;
+    const TIMEOUT = 120000; // 2 minutes
+    setStatusMsg("Waiting for payment confirmation…");
+    pollRef.current = setInterval(async () => {
+      elapsed += INTERVAL;
+      try {
+        const res = await fetch(`/api/orders/status?ref=${encodeURIComponent(orderRef)}`);
+        const data = await res.json();
+        if (data.state === "paid") {
+          clearInterval(pollRef.current!);
+          clearCart();
+          router.push(`/order-confirmed?ref=${encodeURIComponent(orderRef)}`);
+          return;
+        }
+        if (data.state === "failed") {
+          clearInterval(pollRef.current!);
+          setWaiting(false);
+          setApiError("Payment was not completed. Please try again.");
+          return;
+        }
+      } catch {
+        // keep polling
+      }
+      if (elapsed >= TIMEOUT) {
+        clearInterval(pollRef.current!);
+        setWaiting(false);
+        setApiError(
+          "We haven't received your payment yet. If you completed it, your order will still be confirmed — check 'Track Order'. Otherwise please try again."
+        );
+      }
+    }, INTERVAL);
   }
 
   async function handlePay() {
-    const raw = phone.replace(/\s/g, "");
-    if (!validatePhone(raw)) {
-      setPhoneError("Enter a valid Safaricom number");
-      return;
-    }
-    setPhoneError("");
+    if (!validate()) return;
     setApiError("");
     setSubmitting(true);
-
-    const orderRef = generateOrderRef();
+    const raw = phone.replace(/\s/g, "");
+    const payload = {
+      phone: raw || "0700000000",
+      items: items.map((i) => ({ skuId: i.skuId, quantity: i.quantity })),
+      deliveryType: delivery,
+      deliveryAddress: needsAddress ? address.trim() : undefined,
+    };
 
     try {
+      if (method === "card") {
+        const res = await fetch("/api/checkout/card", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        const data = await res.json();
+        if (!res.ok || !data.paymentLink) {
+          setApiError(data.error ?? "Could not start card payment.");
+          setSubmitting(false);
+          return;
+        }
+        // Redirect to Flutterwave hosted checkout.
+        window.location.href = data.paymentLink;
+        return;
+      }
+
+      if (method === "paybill") {
+        // Manual paybill: create the order (pending) then show instructions.
+        const res = await fetch("/api/checkout", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ...payload, paymentMethod: "paybill" }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          setApiError(data.error ?? "Could not create order.");
+          setSubmitting(false);
+          return;
+        }
+        setSubmitting(false);
+        setWaiting(true);
+        setStatusMsg(
+          `Pay ${formatKES(total)} to Paybill ${PAYBILL}, account ${data.orderRef}. We'll confirm automatically.`
+        );
+        pollStatus(data.orderRef);
+        return;
+      }
+
+      // Default: M-Pesa STK push.
       const res = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          phone: raw,
-          items: items.map((i) => ({ skuId: i.skuId, quantity: i.quantity })),
-          deliveryType: delivery,
-        }),
+        body: JSON.stringify(payload),
       });
-
       const data = await res.json();
-
       if (!res.ok) {
         setApiError(data.error ?? "Payment failed. Please try again.");
         setSubmitting(false);
         return;
       }
-
-      setWaiting(true);
       setSubmitting(false);
-
-      // Give the user time to complete M-Pesa PIN, then redirect
-      setTimeout(() => {
-        clearCart();
-        router.push(`/order-confirmed?ref=${data.orderRef ?? orderRef}`);
-      }, 8000);
+      setWaiting(true);
+      pollStatus(data.orderRef);
     } catch {
       setApiError("Network error. Please check your connection and try again.");
       setSubmitting(false);
     }
   }
 
+  const DELIVERY_OPTS: { value: DeliveryType; label: string; detail: string; sub: string }[] = [
+    { value: "pickup", label: "PICKUP", detail: "Westlands Flagship", sub: "Free · Ready in 2hrs" },
+    { value: "cbd", label: "NAIROBI CBD", detail: "Within the CBD", sub: "Free delivery" },
+    { value: "outside_cbd", label: "OUTSIDE CBD", detail: "Rest of Kenya", sub: `From ${formatKES(OUTSIDE_CBD_FEE)}` },
+  ];
+
+  const PAY_OPTS: { value: PayMethod; label: string; sub: string; show: boolean }[] = [
+    { value: "mpesa", label: "M-PESA", sub: "STK push to your phone", show: true },
+    { value: "paybill", label: "PAYBILL", sub: PAYBILL ? `Paybill ${PAYBILL}` : "M-Pesa Paybill", show: !!PAYBILL },
+    { value: "card", label: "CARD & MORE", sub: "Card, Airtel, bank", show: CARD_ENABLED },
+  ];
+
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        background: "var(--es-paper)",
-        fontFamily: "var(--font-inter)",
-      }}
-    >
-      <div
-        style={{
-          maxWidth: 1100,
-          margin: "0 auto",
-          padding: "56px 24px 80px",
-        }}
-      >
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "1fr",
-            gap: 48,
-          }}
-          className="checkout-grid"
-        >
-          {/* ── Left Column: Form ── */}
+    <div style={{ minHeight: "100vh", background: "var(--es-paper)", fontFamily: "var(--font-inter)" }}>
+      <div style={{ maxWidth: 1100, margin: "0 auto", padding: "56px 24px 80px" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 48 }} className="checkout-grid">
+          {/* ── Left: Form ── */}
           <div style={{ minWidth: 0 }}>
-            {/* Eyebrow */}
-            <p
-              style={{
-                fontFamily: "var(--font-inter)",
-                fontSize: 11,
-                letterSpacing: "0.45em",
-                textTransform: "uppercase",
-                color: "var(--es-gold)",
-                marginBottom: 16,
-              }}
-            >
+            <p style={{ fontSize: 11, letterSpacing: "0.45em", textTransform: "uppercase", color: "var(--es-gold)", marginBottom: 16 }}>
               Secure Checkout
             </p>
-
-            {/* Heading */}
-            <h1
-              style={{
-                fontFamily: "var(--font-bodoni)",
-                fontSize: 40,
-                fontWeight: 400,
-                lineHeight: 1.1,
-                color: "var(--es-ink)",
-                margin: "0 0 12px",
-              }}
-            >
-              Pay with M-Pesa
+            <h1 style={{ fontFamily: "var(--font-bodoni)", fontSize: 40, fontWeight: 400, lineHeight: 1.1, color: "var(--es-ink)", margin: "0 0 12px" }}>
+              Checkout
             </h1>
-
-            {/* Subtext */}
-            <p
-              style={{
-                fontFamily: "var(--font-inter)",
-                fontSize: 15,
-                color: "var(--es-mute)",
-                marginBottom: 40,
-                maxWidth: 440,
-              }}
-            >
-              Enter your Safaricom number. We&apos;ll send a push notification to confirm.
+            <p style={{ fontSize: 15, color: "var(--es-mute)", marginBottom: 40, maxWidth: 440 }}>
+              Choose delivery and payment. Free delivery within Nairobi CBD.
             </p>
 
-            {/* Phone Input */}
-            <div style={{ marginBottom: 40 }}>
-              <input
-                type="tel"
-                value={phone}
-                onChange={(e) => {
-                  setPhone(e.target.value);
-                  if (phoneError) setPhoneError("");
-                }}
-                placeholder="+254 7XX XXX XXX"
-                style={{
-                  display: "block",
-                  width: "100%",
-                  fontSize: 18,
-                  fontFamily: "var(--font-inter)",
-                  padding: "16px 0",
-                  border: "none",
-                  borderBottom: phoneError
-                    ? "1px solid #c0392b"
-                    : "1px solid var(--es-ink)",
-                  background: "transparent",
-                  color: "var(--es-ink)",
-                  outline: "none",
-                }}
-                aria-label="Safaricom phone number"
-                aria-describedby={phoneError ? "phone-error" : undefined}
-                disabled={waiting}
-              />
-              {phoneError && (
-                <p
-                  id="phone-error"
-                  role="alert"
-                  style={{
-                    fontFamily: "var(--font-inter)",
-                    fontSize: 12,
-                    color: "#c0392b",
-                    marginTop: 6,
-                  }}
-                >
-                  {phoneError}
-                </p>
-              )}
-            </div>
-
-            {/* Delivery Type */}
-            <div style={{ marginBottom: 40 }}>
-              <p
-                style={{
-                  fontFamily: "var(--font-inter)",
-                  fontSize: 11,
-                  letterSpacing: "0.3em",
-                  textTransform: "uppercase",
-                  color: "var(--es-mute)",
-                  marginBottom: 14,
-                }}
-              >
-                Delivery Option
-              </p>
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "1fr 1fr",
-                  gap: 12,
-                }}
-              >
-                {(
-                  [
-                    {
-                      value: "pickup" as const,
-                      label: "PICKUP",
-                      detail: "Westlands Flagship",
-                      sub: "Free · Ready in 2hrs",
-                    },
-                    {
-                      value: "door" as const,
-                      label: "DOOR DELIVERY",
-                      detail: "Nairobi from KES 250",
-                      sub: "1–2 days",
-                    },
-                  ] as const
-                ).map((opt) => {
-                  const selected = delivery === opt.value;
+            {/* Delivery */}
+            <div style={{ marginBottom: 36 }}>
+              <p style={LABEL}>Delivery Option</p>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }} className="opt-grid">
+                {DELIVERY_OPTS.map((opt) => {
+                  const sel = delivery === opt.value;
                   return (
-                    <button
-                      key={opt.value}
-                      type="button"
-                      onClick={() => setDelivery(opt.value)}
-                      disabled={waiting}
-                      style={{
-                        padding: "18px 16px",
-                        border: selected
-                          ? "1.5px solid var(--es-plum)"
-                          : "1.5px solid var(--es-bone)",
-                        background: selected
-                          ? "var(--es-white)"
-                          : "var(--es-paper)",
-                        cursor: "pointer",
-                        textAlign: "left",
-                        transition: "border-color 0.15s, background 0.15s",
-                        minHeight: "unset",
-                        minWidth: "unset",
-                      }}
-                      aria-pressed={selected}
-                    >
-                      <p
-                        style={{
-                          fontFamily: "var(--font-inter)",
-                          fontSize: 10,
-                          letterSpacing: "0.3em",
-                          textTransform: "uppercase",
-                          color: selected
-                            ? "var(--es-plum)"
-                            : "var(--es-ink)",
-                          fontWeight: 600,
-                          marginBottom: 6,
-                        }}
-                      >
-                        {opt.label}
-                      </p>
-                      <p
-                        style={{
-                          fontFamily: "var(--font-inter)",
-                          fontSize: 13,
-                          color: "var(--es-ink)",
-                          marginBottom: 2,
-                        }}
-                      >
-                        {opt.detail}
-                      </p>
-                      <p
-                        style={{
-                          fontFamily: "var(--font-inter)",
-                          fontSize: 12,
-                          color: "var(--es-mute)",
-                        }}
-                      >
-                        {opt.sub}
-                      </p>
+                    <button key={opt.value} type="button" onClick={() => setDelivery(opt.value)} disabled={waiting}
+                      style={optStyle(sel)} aria-pressed={sel}>
+                      <p style={{ fontSize: 10, letterSpacing: "0.2em", textTransform: "uppercase", color: sel ? "var(--es-plum)" : "var(--es-ink)", fontWeight: 600, marginBottom: 6 }}>{opt.label}</p>
+                      <p style={{ fontSize: 13, color: "var(--es-ink)", marginBottom: 2 }}>{opt.detail}</p>
+                      <p style={{ fontSize: 12, color: "var(--es-mute)" }}>{opt.sub}</p>
                     </button>
                   );
                 })}
               </div>
             </div>
 
-            {/* API Error */}
-            {apiError && (
-              <div
-                role="alert"
-                style={{
-                  fontFamily: "var(--font-inter)",
-                  fontSize: 13,
-                  color: "#c0392b",
-                  background: "#fdf2f2",
-                  border: "1px solid #f5c6c6",
-                  padding: "12px 16px",
-                  marginBottom: 24,
-                }}
-              >
-                {apiError}
+            {/* Address */}
+            {needsAddress && (
+              <div style={{ marginBottom: 36 }}>
+                <p style={LABEL}>Delivery Address</p>
+                <textarea value={address} onChange={(e) => { setAddress(e.target.value); if (addressError) setAddressError(""); }}
+                  placeholder="Building, street, area, and any landmark…" rows={3} disabled={waiting}
+                  style={{ width: "100%", fontSize: 15, fontFamily: "var(--font-inter)", padding: "12px", border: addressError ? "1px solid #c0392b" : "1px solid var(--es-bone)", background: "var(--es-white)", color: "var(--es-ink)", outline: "none", resize: "vertical" }} />
+                {addressError && <p style={ERR}>{addressError}</p>}
               </div>
             )}
 
-            {/* Pay Button / Waiting State */}
+            {/* Payment method */}
+            <div style={{ marginBottom: 36 }}>
+              <p style={LABEL}>Payment Method</p>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }} className="opt-grid">
+                {PAY_OPTS.filter((o) => o.show).map((opt) => {
+                  const sel = method === opt.value;
+                  return (
+                    <button key={opt.value} type="button" onClick={() => setMethod(opt.value)} disabled={waiting}
+                      style={optStyle(sel)} aria-pressed={sel}>
+                      <p style={{ fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase", color: sel ? "var(--es-plum)" : "var(--es-ink)", fontWeight: 700, marginBottom: 4 }}>{opt.label}</p>
+                      <p style={{ fontSize: 12, color: "var(--es-mute)" }}>{opt.sub}</p>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Phone (not needed for card; FW collects it) */}
+            {method !== "card" && (
+              <div style={{ marginBottom: 36 }}>
+                <p style={LABEL}>Safaricom Number</p>
+                <input type="tel" value={phone} onChange={(e) => { setPhone(e.target.value); if (phoneError) setPhoneError(""); }}
+                  placeholder="+254 7XX XXX XXX" disabled={waiting}
+                  style={{ display: "block", width: "100%", fontSize: 18, fontFamily: "var(--font-inter)", padding: "14px 0", border: "none", borderBottom: phoneError ? "1px solid #c0392b" : "1px solid var(--es-ink)", background: "transparent", color: "var(--es-ink)", outline: "none" }} />
+                {phoneError && <p style={ERR}>{phoneError}</p>}
+              </div>
+            )}
+
+            {apiError && <div role="alert" style={{ fontSize: 13, color: "#c0392b", background: "#fdf2f2", border: "1px solid #f5c6c6", padding: "12px 16px", marginBottom: 24 }}>{apiError}</div>}
+
             {waiting ? (
-              <WaitingState />
+              <WaitingState message={statusMsg} />
             ) : (
-              <button
-                type="button"
-                className="es-btn-plum"
-                style={{ width: "100%" }}
-                onClick={handlePay}
-                disabled={submitting || items.length === 0}
-              >
-                {submitting ? (
-                  <span style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                    <Spinner />
-                    Processing…
-                  </span>
-                ) : (
-                  `PAY ${formatKES(total)} →`
-                )}
+              <button type="button" className="es-btn-plum" style={{ width: "100%" }} onClick={handlePay} disabled={submitting || items.length === 0}>
+                {submitting ? "Processing…" : `PAY ${formatKES(total)} →`}
               </button>
             )}
           </div>
 
-          {/* ── Right Column: Order Summary ── */}
+          {/* ── Right: Summary ── */}
           <aside>
-            <div
-              style={{
-                background: "var(--es-white)",
-                padding: "32px 28px",
-                position: "sticky",
-                top: 24,
-              }}
-            >
-              <p
-                style={{
-                  fontFamily: "var(--font-inter)",
-                  fontSize: 11,
-                  letterSpacing: "0.45em",
-                  textTransform: "uppercase",
-                  color: "var(--es-ink)",
-                  marginBottom: 24,
-                }}
-              >
-                Order Summary
-              </p>
-
-              {/* Cart Items */}
+            <div style={{ background: "var(--es-white)", padding: "32px 28px", position: "sticky", top: 24 }}>
+              <p style={{ fontSize: 11, letterSpacing: "0.45em", textTransform: "uppercase", color: "var(--es-ink)", marginBottom: 24 }}>Order Summary</p>
               {items.length === 0 ? (
-                <p
-                  style={{
-                    fontFamily: "var(--font-inter)",
-                    fontSize: 14,
-                    color: "var(--es-mute)",
-                  }}
-                >
-                  Your cart is empty.
-                </p>
+                <p style={{ fontSize: 14, color: "var(--es-mute)" }}>Your cart is empty.</p>
               ) : (
-                <ul
-                  style={{
-                    listStyle: "none",
-                    padding: 0,
-                    margin: "0 0 24px",
-                  }}
-                >
+                <ul style={{ listStyle: "none", padding: 0, margin: "0 0 24px" }}>
                   {items.map((item) => (
-                    <li
-                      key={item.skuId}
-                      style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "baseline",
-                        gap: 12,
-                        paddingBottom: 14,
-                        borderBottom: "1px solid var(--es-bone)",
-                        marginBottom: 14,
-                      }}
-                    >
+                    <li key={item.skuId} style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 12, paddingBottom: 14, borderBottom: "1px solid var(--es-bone)", marginBottom: 14 }}>
                       <div>
-                        <p
-                          style={{
-                            fontFamily: "var(--font-bodoni)",
-                            fontSize: 15,
-                            fontWeight: 400,
-                            color: "var(--es-ink)",
-                          }}
-                        >
-                          {item.name}
-                        </p>
-                        {item.size && (
-                          <p
-                            style={{
-                              fontFamily: "var(--font-inter)",
-                              fontSize: 11,
-                              color: "var(--es-mute)",
-                              marginTop: 2,
-                              letterSpacing: "0.05em",
-                              textTransform: "uppercase",
-                            }}
-                          >
-                            Size: {item.size}
-                            {item.quantity > 1 ? ` · Qty ${item.quantity}` : ""}
-                          </p>
-                        )}
+                        <p style={{ fontFamily: "var(--font-bodoni)", fontSize: 15, color: "var(--es-ink)" }}>{item.name}</p>
+                        {item.size && <p style={{ fontSize: 11, color: "var(--es-mute)", marginTop: 2, letterSpacing: "0.05em", textTransform: "uppercase" }}>Size: {item.size}{item.quantity > 1 ? ` · Qty ${item.quantity}` : ""}</p>}
                       </div>
-                      <span
-                        style={{
-                          fontFamily: "var(--font-inter)",
-                          fontSize: 14,
-                          color: "var(--es-ink)",
-                          whiteSpace: "nowrap",
-                        }}
-                      >
-                        {formatKES(item.price * item.quantity)}
-                      </span>
+                      <span style={{ fontSize: 14, color: "var(--es-ink)", whiteSpace: "nowrap" }}>{formatKES(item.price * item.quantity)}</span>
                     </li>
                   ))}
                 </ul>
               )}
-
-              {/* Subtotal */}
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  marginBottom: 10,
-                }}
-              >
-                <span
-                  style={{
-                    fontFamily: "var(--font-inter)",
-                    fontSize: 13,
-                    color: "var(--es-mute)",
-                  }}
-                >
-                  Subtotal
-                </span>
-                <span
-                  style={{
-                    fontFamily: "var(--font-inter)",
-                    fontSize: 13,
-                    color: "var(--es-ink)",
-                  }}
-                >
-                  {formatKES(subtotal)}
-                </span>
+              <Row label="Subtotal" value={formatKES(subtotal)} />
+              <Row label={delivery === "outside_cbd" ? "Delivery (outside CBD)" : "Delivery"} value={deliveryFee === 0 ? "FREE" : formatKES(deliveryFee)} />
+              <div style={{ height: 1, background: "var(--es-bone)", margin: "16px 0" }} />
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 28 }}>
+                <span style={{ fontSize: 13, textTransform: "uppercase", letterSpacing: "0.1em" }}>Total</span>
+                <span style={{ fontFamily: "var(--font-bodoni)", fontSize: 24, color: "var(--es-ink)" }}>{formatKES(total)}</span>
               </div>
-
-              {/* Delivery fee row */}
-              {delivery === "door" && (
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    marginBottom: 10,
-                  }}
-                >
-                  <span
-                    style={{
-                      fontFamily: "var(--font-inter)",
-                      fontSize: 13,
-                      color: "var(--es-mute)",
-                    }}
-                  >
-                    Delivery
-                  </span>
-                  <span
-                    style={{
-                      fontFamily: "var(--font-inter)",
-                      fontSize: 13,
-                      color: "var(--es-ink)",
-                    }}
-                  >
-                    {formatKES(DELIVERY_FEE)}
-                  </span>
-                </div>
-              )}
-
-              {/* Divider */}
-              <div
-                style={{
-                  height: 1,
-                  background: "var(--es-bone)",
-                  margin: "16px 0",
-                }}
-              />
-
-              {/* Total */}
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "baseline",
-                  marginBottom: 28,
-                }}
-              >
-                <span
-                  style={{
-                    fontFamily: "var(--font-inter)",
-                    fontSize: 13,
-                    textTransform: "uppercase",
-                    letterSpacing: "0.1em",
-                  }}
-                >
-                  Total
-                </span>
-                <span
-                  style={{
-                    fontFamily: "var(--font-bodoni)",
-                    fontSize: 24,
-                    color: "var(--es-ink)",
-                  }}
-                >
-                  {formatKES(total)}
-                </span>
-              </div>
-
-              {/* M-Pesa Badge */}
               <MpesaBadge />
             </div>
           </aside>
         </div>
       </div>
 
-      {/* Responsive grid styles */}
       <style>{`
-        @media (min-width: 900px) {
-          .checkout-grid {
-            grid-template-columns: 2fr 1fr !important;
-          }
-        }
-        input::placeholder {
-          color: var(--es-faint);
-        }
-        input:focus {
-          border-bottom-color: var(--es-plum) !important;
-        }
+        @media (min-width: 900px) { .checkout-grid { grid-template-columns: 2fr 1fr !important; } }
+        @media (max-width: 560px) { .opt-grid { grid-template-columns: 1fr !important; } }
+        input::placeholder, textarea::placeholder { color: var(--es-faint); }
+        input:focus { border-bottom-color: var(--es-plum) !important; }
       `}</style>
     </div>
   );
 }
 
-function WaitingState() {
+const LABEL: React.CSSProperties = { fontSize: 11, letterSpacing: "0.3em", textTransform: "uppercase", color: "var(--es-mute)", marginBottom: 14 };
+const ERR: React.CSSProperties = { fontSize: 12, color: "#c0392b", marginTop: 6 };
+function optStyle(sel: boolean): React.CSSProperties {
+  return { padding: "16px 14px", border: sel ? "1.5px solid var(--es-plum)" : "1.5px solid var(--es-bone)", background: sel ? "var(--es-white)" : "var(--es-paper)", cursor: "pointer", textAlign: "left", transition: "border-color .15s, background .15s" };
+}
+
+function Row({ label, value }: { label: string; value: string }) {
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        padding: "32px 24px",
-        background: "var(--es-white)",
-        border: "1px solid var(--es-bone)",
-        textAlign: "center",
-      }}
-    >
-      <Spinner size={36} />
-      <p
-        style={{
-          fontFamily: "var(--font-bodoni)",
-          fontSize: 20,
-          color: "var(--es-ink)",
-          marginTop: 20,
-          marginBottom: 8,
-        }}
-      >
-        Waiting for M-Pesa confirmation…
-      </p>
-      <p
-        style={{
-          fontFamily: "var(--font-inter)",
-          fontSize: 14,
-          color: "var(--es-mute)",
-        }}
-      >
-        Check your Safaricom phone and enter your PIN
-      </p>
+    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 10 }}>
+      <span style={{ fontSize: 13, color: "var(--es-mute)" }}>{label}</span>
+      <span style={{ fontSize: 13, color: "var(--es-ink)" }}>{value}</span>
     </div>
   );
 }
 
-function Spinner({ size = 20 }: { size?: number }) {
+function WaitingState({ message }: { message: string }) {
   return (
-    <>
-      <span
-        aria-hidden="true"
-        style={{
-          display: "inline-block",
-          width: size,
-          height: size,
-          border: `3px solid var(--es-bone)`,
-          borderTopColor: "var(--es-plum)",
-          borderRadius: "50%",
-          animation: "es-spin 0.75s linear infinite",
-          flexShrink: 0,
-        }}
-      />
-      <style>{`
-        @keyframes es-spin {
-          to { transform: rotate(360deg); }
-        }
-      `}</style>
-    </>
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "32px 24px", background: "var(--es-white)", border: "1px solid var(--es-bone)", textAlign: "center" }}>
+      <span aria-hidden="true" style={{ display: "inline-block", width: 36, height: 36, border: "3px solid var(--es-bone)", borderTopColor: "var(--es-plum)", borderRadius: "50%", animation: "es-spin 0.75s linear infinite" }} />
+      <p style={{ fontFamily: "var(--font-bodoni)", fontSize: 20, color: "var(--es-ink)", marginTop: 20, marginBottom: 8 }}>
+        {message || "Waiting for M-Pesa confirmation…"}
+      </p>
+      <p style={{ fontSize: 14, color: "var(--es-mute)" }}>Check your phone and enter your M-Pesa PIN. This page updates automatically.</p>
+      <style>{`@keyframes es-spin { to { transform: rotate(360deg); } }`}</style>
+    </div>
   );
 }
 
 function MpesaBadge() {
   return (
-    <div
-      style={{
-        display: "inline-flex",
-        alignItems: "center",
-        gap: 8,
-        background: "#007a39",
-        color: "#ffffff",
-        padding: "8px 14px",
-        borderRadius: 4,
-      }}
-    >
-      <svg
-        width="18"
-        height="18"
-        viewBox="0 0 24 24"
-        fill="none"
-        aria-hidden="true"
-      >
+    <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "#007a39", color: "#fff", padding: "8px 14px", borderRadius: 4 }}>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
         <circle cx="12" cy="12" r="10" fill="white" opacity="0.2" />
-        <path
-          d="M7 12.5L10.5 16L17 8"
-          stroke="white"
-          strokeWidth="2.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
+        <path d="M7 12.5L10.5 16L17 8" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
-      <span
-        style={{
-          fontFamily: "var(--font-inter)",
-          fontWeight: 700,
-          fontSize: 13,
-          letterSpacing: "0.1em",
-        }}
-      >
-        M-PESA
-      </span>
+      <span style={{ fontWeight: 700, fontSize: 13, letterSpacing: "0.1em" }}>M-PESA · CARD · PAYBILL</span>
     </div>
   );
 }

@@ -9,6 +9,7 @@ const TABS = [
   { label: "WOMAN", value: "Woman" },
   { label: "MAN", value: "Man" },
   { label: "CHILDREN", value: "Children" },
+  { label: "ACCESSORIES", value: "Accessories" },
 ] as const;
 
 export function ProductFilterTabs() {

@@ -54,6 +54,7 @@ const nextConfig = {
     remotePatterns: [
       { protocol: "https", hostname: "res.cloudinary.com" },
       { protocol: "https", hostname: "images.unsplash.com" },
+      { protocol: "https", hostname: "*.supabase.co" },
     ],
   },
   async headers() {
@@ -72,7 +73,7 @@ const nextConfig = {
               "script-src 'self' 'unsafe-eval' 'unsafe-inline'",
               "style-src 'self' 'unsafe-inline' fonts.googleapis.com",
               "font-src 'self' fonts.gstatic.com",
-              "img-src 'self' data: blob: res.cloudinary.com images.unsplash.com",
+              "img-src 'self' data: blob: res.cloudinary.com images.unsplash.com *.supabase.co",
               "media-src 'self' res.cloudinary.com",
               "connect-src 'self' *.supabase.co *.sentry.io",
               "frame-ancestors 'none'",

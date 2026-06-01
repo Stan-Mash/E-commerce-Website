@@ -1,51 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 
-export default function AdminLoginPage() {
-  const [password, setPassword] = useState("");
-  const [error,    setError]    = useState("");
-  const [loading,  setLoading]  = useState(false);
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setError("");
-    setLoading(true);
-
-    try {
-      const res = await fetch("/api/admin/auth", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ password }),
-      });
-
-      if (res.ok) {
-        const maxAge = 60 * 60 * 8; // 8 hours
-
-        // admin_session — primary HttpOnly cookie set by the server (Set-Cookie header).
-        // We also try to set it client-side in case the server header was stripped.
-        document.cookie =
-          `admin_session=elite-admin-2024; path=/; max-age=${maxAge}; SameSite=Lax; Secure`;
-
-        // admin_token — non-HttpOnly fallback cookie readable by the middleware.
-        // Uses a different name so it is never blocked by the HttpOnly admin_session.
-        document.cookie =
-          `admin_token=elite-admin-2024; path=/; max-age=${maxAge}; SameSite=Lax; Secure`;
-
-        // Also persist to localStorage so API fetch calls can send it as a header.
-        try { localStorage.setItem("esc_admin_token", "elite-admin-2024"); } catch {}
-
-        const params = new URLSearchParams(window.location.search);
-        window.location.href = params.get("from") ?? "/admin";
-      } else {
-        setError("Incorrect password.");
-      }
-    } catch {
-      setError("Something went wrong. Please try again.");
-    } finally {
-      setLoading(false);
-    }
-  }
+function LoginForm() {
+  const searchParams = useSearchParams();
+  const from  = searchParams.get("from")  ?? "/admin";
+  const error = searchParams.get("error") === "1";
 
   return (
     <div
@@ -87,13 +48,24 @@ export default function AdminLoginPage() {
           </span>
         </div>
 
-        {/* Form */}
-        <form onSubmit={handleSubmit}>
+        {/*
+          Native form POST — the browser handles the full request/redirect cycle,
+          so Set-Cookie headers are applied before the next navigation starts.
+          This is more reliable than fetch() + document.cookie + window.location.href,
+          which can race against the PWA service worker.
+        */}
+        <form
+          method="POST"
+          action="/api/admin/auth"
+          encType="application/x-www-form-urlencoded"
+        >
+          {/* Pass the destination so the server can redirect back there */}
+          <input type="hidden" name="from" value={from} />
+
           <div style={{ marginBottom: 32 }}>
             <input
               type="password"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
+              name="password"
               placeholder="Enter admin password"
               required
               autoFocus
@@ -121,24 +93,27 @@ export default function AdminLoginPage() {
               marginBottom: 20,
               marginTop: -16,
             }}>
-              {error}
+              Incorrect password.
             </p>
           )}
 
           <button
             type="submit"
-            disabled={loading}
             className="es-btn-plum"
-            style={{
-              width: "100%",
-              opacity: loading ? 0.7 : 1,
-              cursor: loading ? "not-allowed" : "pointer",
-            }}
+            style={{ width: "100%" }}
           >
-            {loading ? "Verifying..." : "Enter →"}
+            Enter →
           </button>
         </form>
       </div>
     </div>
+  );
+}
+
+export default function AdminLoginPage() {
+  return (
+    <Suspense>
+      <LoginForm />
+    </Suspense>
   );
 }

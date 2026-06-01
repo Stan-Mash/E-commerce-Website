@@ -3,12 +3,10 @@ import { createAdminSupabaseClient } from "@/lib/supabase/server";
 import { normaliseKenyanPhone, generateOrderRef } from "@/lib/utils";
 import { applyDiscounts, type Promotion, type CartLineItem } from "@/lib/promotions/engine";
 import { initiateSTKPush } from "@/lib/mpesa/daraja";
+import { isAuthenticatedAdminRequest } from "@/lib/adminAuth";
 
 function checkAuth(request: NextRequest): boolean {
-  const session = request.cookies.get("admin_session")?.value === "elite-admin-2024";
-  const token   = request.cookies.get("admin_token")?.value   === "elite-admin-2024";
-  const header  = request.headers.get("x-admin-token")        === "elite-admin-2024";
-  return session || token || header;
+  return isAuthenticatedAdminRequest(request);
 }
 
 interface PosItem {

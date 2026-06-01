@@ -1,9 +1,11 @@
+import { AnimateIn } from "@/components/es/AnimateIn";
+
 const FONT = "'Inter','Urbanist',sans-serif";
 
 const PERKS = [
   {
-    title: "Free Delivery",
-    body: "Every order, anywhere in Kenya",
+    title: "Free CBD Delivery",
+    body: "Free within Nairobi CBD · low flat rate elsewhere",
     icon: (
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
         <rect x="1" y="3" width="15" height="13" rx="1"/>
@@ -61,39 +63,41 @@ export function HousePrinciple() {
           className="!grid-cols-2 lg:!grid-cols-4"
         >
           {PERKS.map((p, i) => (
-            <div
-              key={p.title}
-              style={{
-                display: "flex",
-                gap: 14,
-                alignItems: "center",
-                padding: "26px 28px",
-                borderRight: i < PERKS.length - 1 ? "1px solid #e8e8e8" : "none",
-              }}
-            >
-              <div style={{ color: "#111", flexShrink: 0 }}>{p.icon}</div>
-              <div>
-                <p style={{
-                  fontFamily: FONT,
-                  fontSize: 13,
-                  fontWeight: 700,
-                  color: "#111",
-                  margin: "0 0 2px",
-                  letterSpacing: "-0.01em",
-                }}>
-                  {p.title}
-                </p>
-                <p style={{
-                  fontFamily: FONT,
-                  fontSize: 12,
-                  color: "#888",
-                  margin: 0,
-                  lineHeight: 1.4,
-                }}>
-                  {p.body}
-                </p>
+            <AnimateIn key={p.title} direction="up" delay={i * 0.15}>
+              <div
+                style={{
+                  display: "flex",
+                  gap: 14,
+                  alignItems: "center",
+                  padding: "26px 28px",
+                  borderRight: i < PERKS.length - 1 ? "1px solid #e8e8e8" : "none",
+                  height: "100%",
+                }}
+              >
+                <div style={{ color: "#111", flexShrink: 0 }}>{p.icon}</div>
+                <div>
+                  <p style={{
+                    fontFamily: FONT,
+                    fontSize: 13,
+                    fontWeight: 700,
+                    color: "#111",
+                    margin: "0 0 2px",
+                    letterSpacing: "-0.01em",
+                  }}>
+                    {p.title}
+                  </p>
+                  <p style={{
+                    fontFamily: FONT,
+                    fontSize: 12,
+                    color: "#888",
+                    margin: 0,
+                    lineHeight: 1.4,
+                  }}>
+                    {p.body}
+                  </p>
+                </div>
               </div>
-            </div>
+            </AnimateIn>
           ))}
         </div>
       </div>

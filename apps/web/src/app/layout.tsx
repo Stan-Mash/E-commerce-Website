@@ -9,7 +9,7 @@ export const metadata: Metadata = {
     template: "%s | Elite Style Co.",
   },
   description:
-    "A maison built in Nairobi — for the woman, the man, and the children who follow. Atelier-led cuts, honest fabrics, KES pricing. Complimentary delivery across Kenya.",
+    "A maison built in Nairobi — for the woman, the man, and the children who follow. Atelier-led cuts, honest fabrics, KES pricing. Free delivery within Nairobi CBD.",
   keywords: ["Elite Style", "Nairobi fashion", "luxury clothing Kenya", "bespoke tailoring Nairobi", "M-Pesa fashion"],
   authors: [{ name: "Elite Style Co." }],
   creator: "Elite Style Co.",
