@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { isAuthenticatedAdminRequest } from "@/lib/adminAuth";
 
 function getAdminClient() {
   return createClient(
@@ -10,10 +11,7 @@ function getAdminClient() {
 }
 
 function checkAuth(request: NextRequest): boolean {
-  const session = request.cookies.get("admin_session")?.value === "elite-admin-2024";
-  const token   = request.cookies.get("admin_token")?.value   === "elite-admin-2024";
-  const header  = request.headers.get("x-admin-token")        === "elite-admin-2024";
-  return session || token || header;
+  return isAuthenticatedAdminRequest(request);
 }
 
 export async function GET(
@@ -94,6 +92,30 @@ export async function PUT(
 
   if (productError) {
     return NextResponse.json({ error: productError.message }, { status: 500 });
+  }
+
+  // Sync primary image into product_images table (used by the public storefront)
+  if (image_url !== undefined) {
+    if (image_url) {
+      // Upsert the primary (sort_order=0) image row
+      await supabase.from("product_images").upsert(
+        {
+          product_id: params.id,
+          url: image_url,
+          alt: name ?? null,
+          media_type: "image",
+          sort_order: 0,
+        },
+        { onConflict: "product_id,sort_order" }
+      );
+    } else {
+      // Image was removed — delete the admin-managed primary image
+      await supabase
+        .from("product_images")
+        .delete()
+        .eq("product_id", params.id)
+        .eq("sort_order", 0);
+    }
   }
 
   // Replace SKUs if provided

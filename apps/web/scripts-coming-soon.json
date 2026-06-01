@@ -1,0 +1,317 @@
+[
+  {
+    "slug": "chain-shoulder-bag",
+    "name": "Chain Shoulder Bag",
+    "category": "accessories",
+    "price": 2200,
+    "variants": [
+      {
+        "color": "Black",
+        "image": "/products/coming-soon/chain-shoulder-bag-black.jpg"
+      },
+      {
+        "color": "Brown",
+        "image": "/products/coming-soon/chain-shoulder-bag-brown.jpg"
+      },
+      {
+        "color": "Fushia Pink",
+        "image": "/products/coming-soon/chain-shoulder-bag-fushia-pink.jpg"
+      },
+      {
+        "color": "Green",
+        "image": "/products/coming-soon/chain-shoulder-bag-green.jpg"
+      },
+      {
+        "color": "Tan Brown",
+        "image": "/products/coming-soon/chain-shoulder-bag-tan-brown.jpg"
+      },
+      {
+        "color": "White",
+        "image": "/products/coming-soon/chain-shoulder-bag-white.jpg"
+      }
+    ]
+  },
+  {
+    "slug": "quilted-crossbody-bag",
+    "name": "Quilted Crossbody Bag",
+    "category": "accessories",
+    "price": 2500,
+    "variants": [
+      {
+        "color": "Brown",
+        "image": "/products/coming-soon/quilted-crossbody-bag-default.png"
+      },
+      {
+        "color": "Black",
+        "image": "/products/coming-soon/quilted-crossbody-bag-black.png"
+      },
+      {
+        "color": "Light Blue",
+        "image": "/products/coming-soon/quilted-crossbody-bag-light-blue.png"
+      },
+      {
+        "color": "Off White",
+        "image": "/products/coming-soon/quilted-crossbody-bag-off-white.png"
+      },
+      {
+        "color": "Pink",
+        "image": "/products/coming-soon/quilted-crossbody-bag-pink.png"
+      },
+      {
+        "color": "Tan",
+        "image": "/products/coming-soon/quilted-crossbody-bag-default.png"
+      }
+    ]
+  },
+  {
+    "slug": "structured-tote-bag",
+    "name": "Structured Tote Bag",
+    "category": "accessories",
+    "price": 2800,
+    "variants": [
+      {
+        "color": "Beige",
+        "image": "/products/coming-soon/structured-tote-bag-beige.png"
+      },
+      {
+        "color": "Black",
+        "image": "/products/coming-soon/structured-tote-bag-black.png"
+      },
+      {
+        "color": "Maroon",
+        "image": "/products/coming-soon/structured-tote-bag-maroon.png"
+      },
+      {
+        "color": "Off White",
+        "image": "/products/coming-soon/structured-tote-bag-off-white.png"
+      },
+      {
+        "color": "Brown",
+        "image": "/products/coming-soon/structured-tote-bag-default.png"
+      }
+    ]
+  },
+  {
+    "slug": "knitted-turtleneck-vest",
+    "name": "Knitted Turtleneck Vest",
+    "category": "women",
+    "price": 1500,
+    "variants": [
+      {
+        "color": "Blue",
+        "image": "/products/coming-soon/knitted-turtleneck-vest-blue.png"
+      },
+      {
+        "color": "Caramel",
+        "image": "/products/coming-soon/knitted-turtleneck-vest-caramel.png"
+      },
+      {
+        "color": "Green",
+        "image": "/products/coming-soon/knitted-turtleneck-vest-green.png"
+      },
+      {
+        "color": "White",
+        "image": "/products/coming-soon/knitted-turtleneck-vest-default.png"
+      },
+      {
+        "color": "Black",
+        "image": "/products/coming-soon/knitted-turtleneck-vest-black.png"
+      }
+    ]
+  },
+  {
+    "slug": "double-breasted-woolen-coat",
+    "name": "Double-Breasted Woolen Coat",
+    "category": "women",
+    "price": 4500,
+    "variants": [
+      {
+        "color": "Black",
+        "image": "/products/coming-soon/double-breasted-woolen-coat-breasted-woolen-coat-ladies-solid-color-fleece-thickness-trench-coat.png"
+      },
+      {
+        "color": "Dark Green",
+        "image": "/products/coming-soon/double-breasted-woolen-coat-dark-green.png"
+      },
+      {
+        "color": "Grey",
+        "image": "/products/coming-soon/double-breasted-woolen-coat-black.png"
+      },
+      {
+        "color": "Light Green",
+        "image": "/products/coming-soon/double-breasted-woolen-coat-grey.png"
+      },
+      {
+        "color": "Purple",
+        "image": "/products/coming-soon/double-breasted-woolen-coat-light-green.png"
+      },
+      {
+        "color": "Camel",
+        "image": "/products/coming-soon/double-breasted-woolen-coat-purple.png"
+      }
+    ]
+  },
+  {
+    "slug": "thick-heel-work-sandals",
+    "name": "Pointed Thick-Heel Sandals",
+    "category": "women",
+    "price": 2500,
+    "variants": [
+      {
+        "color": "Apricot Nude",
+        "image": "/products/coming-soon/thick-heel-work-sandals-apricot-nude.png"
+      },
+      {
+        "color": "Black",
+        "image": "/products/coming-soon/thick-heel-work-sandals-black.png"
+      }
+    ]
+  },
+  {
+    "slug": "pointed-buckle-boots",
+    "name": "Pointed Buckle Boots",
+    "category": "women",
+    "price": 4000,
+    "variants": [
+      {
+        "color": "Milky White",
+        "image": "/products/coming-soon/pointed-buckle-boots-milky-white.png"
+      },
+      {
+        "color": "Black",
+        "image": "/products/coming-soon/pointed-buckle-boots-black.png"
+      }
+    ]
+  },
+  {
+    "slug": "single-heel-office-shoes",
+    "name": "Single-Heel Office Shoes",
+    "category": "women",
+    "price": 2500,
+    "variants": [
+      {
+        "color": "Milky White Cream",
+        "image": "/products/coming-soon/single-heel-office-shoes-milky-white-cream.png"
+      },
+      {
+        "color": "White",
+        "image": "/products/coming-soon/single-heel-office-shoes-white.png"
+      }
+    ]
+  },
+  {
+    "slug": "beach-flip-flops",
+    "name": "Soft-Sole Beach Flip-Flops",
+    "category": "women",
+    "price": 800,
+    "variants": [
+      {
+        "color": "Brown",
+        "image": "/products/coming-soon/beach-flip-flops-brown.png"
+      },
+      {
+        "color": "Apricot",
+        "image": "/products/coming-soon/beach-flip-flops-apricot.png"
+      },
+      {
+        "color": "Black",
+        "image": "/products/coming-soon/beach-flip-flops-black.png"
+      },
+      {
+        "color": "White",
+        "image": "/products/coming-soon/beach-flip-flops-white.png"
+      }
+    ]
+  },
+  {
+    "slug": "princess-lace-sandals",
+    "name": "Lace Breathable Sandals",
+    "category": "women",
+    "price": 1500,
+    "color": "Pink",
+    "variants": [
+      {
+        "color": "Pink",
+        "image": "/products/coming-soon/princess-lace-sandals-pink.png"
+      }
+    ]
+  },
+  {
+    "slug": "pointed-high-heels",
+    "name": "Small-Chic Pointed High Heels",
+    "category": "women",
+    "price": 2800,
+    "color": "Nude",
+    "variants": [
+      {
+        "color": "Nude",
+        "image": "/products/coming-soon/pointed-high-heels-nude.png"
+      }
+    ]
+  },
+  {
+    "slug": "versatile-pointed-heel",
+    "name": "Versatile Pointed-Tip Heel",
+    "category": "women",
+    "price": 2800,
+    "color": "Black",
+    "variants": [
+      {
+        "color": "Black",
+        "image": "/products/coming-soon/versatile-pointed-heel-black.png"
+      }
+    ]
+  },
+  {
+    "slug": "water-drop-earrings",
+    "name": "Water Drop Statement Earrings",
+    "category": "accessories",
+    "price": 600,
+    "color": "Black",
+    "variants": [
+      {
+        "color": "Black",
+        "image": "/products/coming-soon/water-drop-earrings-black.png"
+      }
+    ]
+  },
+  {
+    "slug": "cream-rose-blazer",
+    "name": "Cream Rose Double-Breasted Jacket",
+    "category": "women",
+    "price": 2800,
+    "color": "Cream",
+    "variants": [
+      {
+        "color": "Cream",
+        "image": "/products/coming-soon/cream-rose-blazer-cream.2800"
+      }
+    ]
+  },
+  {
+    "slug": "fushia-graffiti-blazer",
+    "name": "Fuchsia Graffiti Blazer",
+    "category": "women",
+    "price": 2500,
+    "color": "Fuchsia",
+    "variants": [
+      {
+        "color": "Fuchsia",
+        "image": "/products/coming-soon/fushia-graffiti-blazer-fuchsia"
+      }
+    ]
+  },
+  {
+    "slug": "houndstooth-blazer",
+    "name": "Monochrome Houndstooth Blazer",
+    "category": "women",
+    "price": 2500,
+    "color": "Houndstooth",
+    "variants": [
+      {
+        "color": "Houndstooth",
+        "image": "/products/coming-soon/houndstooth-blazer-houndstooth"
+      }
+    ]
+  }
+]

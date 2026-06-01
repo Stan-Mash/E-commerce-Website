@@ -11,12 +11,10 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { isAuthenticatedAdminRequest } from "@/lib/adminAuth";
 
 function checkAuth(request: NextRequest): boolean {
-  const session = request.cookies.get("admin_session")?.value === "elite-admin-2024";
-  const token   = request.cookies.get("admin_token")?.value   === "elite-admin-2024";
-  const header  = request.headers.get("x-admin-token")        === "elite-admin-2024";
-  return session || token || header;
+  return isAuthenticatedAdminRequest(request);
 }
 
 const BUCKET        = "product-images";

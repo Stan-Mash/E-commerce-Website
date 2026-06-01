@@ -61,7 +61,7 @@ interface FormState {
 const INITIAL_FORM: FormState = {
   name: "",
   slug: "",
-  category: "Woman",
+  category: "women",
   description: "",
   basePrice: "",
   comparePrice: "",
@@ -535,10 +535,10 @@ export default function NewProductPage() {
               onChange={handleChange}
               style={{ ...INPUT_STYLE, cursor: "pointer" }}
             >
-              <option value="Woman">Woman</option>
-              <option value="Man">Man</option>
-              <option value="Children">Children</option>
-              <option value="Accessories">Accessories</option>
+              <option value="women">Women</option>
+              <option value="men">Men</option>
+              <option value="children">Children</option>
+              <option value="accessories">Accessories</option>
             </select>
           </div>
           <div>

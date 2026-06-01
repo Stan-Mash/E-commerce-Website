@@ -11,9 +11,9 @@ export function AnnouncementBar() {
         padding: "12px 0",
       }}
     >
-      COMPLIMENTARY DELIVERY ACROSS KENYA&nbsp;&nbsp;·&nbsp;&nbsp;
+      FREE DELIVERY WITHIN NAIROBI CBD&nbsp;&nbsp;·&nbsp;&nbsp;
       NEW ARRIVALS EVERY WEEK&nbsp;&nbsp;·&nbsp;&nbsp;
-      PAY WITH M-PESA AT CHECKOUT
+      PAY WITH M-PESA OR CARD AT CHECKOUT
     </div>
   );
 }

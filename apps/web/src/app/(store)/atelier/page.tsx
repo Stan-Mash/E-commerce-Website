@@ -100,7 +100,7 @@ export default function AboutPage() {
                 numeral: "03",
                 label: "WE DELIVER TO YOU",
                 description:
-                  "Your order is packed and dispatched. Complimentary delivery across Kenya. Track your order and receive it at your door.",
+                  "Your order is packed and dispatched. Free delivery within Nairobi CBD, low flat rate countrywide. Track your order and receive it at your door.",
               },
             ].map((step) => (
               <div key={step.numeral} className="flex flex-col">

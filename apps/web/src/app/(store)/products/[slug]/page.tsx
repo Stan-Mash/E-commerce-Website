@@ -3,6 +3,8 @@ import type { Metadata } from "next";
 import { ProductGallery } from "@/components/product/ProductGallery";
 import { ProductInfo } from "@/components/product/ProductInfo";
 import { ProductBreadcrumb } from "@/components/product/ProductBreadcrumb";
+import { RelatedProducts } from "@/components/product/RelatedProducts";
+import { ProductReviews } from "@/components/product/ProductReviews";
 import type { ProductDetail } from "@nairobi-fashion/lib";
 
 interface Props {
@@ -37,7 +39,7 @@ async function getProduct(slug: string): Promise<ProductDetail | null> {
            product_videos(id, cloudinary_url, cloudinary_public_id, thumbnail_url, duration_seconds, sort_order)`
         )
         .eq("slug", slug)
-        .eq("status", "active")
+        .in("status", ["active", "coming_soon"])
         .single();
       if (!error && data) return data as unknown as ProductDetail;
     } catch {
@@ -109,6 +111,13 @@ export default async function ProductPage({ params }: Props) {
           />
           <ProductInfo product={product} />
         </div>
+        {product.status !== "coming_soon" && (
+          <ProductReviews productId={product.id} />
+        )}
+        <RelatedProducts
+          category={product.category}
+          currentProductId={product.id}
+        />
       </div>
     </>
   );

@@ -11,9 +11,61 @@ const CATS = [
   { label: "New In",      sub: "Just dropped",     href: "/products" },
 ];
 
-export function Hero() {
+interface HeroProps {
+  /** Real count of purchasable (active) products, shown as social proof. */
+  productCount?: number;
+}
+
+export function Hero({ productCount }: HeroProps = {}) {
+  // Show a tidy "N+" only when we genuinely have a meaningful catalogue;
+  // otherwise fall back to an honest label rather than an inflated number.
+  const stylesValue =
+    productCount && productCount >= 10
+      ? `${Math.floor(productCount / 10) * 10}+`
+      : productCount && productCount > 0
+        ? `${productCount}`
+        : "New";
+
   return (
     <section>
+      <style>{`
+        @keyframes kenburns {
+          from { transform: scale(1); }
+          to   { transform: scale(1.06); }
+        }
+
+        @keyframes fadeInUp {
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        .hero-headline {
+          animation: fadeInUp 0.7s ease-out 0.1s both;
+        }
+
+        .hero-subtitle {
+          animation: fadeInUp 0.7s ease-out 0.3s both;
+        }
+
+        .hero-cta {
+          animation: fadeInUp 0.7s ease-out 0.5s both;
+        }
+
+        .hero-img {
+          animation: kenburns 16s ease-in-out infinite alternate;
+        }
+
+        .hero-cat-link:hover {
+          background: #fafafa !important;
+        }
+      `}</style>
+
       {/* ── Main hero — split layout ──────────────────────── */}
       <div style={{
         display: "grid",
@@ -32,6 +84,7 @@ export function Hero() {
           <img
             src="/products/tweed-set-black-white.jpg"
             alt="New collection — Tweed Jacket & Skirt Set"
+            className="hero-img"
             style={{
               position: "absolute",
               inset: 0,
@@ -70,7 +123,7 @@ export function Hero() {
               Free delivery
             </p>
             <p style={{ fontFamily: FONT, fontSize: 13, fontWeight: 700, color: "#111", margin: 0 }}>
-              Across all of Kenya 🇰🇪
+              Within Nairobi CBD 🇰🇪
             </p>
           </div>
         </div>
@@ -96,32 +149,38 @@ export function Hero() {
             Elite Style Co. · Nairobi
           </span>
 
-          <h1 style={{
-            fontFamily: FONT,
-            fontSize: "clamp(42px, 5.5vw, 76px)",
-            fontWeight: 900,
-            lineHeight: 1.02,
-            letterSpacing: "-0.04em",
-            color: "#111",
-            margin: "0 0 24px",
-          }}>
+          <h1
+            className="hero-headline"
+            style={{
+              fontFamily: "var(--font-bodoni)",
+              fontSize: "clamp(42px, 5.5vw, 76px)",
+              fontWeight: 900,
+              lineHeight: 1.02,
+              letterSpacing: "-0.04em",
+              color: "#111",
+              margin: "0 0 24px",
+            }}
+          >
             Dressed<br />for every<br />moment.
           </h1>
 
-          <p style={{
-            fontFamily: FONT,
-            fontSize: 15,
-            fontWeight: 400,
-            color: "#555",
-            lineHeight: 1.75,
-            maxWidth: 400,
-            margin: "0 0 40px",
-          }}>
+          <p
+            className="hero-subtitle"
+            style={{
+              fontFamily: FONT,
+              fontSize: 15,
+              fontWeight: 400,
+              color: "#555",
+              lineHeight: 1.75,
+              maxWidth: 400,
+              margin: "0 0 40px",
+            }}
+          >
             Curated fashion for the whole family — KES pricing,
-            M-Pesa checkout, free delivery across Kenya.
+            M-Pesa &amp; card checkout, free delivery within Nairobi CBD.
           </p>
 
-          <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+          <div className="hero-cta" style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
             <Link
               href="/products"
               style={{
@@ -168,8 +227,8 @@ export function Hero() {
           {/* Social proof */}
           <div style={{ display: "flex", gap: 32, marginTop: 48 }}>
             {[
-              { num: "500+", label: "Styles" },
-              { num: "Free", label: "Delivery" },
+              { num: stylesValue, label: "Styles" },
+              { num: "CBD", label: "Free delivery" },
               { num: "M-Pesa", label: "Accepted" },
             ].map((s) => (
               <div key={s.label}>
@@ -197,6 +256,7 @@ export function Hero() {
           <Link
             key={cat.label}
             href={cat.href}
+            className="hero-cat-link"
             style={{
               display: "flex",
               alignItems: "center",
@@ -207,8 +267,6 @@ export function Hero() {
               transition: "background .15s",
               background: "#fff",
             }}
-            onMouseEnter={e => (e.currentTarget.style.background = "#fafafa")}
-            onMouseLeave={e => (e.currentTarget.style.background = "#fff")}
           >
             <div>
               <p style={{ fontFamily: FONT, fontSize: 10, fontWeight: 600, color: "#888", textTransform: "uppercase", letterSpacing: "0.12em", margin: "0 0 4px" }}>

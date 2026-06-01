@@ -1,11 +1,46 @@
 import Link from "next/link";
 
-const COLS = [
-  { h: "COMPANY",     items: ["About Us", "How It Works", "Contact Us", "Press"] },
-  { h: "DEPARTMENTS", items: ["Woman", "Man", "Children", "Gift Cards"] },
-  { h: "SUPPORT",     items: ["Delivery", "Returns", "Sizing Guide", "Track Order"] },
-  { h: "CONNECT",     items: ["Instagram", "TikTok", "WhatsApp", "Facebook"] },
-] as const;
+type FooterItem = { label: string; href: string };
+type FooterCol = { h: string; items: FooterItem[] };
+
+const COLS: FooterCol[] = [
+  {
+    h: "COMPANY",
+    items: [
+      { label: "About Us",   href: "/atelier" },
+      { label: "How It Works", href: "/atelier#how-it-works" },
+      { label: "Contact Us", href: "/contact" },
+      { label: "Press",      href: "#" },
+    ],
+  },
+  {
+    h: "DEPARTMENTS",
+    items: [
+      { label: "Woman",      href: "/woman" },
+      { label: "Man",        href: "/man" },
+      { label: "Children",   href: "/children" },
+      { label: "Gift Cards", href: "#" },
+    ],
+  },
+  {
+    h: "SUPPORT",
+    items: [
+      { label: "Delivery",     href: "#" },
+      { label: "Returns",      href: "/returns" },
+      { label: "Sizing Guide", href: "#" },
+      { label: "Track Order",  href: "/track" },
+    ],
+  },
+  {
+    h: "CONNECT",
+    items: [
+      { label: "Instagram", href: "https://instagram.com" },
+      { label: "TikTok",    href: "https://tiktok.com" },
+      { label: "WhatsApp",  href: "https://wa.me/254700000000" },
+      { label: "Facebook",  href: "https://facebook.com" },
+    ],
+  },
+];
 
 const PAYMENT_METHODS = ["VISA", "MASTERCARD", "M-PESA"] as const;
 
@@ -38,7 +73,7 @@ export function SiteFooter() {
             }}
           >
             Nairobi&apos;s go-to online fashion store — curated styles for the whole
-            family, delivered free across Kenya.
+            family, free delivery within Nairobi CBD.
           </p>
           {/* Payment badges */}
           <div style={{ display: "flex", gap: 8, marginTop: 28, flexWrap: "wrap" }}>
@@ -78,9 +113,9 @@ export function SiteFooter() {
             </div>
             <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 12 }}>
               {col.items.map((item) => (
-                <li key={item}>
+                <li key={item.label}>
                   <Link
-                    href="#"
+                    href={item.href}
                     style={{
                       fontFamily: "var(--font-inter), sans-serif",
                       fontSize: 13,
@@ -89,7 +124,7 @@ export function SiteFooter() {
                       textDecoration: "none",
                     }}
                   >
-                    {item}
+                    {item.label}
                   </Link>
                 </li>
               ))}

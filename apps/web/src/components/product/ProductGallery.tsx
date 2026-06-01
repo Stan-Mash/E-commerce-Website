@@ -4,6 +4,7 @@ import { useState, useRef } from "react";
 import Image from "next/image";
 import { Play, Pause, Volume2, VolumeX } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ImageZoomModal } from "@/components/product/ImageZoomModal";
 import type { ProductImage, ProductVideo } from "@nairobi-fashion/lib";
 
 interface Props {
@@ -30,6 +31,7 @@ export function ProductGallery({ images, videos, productName }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isPlaying, setIsPlaying] = useState(true);
   const [isMuted, setIsMuted] = useState(true);
+  const [zoomOpen, setZoomOpen] = useState(false);
 
   const active = mediaItems[activeIndex];
 
@@ -49,93 +51,150 @@ export function ProductGallery({ images, videos, productName }: Props) {
     setIsMuted(!isMuted);
   }
 
+  const activeImageUrl =
+    active?.kind === "image" ? active.url : null;
+  const activeImageAlt =
+    active?.kind === "image" ? (active.alt ?? productName) : productName;
+
   return (
-    <div className="flex flex-col gap-3">
-      {/* Main media */}
-      <div className="relative aspect-product w-full rounded-2xl overflow-hidden bg-surface-warm">
-        {active?.kind === "video" ? (
-          <>
-            <video
-              ref={videoRef}
-              key={active.cloudinary_url}
-              src={active.cloudinary_url}
-              poster={active.thumbnail_url ?? undefined}
-              autoPlay
-              muted={isMuted}
-              loop
-              playsInline
-              className="w-full h-full object-cover"
-            />
-            {/* Video controls overlay */}
-            <div className="absolute bottom-3 left-3 flex items-center gap-2">
+    <>
+      <div className="flex flex-col gap-3">
+        {/* Main media */}
+        <div className="relative aspect-product w-full rounded-2xl overflow-hidden bg-surface-warm group">
+          {active?.kind === "video" ? (
+            <>
+              <video
+                ref={videoRef}
+                key={active.cloudinary_url}
+                src={active.cloudinary_url}
+                poster={active.thumbnail_url ?? undefined}
+                autoPlay
+                muted={isMuted}
+                loop
+                playsInline
+                className="w-full h-full object-cover"
+              />
+              {/* Video controls overlay */}
+              <div className="absolute bottom-3 left-3 flex items-center gap-2">
+                <button
+                  onClick={togglePlay}
+                  className="rounded-full bg-black/50 p-2 text-white backdrop-blur-sm hover:bg-black/70 transition-colors"
+                  aria-label={isPlaying ? "Pause" : "Play"}
+                >
+                  {isPlaying ? <Pause size={16} /> : <Play size={16} />}
+                </button>
+                <button
+                  onClick={toggleMute}
+                  className="rounded-full bg-black/50 p-2 text-white backdrop-blur-sm hover:bg-black/70 transition-colors"
+                  aria-label={isMuted ? "Unmute" : "Mute"}
+                >
+                  {isMuted ? <VolumeX size={16} /> : <Volume2 size={16} />}
+                </button>
+              </div>
+              <span className="absolute top-3 left-3 rounded-full bg-black/50 px-2 py-1 text-xs text-white backdrop-blur-sm">
+                Video
+              </span>
+            </>
+          ) : active?.kind === "image" ? (
+            <>
+              <Image
+                src={active.url}
+                alt={active.alt ?? productName}
+                fill
+                sizes="(max-width: 768px) 100vw, 50vw"
+                className="object-cover"
+                priority={activeIndex === 0}
+              />
+              {/* Zoom trigger — click on image area */}
               <button
-                onClick={togglePlay}
-                className="rounded-full bg-black/50 p-2 text-white backdrop-blur-sm hover:bg-black/70 transition-colors"
-                aria-label={isPlaying ? "Pause" : "Play"}
-              >
-                {isPlaying ? <Pause size={16} /> : <Play size={16} />}
-              </button>
+                onClick={() => setZoomOpen(true)}
+                className="absolute inset-0 w-full h-full cursor-zoom-in"
+                aria-label="Zoom image"
+                tabIndex={0}
+              />
+              {/* Zoom icon overlay — bottom-right, appears on hover */}
               <button
-                onClick={toggleMute}
-                className="rounded-full bg-black/50 p-2 text-white backdrop-blur-sm hover:bg-black/70 transition-colors"
-                aria-label={isMuted ? "Unmute" : "Mute"}
+                onClick={() => setZoomOpen(true)}
+                aria-label="Zoom image"
+                className={cn(
+                  "absolute bottom-3 right-3 rounded-full bg-white/80 p-2 shadow-md",
+                  "opacity-0 group-hover:opacity-100 transition-opacity duration-200",
+                  "pointer-events-none group-hover:pointer-events-auto",
+                  "backdrop-blur-sm"
+                )}
               >
-                {isMuted ? <VolumeX size={16} /> : <Volume2 size={16} />}
+                {/* Magnifying glass SVG */}
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="text-es-ink"
+                  aria-hidden="true"
+                >
+                  <circle cx="11" cy="11" r="8" />
+                  <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                  <line x1="11" y1="8" x2="11" y2="14" />
+                  <line x1="8" y1="11" x2="14" y2="11" />
+                </svg>
               </button>
-            </div>
-            <span className="absolute top-3 left-3 rounded-full bg-black/50 px-2 py-1 text-xs text-white backdrop-blur-sm">
-              Video
-            </span>
-          </>
-        ) : active?.kind === "image" ? (
-          <Image
-            src={active.url}
-            alt={active.alt ?? productName}
-            fill
-            sizes="(max-width: 768px) 100vw, 50vw"
-            className="object-cover"
-            priority={activeIndex === 0}
-          />
-        ) : null}
+            </>
+          ) : null}
+        </div>
+
+        {/* Thumbnail strip */}
+        {mediaItems.length > 1 && (
+          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+            {mediaItems.map((item, i) => (
+              <button
+                key={i}
+                onClick={() => setActiveIndex(i)}
+                className={cn(
+                  "relative flex-shrink-0 w-16 h-20 rounded-xl overflow-hidden border-2 transition-all",
+                  activeIndex === i
+                    ? "border-brand-500 shadow-md"
+                    : "border-transparent opacity-70 hover:opacity-100"
+                )}
+                aria-label={`View ${item.kind === "video" ? "video" : "image"} ${i + 1}`}
+              >
+                {item.kind === "video" ? (
+                  <>
+                    {item.thumbnail_url ? (
+                      <Image src={item.thumbnail_url} alt="Video thumbnail" fill className="object-cover" />
+                    ) : (
+                      <div className="w-full h-full bg-ink/10 flex items-center justify-center">
+                        <Play size={16} className="text-ink-muted" />
+                      </div>
+                    )}
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="rounded-full bg-black/50 p-1">
+                        <Play size={10} className="text-white" />
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <Image src={item.url} alt={item.alt ?? `Image ${i + 1}`} fill className="object-cover" />
+                )}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
-      {/* Thumbnail strip */}
-      {mediaItems.length > 1 && (
-        <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-          {mediaItems.map((item, i) => (
-            <button
-              key={i}
-              onClick={() => setActiveIndex(i)}
-              className={cn(
-                "relative flex-shrink-0 w-16 h-20 rounded-xl overflow-hidden border-2 transition-all",
-                activeIndex === i
-                  ? "border-brand-500 shadow-md"
-                  : "border-transparent opacity-70 hover:opacity-100"
-              )}
-              aria-label={`View ${item.kind === "video" ? "video" : "image"} ${i + 1}`}
-            >
-              {item.kind === "video" ? (
-                <>
-                  {item.thumbnail_url ? (
-                    <Image src={item.thumbnail_url} alt="Video thumbnail" fill className="object-cover" />
-                  ) : (
-                    <div className="w-full h-full bg-ink/10 flex items-center justify-center">
-                      <Play size={16} className="text-ink-muted" />
-                    </div>
-                  )}
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="rounded-full bg-black/50 p-1">
-                      <Play size={10} className="text-white" />
-                    </div>
-                  </div>
-                </>
-              ) : (
-                <Image src={item.url} alt={item.alt ?? `Image ${i + 1}`} fill className="object-cover" />
-              )}
-            </button>
-          ))}
-        </div>
+      {/* Zoom modal */}
+      {activeImageUrl && (
+        <ImageZoomModal
+          src={activeImageUrl}
+          alt={activeImageAlt}
+          isOpen={zoomOpen}
+          onClose={() => setZoomOpen(false)}
+        />
       )}
-    </div>
+    </>
   );
 }
