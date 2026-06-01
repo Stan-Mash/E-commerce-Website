@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import Link from "next/link";
 
 interface SKURow {
@@ -17,6 +17,7 @@ interface ProductRow {
   category: string;
   base_price: number;
   status: "active" | "draft" | "archived";
+  image_url: string | null;
   skus: SKURow[];
 }
 
@@ -35,11 +36,56 @@ const STATUS_STYLES: Record<string, { background: string; color: string }> = {
   archived: { background: "#fafafa", color: "#757575" },
 };
 
+const PAGE_SIZE = 20;
+
+function ProductThumbnail({ imageUrl }: { imageUrl: string | null }) {
+  if (imageUrl) {
+    return (
+      <img
+        src={imageUrl}
+        alt=""
+        style={{ width: 48, height: 48, objectFit: "cover", borderRadius: 2, display: "block" }}
+      />
+    );
+  }
+  return (
+    <div
+      style={{
+        width: 48,
+        height: 48,
+        background: "#e0e0e0",
+        borderRadius: 2,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        flexShrink: 0,
+      }}
+    >
+      <svg
+        width="22"
+        height="22"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="#9e9e9e"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z" />
+        <line x1="7" y1="7" x2="7.01" y2="7" />
+      </svg>
+    </div>
+  );
+}
+
 export default function AdminProductsPage() {
   const [products, setProducts] = useState<ProductRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "draft" | "archived">("all");
+  const [page, setPage] = useState(1);
 
   const loadProducts = useCallback(async () => {
     setLoading(true);
@@ -63,6 +109,28 @@ export default function AdminProductsPage() {
   useEffect(() => {
     void loadProducts();
   }, [loadProducts]);
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setPage(1);
+  }, [search, statusFilter]);
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return products.filter((p) => {
+      const matchesSearch =
+        q === "" ||
+        p.name.toLowerCase().includes(q) ||
+        p.category.toLowerCase().includes(q);
+      const matchesStatus =
+        statusFilter === "all" || p.status === statusFilter;
+      return matchesSearch && matchesStatus;
+    });
+  }, [products, search, statusFilter]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const safePage = Math.min(page, totalPages);
+  const pageItems = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
 
   function confirmDelete(id: string) {
     setDeleteId(id);
@@ -89,6 +157,9 @@ export default function AdminProductsPage() {
 
   const productToDelete = products.find((p) => p.id === deleteId);
 
+  // Column headers: Image + original 6
+  const colHeaders = ["", "Name", "Category", "Price", "SKUs / Stock", "Status", ""];
+
   return (
     <div>
       {/* Page header */}
@@ -97,7 +168,7 @@ export default function AdminProductsPage() {
           display: "flex",
           alignItems: "flex-end",
           justifyContent: "space-between",
-          marginBottom: 40,
+          marginBottom: 32,
           gap: 16,
           flexWrap: "wrap",
         }}
@@ -132,6 +203,107 @@ export default function AdminProductsPage() {
         </Link>
       </div>
 
+      {/* Search + Status filter */}
+      <div
+        style={{
+          display: "flex",
+          gap: 12,
+          marginBottom: 24,
+          flexWrap: "wrap",
+          alignItems: "stretch",
+        }}
+      >
+        {/* Search bar */}
+        <div
+          style={{
+            flex: 1,
+            minWidth: 220,
+            display: "flex",
+            alignItems: "center",
+            borderBottom: "2px solid var(--es-ink)",
+            paddingBottom: 6,
+            gap: 8,
+          }}
+        >
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="var(--es-mute)"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            style={{ flexShrink: 0 }}
+          >
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search products..."
+            style={{
+              flex: 1,
+              border: "none",
+              outline: "none",
+              background: "transparent",
+              fontFamily: "var(--font-inter)",
+              fontSize: 14,
+              color: "var(--es-ink)",
+            }}
+          />
+          {search && (
+            <button
+              onClick={() => setSearch("")}
+              style={{
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                padding: 0,
+                color: "var(--es-mute)",
+                fontSize: 16,
+                lineHeight: 1,
+                flexShrink: 0,
+              }}
+              aria-label="Clear search"
+            >
+              ×
+            </button>
+          )}
+        </div>
+
+        {/* Status filter */}
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)}
+          style={{
+            fontFamily: "var(--font-inter)",
+            fontSize: 12,
+            letterSpacing: "0.1em",
+            textTransform: "uppercase",
+            color: "var(--es-ink)",
+            background: "var(--es-white)",
+            border: "1px solid var(--es-bone)",
+            borderRadius: 4,
+            padding: "8px 32px 8px 14px",
+            cursor: "pointer",
+            appearance: "none",
+            backgroundImage:
+              "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23666'/%3E%3C/svg%3E\")",
+            backgroundRepeat: "no-repeat",
+            backgroundPosition: "right 10px center",
+            minWidth: 140,
+          }}
+        >
+          <option value="all">All Status</option>
+          <option value="active">Active</option>
+          <option value="draft">Draft</option>
+          <option value="archived">Archived</option>
+        </select>
+      </div>
+
       {/* Table */}
       <div style={{ overflowX: "auto" }}>
         <table
@@ -143,12 +315,12 @@ export default function AdminProductsPage() {
         >
           <thead>
             <tr style={{ background: "var(--es-ink)" }}>
-              {["Name", "Category", "Price", "SKUs / Stock", "Status", ""].map((col, i) => (
+              {colHeaders.map((col, i) => (
                 <th
                   key={i}
                   style={{
-                    padding: "14px 20px",
-                    textAlign: i === 5 ? "right" : "left",
+                    padding: i === 0 ? "14px 12px 14px 20px" : "14px 20px",
+                    textAlign: i === colHeaders.length - 1 ? "right" : "left",
                     fontFamily: "var(--font-inter)",
                     fontSize: 11,
                     letterSpacing: "0.3em",
@@ -156,6 +328,7 @@ export default function AdminProductsPage() {
                     color: "var(--es-white)",
                     fontWeight: 500,
                     whiteSpace: "nowrap",
+                    width: i === 0 ? 72 : undefined,
                   }}
                 >
                   {col}
@@ -168,7 +341,7 @@ export default function AdminProductsPage() {
             {loading ? (
               <tr>
                 <td
-                  colSpan={6}
+                  colSpan={colHeaders.length}
                   style={{
                     padding: "48px 20px",
                     textAlign: "center",
@@ -181,10 +354,10 @@ export default function AdminProductsPage() {
                   Loading products…
                 </td>
               </tr>
-            ) : products.length === 0 ? (
+            ) : filtered.length === 0 ? (
               <tr>
                 <td
-                  colSpan={6}
+                  colSpan={colHeaders.length}
                   style={{
                     padding: "64px 20px",
                     textAlign: "center",
@@ -194,14 +367,20 @@ export default function AdminProductsPage() {
                     background: "var(--es-white)",
                   }}
                 >
-                  No products yet.{" "}
-                  <Link href="/admin/products/new" style={{ color: "var(--es-plum)" }}>
-                    Add the first one →
-                  </Link>
+                  {products.length === 0 ? (
+                    <>
+                      No products yet.{" "}
+                      <Link href="/admin/products/new" style={{ color: "var(--es-plum)" }}>
+                        Add the first one →
+                      </Link>
+                    </>
+                  ) : (
+                    "No products match your search."
+                  )}
                 </td>
               </tr>
             ) : (
-              products.map((product, index) => {
+              pageItems.map((product, index) => {
                 const isEven = index % 2 === 0;
                 const statusStyle = STATUS_STYLES[product.status] ?? STATUS_STYLES["draft"]!;
                 const totalStock = product.skus.reduce((s, sku) => s + sku.stock_quantity, 0);
@@ -213,6 +392,12 @@ export default function AdminProductsPage() {
                       background: isEven ? "var(--es-white)" : "var(--es-paper)",
                     }}
                   >
+                    {/* Thumbnail */}
+                    <td style={{ padding: "12px 12px 12px 20px", width: 72 }}>
+                      <ProductThumbnail imageUrl={product.image_url} />
+                    </td>
+
+                    {/* Name */}
                     <td style={{ padding: "16px 20px" }}>
                       <span
                         style={{
@@ -226,6 +411,7 @@ export default function AdminProductsPage() {
                       </span>
                     </td>
 
+                    {/* Category */}
                     <td style={{ padding: "16px 20px" }}>
                       <span
                         style={{
@@ -245,6 +431,7 @@ export default function AdminProductsPage() {
                       </span>
                     </td>
 
+                    {/* Price */}
                     <td style={{ padding: "16px 20px" }}>
                       <span
                         style={{
@@ -258,6 +445,7 @@ export default function AdminProductsPage() {
                       </span>
                     </td>
 
+                    {/* SKUs / Stock */}
                     <td style={{ padding: "16px 20px" }}>
                       <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
                         {product.skus.length > 0 ? (
@@ -267,25 +455,44 @@ export default function AdminProductsPage() {
                               style={{
                                 fontFamily: "var(--font-inter)",
                                 fontSize: 11,
-                                color: sku.stock_quantity === 0 ? "#c0392b" : sku.stock_quantity < 5 ? "#f57f17" : "var(--es-mute)",
+                                color:
+                                  sku.stock_quantity === 0
+                                    ? "#c0392b"
+                                    : sku.stock_quantity < 5
+                                    ? "#f57f17"
+                                    : "var(--es-mute)",
                               }}
                             >
-                              {sku.size}{sku.color ? ` / ${sku.color}` : ""} — {sku.stock_quantity} units
+                              {sku.size}
+                              {sku.color ? ` / ${sku.color}` : ""} — {sku.stock_quantity} units
                             </span>
                           ))
                         ) : (
-                          <span style={{ fontFamily: "var(--font-inter)", fontSize: 11, color: "var(--es-mute)" }}>
+                          <span
+                            style={{
+                              fontFamily: "var(--font-inter)",
+                              fontSize: 11,
+                              color: "var(--es-mute)",
+                            }}
+                          >
                             No SKUs
                           </span>
                         )}
                         {product.skus.length > 3 && (
-                          <span style={{ fontFamily: "var(--font-inter)", fontSize: 11, color: "var(--es-mute)" }}>
+                          <span
+                            style={{
+                              fontFamily: "var(--font-inter)",
+                              fontSize: 11,
+                              color: "var(--es-mute)",
+                            }}
+                          >
                             +{product.skus.length - 3} more · {totalStock} total
                           </span>
                         )}
                       </div>
                     </td>
 
+                    {/* Status */}
                     <td style={{ padding: "16px 20px" }}>
                       <span
                         style={{
@@ -306,7 +513,14 @@ export default function AdminProductsPage() {
                       </span>
                     </td>
 
-                    <td style={{ padding: "16px 20px", textAlign: "right", whiteSpace: "nowrap" }}>
+                    {/* Actions */}
+                    <td
+                      style={{
+                        padding: "16px 20px",
+                        textAlign: "right",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
                       <Link
                         href={`/admin/products/${product.id}/edit`}
                         style={{
@@ -345,6 +559,86 @@ export default function AdminProductsPage() {
           </tbody>
         </table>
       </div>
+
+      {/* Pagination */}
+      {!loading && filtered.length > 0 && (
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            marginTop: 24,
+            flexWrap: "wrap",
+            gap: 12,
+          }}
+        >
+          <span
+            style={{
+              fontFamily: "var(--font-inter)",
+              fontSize: 12,
+              color: "var(--es-mute)",
+              letterSpacing: "0.05em",
+            }}
+          >
+            {filtered.length} product{filtered.length !== 1 ? "s" : ""}
+            {search || statusFilter !== "all" ? " found" : " total"}
+          </span>
+
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <button
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={safePage <= 1}
+              style={{
+                fontFamily: "var(--font-inter)",
+                fontSize: 12,
+                letterSpacing: "0.15em",
+                textTransform: "uppercase",
+                color: safePage <= 1 ? "var(--es-mute)" : "var(--es-ink)",
+                background: "none",
+                border: "1px solid var(--es-bone)",
+                borderRadius: 4,
+                padding: "7px 16px",
+                cursor: safePage <= 1 ? "not-allowed" : "pointer",
+                opacity: safePage <= 1 ? 0.5 : 1,
+              }}
+            >
+              Prev
+            </button>
+
+            <span
+              style={{
+                fontFamily: "var(--font-inter)",
+                fontSize: 12,
+                color: "var(--es-ink)",
+                letterSpacing: "0.05em",
+                whiteSpace: "nowrap",
+              }}
+            >
+              Page {safePage} of {totalPages}
+            </span>
+
+            <button
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={safePage >= totalPages}
+              style={{
+                fontFamily: "var(--font-inter)",
+                fontSize: 12,
+                letterSpacing: "0.15em",
+                textTransform: "uppercase",
+                color: safePage >= totalPages ? "var(--es-mute)" : "var(--es-ink)",
+                background: "none",
+                border: "1px solid var(--es-bone)",
+                borderRadius: 4,
+                padding: "7px 16px",
+                cursor: safePage >= totalPages ? "not-allowed" : "pointer",
+                opacity: safePage >= totalPages ? 0.5 : 1,
+              }}
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Delete confirmation modal */}
       {deleteId && productToDelete && (

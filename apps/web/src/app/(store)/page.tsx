@@ -7,11 +7,28 @@ import { AtelierBanner }   from "@/components/es/homepage/AtelierBanner";
 import { SaleBand }        from "@/components/es/homepage/SaleBand";
 import { Journal }         from "@/components/es/homepage/Journal";
 import { Newsletter }      from "@/components/es/homepage/Newsletter";
+import { createPublicSupabaseClient } from "@/lib/supabase/server";
 
-export default function HomePage() {
+export const revalidate = 60;
+
+async function getActiveProductCount(): Promise<number> {
+  try {
+    const supabase = createPublicSupabaseClient();
+    const { count } = await supabase
+      .from("products")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "active");
+    return count ?? 0;
+  } catch {
+    return 0;
+  }
+}
+
+export default async function HomePage() {
+  const productCount = await getActiveProductCount();
   return (
     <div style={{ background: "#ffffff" }}>
-      <Hero />
+      <Hero productCount={productCount} />
       <HousePrinciple />
       <FeaturedGrid />
       <MpesaMoment />

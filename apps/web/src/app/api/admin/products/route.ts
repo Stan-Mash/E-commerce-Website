@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { isAuthenticatedAdminRequest } from "@/lib/adminAuth";
 
 function getAdminClient() {
   return createClient(
@@ -10,10 +11,7 @@ function getAdminClient() {
 }
 
 function checkAuth(request: NextRequest): boolean {
-  const session = request.cookies.get("admin_session")?.value === "elite-admin-2024";
-  const token   = request.cookies.get("admin_token")?.value   === "elite-admin-2024";
-  const header  = request.headers.get("x-admin-token")        === "elite-admin-2024";
-  return session || token || header;
+  return isAuthenticatedAdminRequest(request);
 }
 
 export async function GET(request: NextRequest) {
@@ -88,6 +86,20 @@ export async function POST(request: NextRequest) {
 
   if (productError) {
     return NextResponse.json({ error: productError.message }, { status: 500 });
+  }
+
+  // Sync primary image into product_images table (used by the public storefront)
+  if (image_url) {
+    await supabase.from("product_images").upsert(
+      {
+        product_id: product.id,
+        url: image_url,
+        alt: name ?? null,
+        media_type: "image",
+        sort_order: 0,
+      },
+      { onConflict: "product_id,sort_order" }
+    );
   }
 
   // Insert SKUs if provided

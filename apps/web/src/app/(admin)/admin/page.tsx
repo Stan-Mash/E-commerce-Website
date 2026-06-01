@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import DashboardChart from "./DashboardChart";
+import AnimatedCounter from "./AnimatedCounter";
 
 export const metadata: Metadata = { title: "Dashboard" };
 
@@ -110,14 +112,42 @@ async function getDashboardData(): Promise<DashboardData> {
 
 export default async function AdminDashboardPage() {
   const data = await getDashboardData();
+  const maxRevenue = Math.max(...data.revenue_last_7_days.map((d) => d.revenue), 0);
 
-  const maxRevenue = Math.max(...data.revenue_last_7_days.map((d) => d.revenue), 1);
+  const lastUpdated = new Date().toLocaleString("en-KE", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  });
 
-  const STATS = [
-    { label: "Total Revenue", value: formatKES(data.total_revenue), accent: "var(--es-gold)" },
-    { label: "Total Orders", value: String(data.order_count), accent: "var(--es-plum)" },
-    { label: "Products", value: String(data.product_count), accent: "var(--es-plum)" },
-    { label: "Low Stock SKUs", value: String(data.low_stock_count), accent: data.low_stock_count > 0 ? "#c0392b" : "#2e7d32" },
+  const STATS: Array<{
+    label: string;
+    value: number;
+    prefix?: string;
+    accent: string;
+    isLowStock?: boolean;
+  }> = [
+    {
+      label: "Total Revenue",
+      value: data.total_revenue,
+      prefix: "Ksh",
+      accent: "var(--es-gold)",
+    },
+    {
+      label: "Total Orders",
+      value: data.order_count,
+      accent: "var(--es-plum)",
+    },
+    {
+      label: "Products",
+      value: data.product_count,
+      accent: "var(--es-plum)",
+    },
+    {
+      label: "Low Stock SKUs",
+      value: data.low_stock_count,
+      accent: data.low_stock_count > 0 ? "#c0392b" : "#2e7d32",
+      isLowStock: true,
+    },
   ];
 
   return (
@@ -136,17 +166,38 @@ export default async function AdminDashboardPage() {
         >
           Overview
         </p>
-        <h1
+        <div
           style={{
-            fontFamily: "var(--font-bodoni)",
-            fontSize: 36,
-            fontWeight: 400,
-            color: "var(--es-ink)",
-            margin: 0,
+            display: "flex",
+            alignItems: "baseline",
+            justifyContent: "space-between",
+            flexWrap: "wrap",
+            gap: 8,
           }}
         >
-          Dashboard
-        </h1>
+          <h1
+            style={{
+              fontFamily: "var(--font-bodoni)",
+              fontSize: 36,
+              fontWeight: 400,
+              color: "var(--es-ink)",
+              margin: 0,
+            }}
+          >
+            Dashboard
+          </h1>
+          <p
+            style={{
+              fontFamily: "var(--font-inter)",
+              fontSize: 11,
+              color: "var(--es-mute)",
+              margin: 0,
+              letterSpacing: "0.05em",
+            }}
+          >
+            Last updated: {lastUpdated}
+          </p>
+        </div>
       </div>
 
       {/* Stat cards */}
@@ -163,21 +214,25 @@ export default async function AdminDashboardPage() {
             key={stat.label}
             style={{
               background: "var(--es-white)",
-              padding: "28px 24px",
+              padding: "32px 28px 28px",
               borderTop: `3px solid ${stat.accent}`,
             }}
           >
             <p
               style={{
                 fontFamily: "var(--font-bodoni)",
-                fontSize: 32,
+                fontSize: 34,
                 fontWeight: 400,
                 color: stat.accent,
-                margin: "0 0 8px",
+                margin: "0 0 10px",
                 lineHeight: 1,
               }}
             >
-              {stat.value}
+              <AnimatedCounter
+                value={stat.value}
+                prefix={stat.prefix}
+                duration={1200}
+              />
             </p>
             <p
               style={{
@@ -255,64 +310,62 @@ export default async function AdminDashboardPage() {
       >
         {/* Revenue bar chart */}
         <div style={{ background: "var(--es-white)", padding: 32 }}>
-          <p
+          <div
             style={{
-              fontFamily: "var(--font-inter)",
-              fontSize: 11,
-              letterSpacing: "0.35em",
-              textTransform: "uppercase",
-              color: "var(--es-mute)",
-              margin: "0 0 24px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              marginBottom: 24,
             }}
           >
-            Revenue — Last 7 Days
-          </p>
-          <div style={{ display: "flex", alignItems: "flex-end", gap: 8, height: 120 }}>
-            {data.revenue_last_7_days.map((day) => {
-              const heightPct = maxRevenue > 0 ? (day.revenue / maxRevenue) * 100 : 0;
-              const label = new Date(day.date + "T00:00:00").toLocaleDateString("en-KE", {
-                weekday: "short",
-              });
-              return (
-                <div
-                  key={day.date}
-                  style={{
-                    flex: 1,
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    gap: 4,
-                    height: "100%",
-                    justifyContent: "flex-end",
-                  }}
-                  title={`${day.date}: ${formatKES(day.revenue)}`}
-                >
-                  <div
-                    style={{
-                      width: "100%",
-                      height: `${Math.max(heightPct, day.revenue > 0 ? 4 : 0)}%`,
-                      background: day.revenue > 0 ? "var(--es-plum)" : "var(--es-bone)",
-                      borderRadius: "2px 2px 0 0",
-                      minHeight: day.revenue > 0 ? 4 : 2,
-                      transition: "height 0.3s ease",
-                    }}
-                  />
-                  <span
-                    style={{
-                      fontFamily: "var(--font-inter)",
-                      fontSize: 9,
-                      letterSpacing: "0.1em",
-                      textTransform: "uppercase",
-                      color: "var(--es-mute)",
-                      whiteSpace: "nowrap",
-                    }}
-                  >
-                    {label}
-                  </span>
-                </div>
-              );
-            })}
+            <p
+              style={{
+                fontFamily: "var(--font-inter)",
+                fontSize: 11,
+                letterSpacing: "0.35em",
+                textTransform: "uppercase",
+                color: "var(--es-mute)",
+                margin: 0,
+              }}
+            >
+              Revenue — Last 7 Days
+            </p>
+            {/* Date range note */}
+            <span
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 5,
+                fontFamily: "var(--font-inter)",
+                fontSize: 10,
+                color: "var(--es-mute)",
+                letterSpacing: "0.05em",
+              }}
+              title="Showing revenue from paid, processing, shipped, and delivered orders over the last 7 days"
+            >
+              {/* Info icon */}
+              <svg
+                width="12"
+                height="12"
+                viewBox="0 0 16 16"
+                fill="none"
+                aria-hidden="true"
+                style={{ flexShrink: 0 }}
+              >
+                <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5" />
+                <path
+                  d="M8 7v5"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                />
+                <circle cx="8" cy="4.5" r="0.75" fill="currentColor" />
+              </svg>
+              Last 7 days
+            </span>
           </div>
+
+          <DashboardChart data={data.revenue_last_7_days} maxRevenue={maxRevenue} />
         </div>
 
         {/* Recent orders */}

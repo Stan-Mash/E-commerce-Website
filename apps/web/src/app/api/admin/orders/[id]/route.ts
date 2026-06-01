@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { isAuthenticatedAdminRequest } from "@/lib/adminAuth";
 
 function getAdminClient() {
   return createClient(
@@ -10,10 +11,7 @@ function getAdminClient() {
 }
 
 function checkAuth(request: NextRequest): boolean {
-  const session = request.cookies.get("admin_session")?.value === "elite-admin-2024";
-  const token   = request.cookies.get("admin_token")?.value   === "elite-admin-2024";
-  const header  = request.headers.get("x-admin-token")        === "elite-admin-2024";
-  return session || token || header;
+  return isAuthenticatedAdminRequest(request);
 }
 
 export async function GET(
@@ -60,6 +58,36 @@ export async function GET(
 }
 
 export async function PUT(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  if (!checkAuth(request)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
+    return NextResponse.json({ error: "Not configured" }, { status: 503 });
+  }
+
+  const body = await request.json();
+  const { status } = body;
+
+  const supabase = getAdminClient();
+  const { data, error } = await supabase
+    .from("orders")
+    .update({ status })
+    .eq("id", params.id)
+    .select()
+    .single();
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  return NextResponse.json({ order: data });
+}
+
+export async function PATCH(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {

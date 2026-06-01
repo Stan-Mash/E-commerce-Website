@@ -6,7 +6,7 @@ const STEPS = [
   { n: "01", title: "Browse", detail: "Explore thousands of curated styles for women, men and children — all KES priced." },
   { n: "02", title: "Add to bag", detail: "Select your size and add to cart. No account required to shop." },
   { n: "03", title: "Pay with M-Pesa", detail: "Enter your Safaricom number at checkout. Confirm the push prompt. Done." },
-  { n: "04", title: "We deliver", detail: "Your order ships free to your door anywhere in Kenya. Track it in real time." },
+  { n: "04", title: "We deliver", detail: "Free delivery within Nairobi CBD, low flat rate countrywide. Track it in real time." },
 ] as const;
 
 export function AtelierBanner() {

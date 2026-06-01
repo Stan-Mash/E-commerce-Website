@@ -5,6 +5,7 @@ import { Redis } from "@upstash/redis";
 import { initiateSTKPush } from "@/lib/mpesa/daraja";
 import { createAdminSupabaseClient } from "@/lib/supabase/server";
 import { normaliseKenyanPhone, generateOrderRef } from "@/lib/utils";
+import { deliveryFeeFor, requiresAddress, normaliseDeliveryType } from "@/lib/delivery";
 
 const ratelimit = new Ratelimit({
   redis: Redis.fromEnv(),
@@ -24,14 +25,17 @@ const CheckoutSchema = z
       )
       .min(1)
       .max(20),
-    deliveryType: z.enum(["pickup", "door"]),
+    // "door" accepted for backwards compatibility; normalised to "outside_cbd".
+    deliveryType: z.enum(["pickup", "cbd", "outside_cbd", "door"]),
     deliveryAddress: z.string().min(10).max(300).optional(),
     notes: z.string().max(200).optional(),
   })
   .refine(
-    (data) => data.deliveryType !== "door" || !!data.deliveryAddress,
+    (data) =>
+      !requiresAddress(normaliseDeliveryType(data.deliveryType)) ||
+      !!data.deliveryAddress,
     {
-      message: "A delivery address is required for door deliveries.",
+      message: "A delivery address is required for deliveries.",
       path: ["deliveryAddress"],
     }
   );
@@ -56,7 +60,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Validation failed", details: parsed.error.flatten() }, { status: 422 });
   }
 
-  const { phone, items, deliveryType, deliveryAddress, notes } = parsed.data;
+  const { phone, items, deliveryAddress, notes } = parsed.data;
+  const deliveryType = normaliseDeliveryType(parsed.data.deliveryType);
 
   let normalisedPhone: string;
   try {
@@ -95,7 +100,8 @@ export async function POST(req: NextRequest) {
     subtotal += price * item.quantity;
   }
   subtotal = Math.round(subtotal);
-  const deliveryFee = deliveryType === "door" ? 250 : 0;  // always a whole number
+  // Free within Nairobi CBD and for pickup; flat fee outside CBD.
+  const deliveryFee = deliveryFeeFor(deliveryType);  // always a whole number
   const total = Math.round(subtotal + deliveryFee);
 
   // Build RPC payload — stock check, order creation, and stock decrement

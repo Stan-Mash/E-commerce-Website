@@ -5,6 +5,7 @@ import { ShoppingBag, Heart, Share2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useCart } from "@/components/checkout/CartProvider";
 import { formatKES } from "@/lib/utils";
+import { SizeGuide } from "@/components/product/SizeGuide";
 import type { ProductDetail } from "@nairobi-fashion/lib";
 
 interface Props {
@@ -12,7 +13,7 @@ interface Props {
 }
 
 export function ProductInfo({ product }: Props) {
-  const { addItem } = useCart();
+  const { addItem, openCart } = useCart();
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
@@ -33,6 +34,7 @@ export function ProductInfo({ product }: Props) {
       (uniqueColors.length === 0 || s.color === selectedColor)
   );
 
+  const isComingSoon = product.status === "coming_soon";
   const inStock = selectedSku ? selectedSku.stock_quantity > 0 : true;
   const discount =
     product.compare_price && product.compare_price > product.base_price
@@ -64,6 +66,7 @@ export function ProductInfo({ product }: Props) {
       imageUrl: product.product_images?.[0]?.url ?? "",
       quantity: 1,
     });
+    openCart();
     setAddedMessage("Added to bag!");
     setAdding(false);
     setTimeout(() => setAddedMessage(""), 2000);
@@ -151,15 +154,18 @@ export function ProductInfo({ product }: Props) {
       {/* Size selector */}
       {uniqueSizes.length > 0 && (
         <div>
-          <p
-            className="text-es-ink mb-2"
-            style={{ fontSize: "13px", letterSpacing: ".12em" }}
-          >
-            Size:{" "}
-            <span className="text-es-mute font-normal">
-              {selectedSize ?? "Select"}
-            </span>
-          </p>
+          <div className="flex items-center justify-between mb-2">
+            <p
+              className="text-es-ink"
+              style={{ fontSize: "13px", letterSpacing: ".12em" }}
+            >
+              Size:{" "}
+              <span className="text-es-mute font-normal">
+                {selectedSize ?? "Select"}
+              </span>
+            </p>
+            <SizeGuide activeSize={selectedSize} />
+          </div>
           <div className="flex gap-2 flex-wrap">
             {uniqueSizes.map((size) => {
               const skuForSize = product.skus?.find((s) => s.size === size);
@@ -195,12 +201,18 @@ export function ProductInfo({ product }: Props) {
       <div className="flex gap-3">
         <button
           onClick={handleAddToCart}
-          disabled={adding || !inStock}
+          disabled={adding || !inStock || isComingSoon}
           className="es-btn-plum flex-1"
           style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}
         >
           <ShoppingBag size={18} />
-          {!inStock ? "OUT OF STOCK" : adding ? "ADDING…" : "ADD TO BAG"}
+          {isComingSoon
+            ? "COMING SOON"
+            : !inStock
+            ? "OUT OF STOCK"
+            : adding
+            ? "ADDING…"
+            : "ADD TO BAG"}
         </button>
         <button
           className="border border-es-bone p-3 hover:border-es-plum hover:text-es-plum transition-colors"
@@ -239,7 +251,7 @@ export function ProductInfo({ product }: Props) {
           className="text-[11px] tracking-[.25em] uppercase text-es-mute"
         >
           <span className="text-es-gold">◆</span>
-          {" "}COMPLIMENTARY DELIVERY ACROSS KENYA
+          {" "}FREE DELIVERY WITHIN NAIROBI CBD
         </p>
         <p
           className="text-[11px] tracking-[.25em] uppercase text-es-mute"

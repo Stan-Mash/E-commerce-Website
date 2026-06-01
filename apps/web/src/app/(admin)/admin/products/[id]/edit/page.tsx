@@ -69,7 +69,7 @@ export default function EditProductPage({ params }: Props) {
   const [form, setForm] = useState<FormState>({
     name: "",
     slug: "",
-    category: "Woman",
+    category: "women",
     description: "",
     base_price: "",
     compare_price: "",
@@ -510,10 +510,10 @@ export default function EditProductPage({ params }: Props) {
             <div>
               <label style={LABEL_STYLE}>Category</label>
               <select style={INPUT_STYLE} value={form.category} onChange={(e) => set("category", e.target.value)}>
-                <option value="Woman">Woman</option>
-                <option value="Man">Man</option>
-                <option value="Children">Children</option>
-                <option value="Accessories">Accessories</option>
+                <option value="women">Women</option>
+                <option value="men">Men</option>
+                <option value="children">Children</option>
+                <option value="accessories">Accessories</option>
               </select>
             </div>
             <div>
