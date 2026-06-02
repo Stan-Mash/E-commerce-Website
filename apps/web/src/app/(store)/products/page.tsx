@@ -18,9 +18,22 @@ interface ProductRow {
 }
 
 // ---------------------------------------------------------------------------
+// Seed fallback (shown when Supabase is not configured or returns no data)
+// ---------------------------------------------------------------------------
+const SEED_PRODUCTS: ProductRow[] = [
+  { id:"1", name:"Kikoy Wrap Dress", slug:"kikoy-wrap-dress", base_price:8500, compare_price:11000, category:"woman", product_images:[], skus:[{size:"S",color:null,color_hex:null,stock_quantity:4},{size:"M",color:null,color_hex:null,stock_quantity:6},{size:"L",color:null,color_hex:null,stock_quantity:3}] },
+  { id:"2", name:"Bead Collar Shirt", slug:"maasai-bead-collar-shirt", base_price:6200, compare_price:null, category:"man", product_images:[], skus:[{size:"S",color:null,color_hex:null,stock_quantity:2},{size:"M",color:null,color_hex:null,stock_quantity:5},{size:"L",color:null,color_hex:null,stock_quantity:4}] },
+  { id:"3", name:"Ankara Print Jumpsuit", slug:"ankara-print-kids-jumpsuit", base_price:4800, compare_price:null, category:"children", product_images:[], skus:[{size:"2Y",color:null,color_hex:null,stock_quantity:8},{size:"4Y",color:null,color_hex:null,stock_quantity:6}] },
+  { id:"4", name:"Nairobi Linen Co-ord", slug:"nairobi-linen-co-ord", base_price:12400, compare_price:null, category:"woman", product_images:[], skus:[{size:"S",color:null,color_hex:null,stock_quantity:3},{size:"M",color:null,color_hex:null,stock_quantity:4}] },
+  { id:"5", name:"Wax Print Relaxed Shirt", slug:"kitenge-baraza-shirt", base_price:5800, compare_price:null, category:"man", product_images:[], skus:[{size:"M",color:null,color_hex:null,stock_quantity:5},{size:"L",color:null,color_hex:null,stock_quantity:4}] },
+  { id:"6", name:"Check Print Romper", slug:"shuka-check-romper", base_price:3200, compare_price:null, category:"children", product_images:[], skus:[{size:"2Y",color:null,color_hex:null,stock_quantity:6},{size:"4Y",color:null,color_hex:null,stock_quantity:5}] },
+];
+
+// ---------------------------------------------------------------------------
 // Data fetching
 // ---------------------------------------------------------------------------
 async function getProducts(): Promise<ProductRow[]> {
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL) return SEED_PRODUCTS;
   try {
     const supabase = createPublicSupabaseClient();
     const { data, error } = await supabase
@@ -33,10 +46,10 @@ async function getProducts(): Promise<ProductRow[]> {
       .eq("status", "active")
       .order("created_at", { ascending: false });
 
-    if (error || !data) return [];
+    if (error || !data || data.length === 0) return SEED_PRODUCTS;
     return data as unknown as ProductRow[];
   } catch {
-    return [];
+    return SEED_PRODUCTS;
   }
 }
 

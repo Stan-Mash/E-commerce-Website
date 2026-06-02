@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export function SaleBand() {
   return (
     <section
@@ -39,7 +41,7 @@ export function SaleBand() {
           <span style={{ color: "#3d1a4a" }}>10 days only, by invitation.</span>
         </span>
       </div>
-      <button className="es-btn-plum">RESERVE ACCESS →</button>
+      <Link href="/contact" className="es-btn-plum" style={{ textDecoration: "none" }}>RESERVE ACCESS →</Link>
     </section>
   );
 }

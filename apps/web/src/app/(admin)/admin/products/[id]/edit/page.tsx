@@ -520,6 +520,7 @@ export default function EditProductPage({ params }: Props) {
               <label style={LABEL_STYLE}>Status</label>
               <select style={INPUT_STYLE} value={form.status} onChange={(e) => set("status", e.target.value)}>
                 <option value="active">Active</option>
+                <option value="coming_soon">Coming Soon</option>
                 <option value="draft">Draft</option>
                 <option value="archived">Archived</option>
               </select>

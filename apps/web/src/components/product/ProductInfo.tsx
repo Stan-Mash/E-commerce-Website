@@ -35,7 +35,13 @@ export function ProductInfo({ product }: Props) {
   );
 
   const isComingSoon = product.status === "coming_soon";
-  const inStock = selectedSku ? selectedSku.stock_quantity > 0 : true;
+  // If a SKU is selected, check its stock. If nothing is selected yet, fall back
+  // to whether ANY SKU across the product has stock — so a product where every
+  // size is zero-stock shows "OUT OF STOCK" instead of appearing clickable.
+  const anySkuInStock = product.skus
+    ? product.skus.length === 0 || product.skus.some((s) => s.stock_quantity > 0)
+    : true;
+  const inStock = selectedSku ? selectedSku.stock_quantity > 0 : anySkuInStock;
   const discount =
     product.compare_price && product.compare_price > product.base_price
       ? Math.round(

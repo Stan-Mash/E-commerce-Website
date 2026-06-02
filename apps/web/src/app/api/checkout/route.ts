@@ -1,17 +1,29 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { Ratelimit } from "@upstash/ratelimit";
-import { Redis } from "@upstash/redis";
 import { initiateSTKPush } from "@/lib/mpesa/daraja";
 import { createAdminSupabaseClient } from "@/lib/supabase/server";
 import { normaliseKenyanPhone, generateOrderRef } from "@/lib/utils";
 import { deliveryFeeFor, requiresAddress, normaliseDeliveryType } from "@/lib/delivery";
 
-const ratelimit = new Ratelimit({
-  redis: Redis.fromEnv(),
-  limiter: Ratelimit.slidingWindow(10, "1 m"),
-  analytics: true,
-});
+/** Rate limiting is optional — only active when Upstash env vars are present. */
+async function checkRateLimit(ip: string): Promise<boolean> {
+  if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) {
+    return true; // no limiter configured — allow
+  }
+  try {
+    const { Ratelimit } = await import("@upstash/ratelimit");
+    const { Redis } = await import("@upstash/redis");
+    const rl = new Ratelimit({
+      redis: Redis.fromEnv(),
+      limiter: Ratelimit.slidingWindow(10, "1 m"),
+      analytics: true,
+    });
+    const { success } = await rl.limit(ip);
+    return success;
+  } catch {
+    return true; // fail open if Redis is misconfigured
+  }
+}
 
 const CheckoutSchema = z
   .object({
@@ -41,10 +53,26 @@ const CheckoutSchema = z
   );
 
 export async function POST(req: NextRequest) {
-  // Rate limit per IP
+  try {
+    return await _handlePost(req);
+  } catch (err) {
+    console.error("[checkout] Unhandled error:", err);
+    return NextResponse.json({ error: "Internal server error", detail: String(err) }, { status: 500 });
+  }
+}
+
+async function _handlePost(req: NextRequest) {
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    return NextResponse.json(
+      { error: "Checkout is not available yet. Supabase is not configured." },
+      { status: 503 }
+    );
+  }
+
+  // Rate limit per IP (only when Upstash is configured)
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "anonymous";
-  const { success } = await ratelimit.limit(ip);
-  if (!success) {
+  const allowed = await checkRateLimit(ip);
+  if (!allowed) {
     return NextResponse.json({ error: "Too many requests. Please wait a moment." }, { status: 429 });
   }
 
@@ -76,10 +104,16 @@ export async function POST(req: NextRequest) {
 
   // Fetch SKU prices (needed for total calculation before calling RPC)
   const skuIds = items.map((i) => i.skuId);
-  const { data: rawSkus, error: skuErr } = await supabase
-    .from("skus")
-    .select("id, stock_quantity, product:products(name, base_price)")
-    .in("id", skuIds);
+  let rawSkus: unknown, skuErr: unknown;
+  try {
+    ({ data: rawSkus, error: skuErr } = await supabase
+      .from("skus")
+      .select("id, stock_quantity, product:products(name, base_price)")
+      .in("id", skuIds));
+  } catch (e) {
+    console.error("Supabase SKU fetch threw:", e);
+    return NextResponse.json({ error: "Failed to fetch product data" }, { status: 503 });
+  }
   const skus = rawSkus as unknown as SkuWithProduct[] | null;
 
   if (skuErr || !skus || skus.length !== items.length) {

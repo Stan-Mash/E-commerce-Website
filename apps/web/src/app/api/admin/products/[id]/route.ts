@@ -139,9 +139,32 @@ export async function PUT(
         stock_quantity: Number(sku.stock_quantity ?? 0),
       }));
 
-      const { error: skuError } = await supabase.from("skus").insert(skuRows);
+      const { data: insertedSkus, error: skuError } = await supabase
+        .from("skus")
+        .insert(skuRows)
+        .select("id, stock_quantity");
       if (skuError) {
         return NextResponse.json({ error: skuError.message }, { status: 500 });
+      }
+
+      // Re-create inventory_levels for Main Warehouse after SKU replacement
+      if (insertedSkus && insertedSkus.length > 0) {
+        const { data: warehouse } = await supabase
+          .from("locations")
+          .select("id")
+          .eq("name", "Main Warehouse")
+          .single();
+
+        if (warehouse) {
+          const levelRows = insertedSkus.map((s) => ({
+            sku_id: s.id,
+            location_id: warehouse.id,
+            quantity: s.stock_quantity,
+          }));
+          await supabase.from("inventory_levels").upsert(levelRows, {
+            onConflict: "sku_id,location_id",
+          });
+        }
       }
     }
   }

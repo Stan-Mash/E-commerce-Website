@@ -102,7 +102,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // Insert SKUs if provided
+  // Insert SKUs + inventory_levels rows (so stock is tracked per location)
   if (Array.isArray(skuList) && skuList.length > 0) {
     const skuRows = skuList.map((sku: {
       sku_code: string;
@@ -119,9 +119,33 @@ export async function POST(request: NextRequest) {
       stock_quantity: Number(sku.stock_quantity ?? 0),
     }));
 
-    const { error: skuError } = await supabase.from("skus").insert(skuRows);
+    const { data: insertedSkus, error: skuError } = await supabase
+      .from("skus")
+      .insert(skuRows)
+      .select("id, stock_quantity");
     if (skuError) {
       return NextResponse.json({ error: skuError.message }, { status: 500 });
+    }
+
+    // Create inventory_levels rows for Main Warehouse so the checkout RPC
+    // can reserve stock (it reads inventory_levels, not skus.stock_quantity).
+    if (insertedSkus && insertedSkus.length > 0) {
+      const { data: warehouse } = await supabase
+        .from("locations")
+        .select("id")
+        .eq("name", "Main Warehouse")
+        .single();
+
+      if (warehouse) {
+        const levelRows = insertedSkus.map((s) => ({
+          sku_id: s.id,
+          location_id: warehouse.id,
+          quantity: s.stock_quantity,
+        }));
+        await supabase.from("inventory_levels").upsert(levelRows, {
+          onConflict: "sku_id,location_id",
+        });
+      }
     }
   }
 

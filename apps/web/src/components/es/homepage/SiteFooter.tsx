@@ -7,37 +7,37 @@ const COLS: FooterCol[] = [
   {
     h: "COMPANY",
     items: [
-      { label: "About Us",   href: "/atelier" },
+      { label: "About Us",    href: "/atelier" },
       { label: "How It Works", href: "/atelier#how-it-works" },
-      { label: "Contact Us", href: "/contact" },
-      { label: "Press",      href: "#" },
+      { label: "Contact Us",  href: "/contact" },
+      { label: "Press",       href: "/contact" },
     ],
   },
   {
     h: "DEPARTMENTS",
     items: [
-      { label: "Woman",      href: "/woman" },
-      { label: "Man",        href: "/man" },
-      { label: "Children",   href: "/children" },
-      { label: "Gift Cards", href: "#" },
+      { label: "Woman",       href: "/woman" },
+      { label: "Man",         href: "/man" },
+      { label: "Children",    href: "/children" },
+      { label: "New Arrivals", href: "/products" },
     ],
   },
   {
     h: "SUPPORT",
     items: [
-      { label: "Delivery",     href: "#" },
-      { label: "Returns",      href: "/returns" },
-      { label: "Sizing Guide", href: "#" },
-      { label: "Track Order",  href: "/track" },
+      { label: "Delivery & Returns", href: "/returns" },
+      { label: "Sizing Guide",       href: "/products" },
+      { label: "Track Order",        href: "/track" },
+      { label: "Contact Us",         href: "/contact" },
     ],
   },
   {
     h: "CONNECT",
     items: [
-      { label: "Instagram", href: "https://instagram.com" },
-      { label: "TikTok",    href: "https://tiktok.com" },
+      { label: "Instagram", href: "https://instagram.com/elitestyleco" },
+      { label: "TikTok",    href: "https://tiktok.com/@elitestyleco" },
       { label: "WhatsApp",  href: "https://wa.me/254700000000" },
-      { label: "Facebook",  href: "https://facebook.com" },
+      { label: "Facebook",  href: "https://facebook.com/elitestyleco" },
     ],
   },
 ];
@@ -151,7 +151,9 @@ export function SiteFooter() {
         }}
       >
         <span>© MMXXVI · ELITE STYLE CO.</span>
-        <span>PRIVACY · TERMS · COOKIES</span>
+        <Link href="/contact" style={{ color: "rgba(255,255,255,.5)", textDecoration: "none" }}>
+          PRIVACY · TERMS · COOKIES
+        </Link>
         <span>NAIROBI · KENYA</span>
       </div>
     </footer>
