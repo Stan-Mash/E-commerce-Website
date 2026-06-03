@@ -4,23 +4,25 @@
 
 @layer base {
   :root {
-    /* Primary UI font — Inter first, Urbanist fallback */
-    --font-inter: 'Inter', 'Urbanist', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --es-white:          #ffffff;
+    --es-paper:          #f7f6f4;
+    --es-bone:           #eeece8;
+    --es-ink:            #0d0d0d;
+    --es-char:           #1a1a1a;
+    --es-mute:           #6b6b6b;
+    --es-faint:          #a8a8a8;
+    --es-hair:           rgba(13,13,13,0.08);
+    --es-rule:           rgba(13,13,13,0.12);
+    --es-champagne:      #b5a090;
+    --es-champagne-lt:   #f0ece8;
+    --es-champagne-dk:   #8c7262;
 
-    /* Design tokens */
-    --es-white:   #ffffff;
-    --es-paper:   #f7f7f7;
-    --es-bone:    #eeeeee;
-    --es-ink:     #111111;
-    --es-char:    #222222;
-    --es-mute:    #666666;
-    --es-faint:   #aaaaaa;
-    --es-hair:    rgba(0,0,0,0.08);
-    --es-plum:    #3d1a4a;
-    --es-plum-dk: #2a1135;
-    --es-plum-lt: #f5eeff;
-    --es-gold:    #c9a961;
-    --es-gold-dk: #9b7b3f;
+    /* Compatibility aliases — plum references resolve to ink while component migration continues */
+    --es-plum:           var(--es-ink);
+    --es-plum-dk:        var(--es-char);
+    --es-plum-lt:        var(--es-champagne-lt);
+    --es-gold:           var(--es-champagne);
+    --es-gold-dk:        var(--es-champagne-dk);
   }
 
   * { box-sizing: border-box; }
@@ -31,9 +33,9 @@
   }
 
   body {
-    background: #ffffff;
-    color: #111111;
-    font-family: var(--font-inter);
+    background: var(--es-white);
+    color: var(--es-ink);
+    font-family: var(--font-inter), system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
@@ -48,52 +50,64 @@
 }
 
 @layer components {
-  /* ── Button system — clean, modern ──────────────────────── */
+  /* ── Button system ───────────────────────────────────────── */
   .es-btn-plum {
     @apply inline-flex items-center justify-center gap-2
-           bg-[#111] text-white
+           bg-es-ink text-white
            px-8 py-4
-           font-sans text-[12px] font-bold tracking-[0.06em] uppercase
+           font-sans text-[12px] font-bold tracking-label uppercase
            border-0 cursor-pointer
            transition-all duration-150
-           hover:bg-[#333]
+           hover:bg-es-char
+           active:scale-[0.99]
            disabled:opacity-50 disabled:cursor-not-allowed;
-    font-family: var(--font-inter);
   }
 
   .es-btn-outline-ink {
     @apply inline-flex items-center justify-center gap-2
-           bg-transparent text-[#111]
+           bg-transparent text-es-ink
            px-8 py-4
-           font-sans text-[12px] font-bold tracking-[0.06em] uppercase
-           border-2 border-[#111] cursor-pointer
+           font-sans text-[12px] font-bold tracking-label uppercase
+           border border-es-rule cursor-pointer
            transition-all duration-150
-           hover:bg-[#111] hover:text-white
+           hover:border-es-ink hover:bg-es-ink hover:text-white
+           active:scale-[0.99]
            disabled:opacity-50;
-    font-family: var(--font-inter);
   }
 
   .es-btn-outline-white {
     @apply inline-flex items-center justify-center gap-2
            bg-transparent text-white
            px-8 py-4
-           font-sans text-[12px] font-bold tracking-[0.06em] uppercase
-           border-2 border-white cursor-pointer
+           font-sans text-[12px] font-bold tracking-label uppercase
+           border border-white/60 cursor-pointer
            transition-all duration-150
-           hover:bg-white hover:text-[#111]
+           hover:bg-white hover:text-es-ink
+           active:scale-[0.99]
            disabled:opacity-50;
-    font-family: var(--font-inter);
+  }
+
+  .es-btn-champagne {
+    @apply inline-flex items-center justify-center gap-2
+           bg-es-champagne-lt text-es-champagne-dk
+           px-8 py-4
+           font-sans text-[12px] font-semibold tracking-label uppercase
+           border border-es-champagne cursor-pointer
+           transition-all duration-150
+           hover:bg-es-champagne hover:text-white
+           active:scale-[0.99]
+           disabled:opacity-50;
   }
 
   /* ── Typography helpers ──────────────────────────────────── */
   .es-eyebrow {
-    font-family: var(--font-inter);
-    @apply text-[11px] font-semibold tracking-[0.15em] uppercase text-[#888];
+    @apply text-[11px] font-semibold tracking-label uppercase text-es-faint;
+    font-family: var(--font-inter), system-ui, sans-serif;
   }
 
   .es-overline {
-    font-family: var(--font-inter);
-    @apply text-[10px] font-semibold tracking-[0.12em] uppercase;
+    @apply text-[10px] font-semibold tracking-label uppercase;
+    font-family: var(--font-inter), system-ui, sans-serif;
   }
 
   /* ── Card / skeleton ─────────────────────────────────────── */

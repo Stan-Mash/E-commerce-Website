@@ -2,23 +2,18 @@
 
 import Link from "next/link";
 
-const FONT = "'Inter','Urbanist',sans-serif";
-
 const CATS = [
-  { label: "Women",       sub: "New arrivals",     href: "/woman" },
-  { label: "Men",         sub: "Sharp looks",      href: "/man" },
-  { label: "Children",    sub: "Mini style",       href: "/children" },
-  { label: "New In",      sub: "Just dropped",     href: "/products" },
-];
+  { label: "Women",    sub: "Current edit",  href: "/woman" },
+  { label: "Men",      sub: "Sharp looks",   href: "/man" },
+  { label: "Children", sub: "Mini style",    href: "/children" },
+  { label: "New In",   sub: "Just landed",   href: "/products" },
+] as const;
 
 interface HeroProps {
-  /** Real count of purchasable (active) products, shown as social proof. */
   productCount?: number;
 }
 
 export function Hero({ productCount }: HeroProps = {}) {
-  // Show a tidy "N+" only when we genuinely have a meaningful catalogue;
-  // otherwise fall back to an honest label rather than an inflated number.
   const stylesValue =
     productCount && productCount >= 10
       ? `${Math.floor(productCount / 10) * 10}+`
@@ -31,211 +26,88 @@ export function Hero({ productCount }: HeroProps = {}) {
       <style>{`
         @keyframes kenburns {
           from { transform: scale(1); }
-          to   { transform: scale(1.06); }
+          to   { transform: scale(1.05); }
         }
-
-        @keyframes fadeInUp {
-          from {
-            opacity: 0;
-            transform: translateY(20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-
-        .hero-headline {
-          animation: fadeInUp 0.7s ease-out 0.1s both;
-        }
-
-        .hero-subtitle {
-          animation: fadeInUp 0.7s ease-out 0.3s both;
-        }
-
-        .hero-cta {
-          animation: fadeInUp 0.7s ease-out 0.5s both;
-        }
-
-        .hero-img {
-          animation: kenburns 16s ease-in-out infinite alternate;
-        }
-
-        .hero-cat-link:hover {
-          background: #fafafa !important;
+        .hero-img      { animation: kenburns 18s ease-in-out infinite alternate; }
+        .hero-headline { animation: _fadeup 0.8s cubic-bezier(0.22,1,0.36,1) 0.10s both; }
+        .hero-sub      { animation: _fadeup 0.8s cubic-bezier(0.22,1,0.36,1) 0.28s both; }
+        .hero-cta      { animation: _fadeup 0.8s cubic-bezier(0.22,1,0.36,1) 0.46s both; }
+        .hero-stats    { animation: _fadeup 0.8s cubic-bezier(0.22,1,0.36,1) 0.62s both; }
+        @keyframes _fadeup {
+          from { opacity: 0; transform: translateY(14px); }
+          to   { opacity: 1; transform: translateY(0); }
         }
       `}</style>
 
-      {/* ── Main hero — split layout ──────────────────────── */}
-      <div style={{
-        display: "grid",
-        gridTemplateColumns: "1fr 1fr",
-        minHeight: "86vh",
-      }} className="!grid-cols-1 md:!grid-cols-2">
+      {/* ── Split layout ─────────────────────────────────── */}
+      <div className="grid grid-cols-1 md:grid-cols-2 min-h-[88vh]">
 
         {/* Image panel */}
-        <div style={{
-          position: "relative",
-          overflow: "hidden",
-          background: "#f0ebe3",
-          minHeight: 520,
-        }}>
+        <div className="relative overflow-hidden bg-es-bone order-first min-h-[60vw] md:min-h-0">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/products/tweed-set-black-white.jpg"
-            alt="New collection — Tweed Jacket & Skirt Set"
-            className="hero-img"
-            style={{
-              position: "absolute",
-              inset: 0,
-              width: "100%",
-              height: "100%",
-              objectFit: "cover",
-              objectPosition: "top center",
-            }}
+            alt="New season — Tweed Jacket & Skirt Set"
+            className="hero-img absolute inset-0 w-full h-full object-cover object-top"
           />
-          {/* Season badge */}
-          <div style={{
-            position: "absolute",
-            top: 24,
-            left: 24,
-            background: "#111",
-            color: "#fff",
-            fontFamily: FONT,
-            fontSize: 10,
-            fontWeight: 700,
-            letterSpacing: "0.14em",
-            textTransform: "uppercase",
-            padding: "7px 16px",
-          }}>
+
+          <div className="absolute top-5 left-5 bg-es-ink text-white px-4 py-[7px] text-[10px] font-semibold tracking-label uppercase font-sans">
             New Season 2026
           </div>
-          {/* Delivery badge */}
-          <div style={{
-            position: "absolute",
-            bottom: 24,
-            right: 24,
-            background: "rgba(255,255,255,0.96)",
-            padding: "12px 20px",
-            backdropFilter: "blur(8px)",
-          }}>
-            <p style={{ fontFamily: FONT, fontSize: 10, color: "#888", margin: "0 0 3px", letterSpacing: "0.1em", textTransform: "uppercase" }}>
-              Free delivery
+
+          <div className="absolute bottom-5 right-5 bg-white/95 backdrop-blur-sm px-5 py-3 border border-es-hair">
+            <p className="text-[10px] font-medium tracking-label uppercase text-es-mute mb-0.5 font-sans">
+              Complimentary delivery
             </p>
-            <p style={{ fontFamily: FONT, fontSize: 13, fontWeight: 700, color: "#111", margin: 0 }}>
-              Within Nairobi CBD 🇰🇪
+            <p className="text-[13px] font-bold text-es-ink font-sans">
+              Within Nairobi CBD
             </p>
           </div>
         </div>
 
         {/* Text panel */}
-        <div style={{
-          padding: "72px 64px",
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "center",
-          background: "#fff",
-        }} className="!p-8 md:!p-16">
-          <span style={{
-            display: "inline-block",
-            fontFamily: FONT,
-            fontSize: 11,
-            fontWeight: 700,
-            color: "#3d1a4a",
-            letterSpacing: "0.18em",
-            textTransform: "uppercase",
-            marginBottom: 24,
-          }}>
+        <div className="flex flex-col justify-center px-8 py-16 md:px-16 md:py-24 bg-white">
+
+          <span className="hero-headline text-[11px] font-semibold tracking-label uppercase text-es-champagne mb-6 block font-sans">
             Elite Style Co. · Nairobi
           </span>
 
           <h1
-            className="hero-headline"
+            className="hero-headline font-cormorant font-semibold text-es-ink mb-6"
             style={{
-              fontFamily: "var(--font-bodoni)",
-              fontSize: "clamp(42px, 5.5vw, 76px)",
-              fontWeight: 900,
-              lineHeight: 1.02,
-              letterSpacing: "-0.04em",
-              color: "#111",
-              margin: "0 0 24px",
+              fontSize: "clamp(48px, 5.5vw, 80px)",
+              lineHeight: 0.96,
+              letterSpacing: "-0.025em",
             }}
           >
             Dressed<br />for every<br />moment.
           </h1>
 
-          <p
-            className="hero-subtitle"
-            style={{
-              fontFamily: FONT,
-              fontSize: 15,
-              fontWeight: 400,
-              color: "#555",
-              lineHeight: 1.75,
-              maxWidth: 400,
-              margin: "0 0 40px",
-            }}
-          >
+          <p className="hero-sub font-sans text-[15px] text-es-mute leading-relaxed max-w-sm mb-10">
             Curated fashion for the whole family — KES pricing,
             M-Pesa &amp; card checkout, free delivery within Nairobi CBD.
           </p>
 
-          <div className="hero-cta" style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-            <Link
-              href="/products"
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                justifyContent: "center",
-                background: "#111",
-                color: "#fff",
-                fontFamily: FONT,
-                fontSize: 12,
-                fontWeight: 700,
-                letterSpacing: "0.08em",
-                textTransform: "uppercase",
-                padding: "15px 36px",
-                textDecoration: "none",
-                transition: "background .15s",
-              }}
-            >
-              Shop New Arrivals
+          <div className="hero-cta flex flex-wrap gap-3">
+            <Link href="/products" className="es-btn-plum min-w-[176px]">
+              Explore New Arrivals
             </Link>
-            <Link
-              href="/woman"
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                justifyContent: "center",
-                background: "#fff",
-                color: "#111",
-                fontFamily: FONT,
-                fontSize: 12,
-                fontWeight: 700,
-                letterSpacing: "0.08em",
-                textTransform: "uppercase",
-                padding: "15px 36px",
-                border: "2px solid #111",
-                textDecoration: "none",
-                transition: "all .15s",
-              }}
-            >
+            <Link href="/woman" className="es-btn-outline-ink min-w-[160px]">
               Women&apos;s Edit
             </Link>
           </div>
 
-          {/* Social proof */}
-          <div style={{ display: "flex", gap: 32, marginTop: 48 }}>
+          <div className="hero-stats flex gap-8 mt-12 pt-8 border-t border-es-hair">
             {[
-              { num: stylesValue, label: "Styles" },
-              { num: "CBD", label: "Free delivery" },
-              { num: "M-Pesa", label: "Accepted" },
+              { num: stylesValue, label: "Styles available" },
+              { num: "CBD",       label: "Free delivery zone" },
+              { num: "M-Pesa",    label: "Accepted" },
             ].map((s) => (
               <div key={s.label}>
-                <p style={{ fontFamily: FONT, fontSize: 22, fontWeight: 900, color: "#111", margin: "0 0 2px", letterSpacing: "-0.03em" }}>
+                <p className="font-cormorant text-2xl font-semibold text-es-ink leading-none mb-1">
                   {s.num}
                 </p>
-                <p style={{ fontFamily: FONT, fontSize: 11, color: "#888", margin: 0, letterSpacing: "0.05em" }}>
+                <p className="text-[11px] text-es-mute tracking-wide font-sans">
                   {s.label}
                 </p>
               </div>
@@ -244,39 +116,31 @@ export function Hero({ productCount }: HeroProps = {}) {
         </div>
       </div>
 
-      {/* ── Category strip ───────────────────────────────────── */}
-      <div style={{
-        display: "grid",
-        gridTemplateColumns: "repeat(4, 1fr)",
-        borderTop: "1px solid #e8e8e8",
-        borderBottom: "1px solid #e8e8e8",
-        background: "#fff",
-      }} className="!grid-cols-2 md:!grid-cols-4">
+      {/* ── Category strip ───────────────────────────────── */}
+      <div className="grid grid-cols-2 md:grid-cols-4 border-t border-b border-es-hair bg-white">
         {CATS.map((cat, i) => (
           <Link
             key={cat.label}
             href={cat.href}
-            className="hero-cat-link"
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              padding: "20px 28px",
-              textDecoration: "none",
-              borderRight: i < CATS.length - 1 ? "1px solid #e8e8e8" : "none",
-              transition: "background .15s",
-              background: "#fff",
-            }}
+            className={[
+              "group flex items-center justify-between px-6 py-5",
+              "hover:bg-es-paper transition-colors duration-150",
+              i < CATS.length - 1 ? "border-r border-es-hair" : "",
+            ].join(" ")}
           >
             <div>
-              <p style={{ fontFamily: FONT, fontSize: 10, fontWeight: 600, color: "#888", textTransform: "uppercase", letterSpacing: "0.12em", margin: "0 0 4px" }}>
+              <p className="text-[10px] font-semibold tracking-label uppercase text-es-faint mb-1 font-sans">
                 {cat.sub}
               </p>
-              <p style={{ fontFamily: FONT, fontSize: 16, fontWeight: 800, color: "#111", margin: 0, letterSpacing: "-0.02em" }}>
+              <p className="text-[15px] font-semibold text-es-ink group-hover:text-es-champagne-dk transition-colors duration-150 font-sans">
                 {cat.label}
               </p>
             </div>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <svg
+              width="16" height="16" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+              className="text-es-faint group-hover:text-es-champagne transition-colors duration-150 group-hover:translate-x-1 translate-x-0 duration-200"
+            >
               <path d="M5 12h14M12 5l7 7-7 7"/>
             </svg>
           </Link>

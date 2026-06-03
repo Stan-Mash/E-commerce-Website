@@ -35,7 +35,7 @@ function OrderConfirmedContent() {
           width: 88,
           height: 88,
           borderRadius: "50%",
-          border: "3px solid var(--es-plum)",
+          border: "3px solid var(--es-ink)",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
@@ -53,7 +53,7 @@ function OrderConfirmedContent() {
         >
           <path
             d="M10 22.5L18.5 31L34 13"
-            stroke="var(--es-plum)"
+            stroke="var(--es-ink)"
             strokeWidth="3"
             strokeLinecap="round"
             strokeLinejoin="round"

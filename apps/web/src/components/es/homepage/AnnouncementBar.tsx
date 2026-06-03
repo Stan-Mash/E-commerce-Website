@@ -1,19 +1,9 @@
 export function AnnouncementBar() {
   return (
-    <div
-      style={{
-        background: "#0a0a0a",
-        color: "#ffffff",
-        fontFamily: "var(--font-inter), sans-serif",
-        fontSize: 11,
-        letterSpacing: ".42em",
-        textAlign: "center",
-        padding: "12px 0",
-      }}
-    >
-      FREE DELIVERY WITHIN NAIROBI CBD&nbsp;&nbsp;·&nbsp;&nbsp;
-      NEW ARRIVALS EVERY WEEK&nbsp;&nbsp;·&nbsp;&nbsp;
-      PAY WITH M-PESA OR CARD AT CHECKOUT
+    <div className="bg-es-ink text-white font-sans text-[11px] tracking-label text-center py-3 uppercase">
+      Complimentary delivery within Nairobi CBD&nbsp;&nbsp;·&nbsp;&nbsp;
+      New arrivals weekly&nbsp;&nbsp;·&nbsp;&nbsp;
+      Pay with M-Pesa or card
     </div>
   );
 }

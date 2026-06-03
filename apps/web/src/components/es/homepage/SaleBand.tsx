@@ -2,46 +2,19 @@ import Link from "next/link";
 
 export function SaleBand() {
   return (
-    <section
-      style={{
-        background: "#f1e9f5",
-        padding: "40px 64px",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        flexWrap: "wrap",
-        gap: 24,
-      }}
-    >
-      <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 28 }}>
-        <span
-          style={{
-            fontFamily: "var(--font-inter), sans-serif",
-            fontSize: 10,
-            letterSpacing: ".5em",
-            color: "#3d1a4a",
-            background: "transparent",
-            border: "1px solid #3d1a4a",
-            padding: "8px 14px",
-            textTransform: "uppercase",
-          }}
-        >
-          PRIVATE PREVIEW
+    <section className="bg-es-champagne-lt border-t border-b border-es-champagne/30 px-8 md:px-16 py-10 flex items-center justify-between flex-wrap gap-6">
+      <div className="flex items-center flex-wrap gap-7">
+        <span className="font-sans text-[10px] tracking-label uppercase text-es-champagne-dk border border-es-champagne px-3.5 py-2">
+          Private Preview
         </span>
-        <span
-          style={{
-            fontFamily: "'Inter','Urbanist',sans-serif",
-            fontSize: 22,
-            fontWeight: 800,
-            color: "#0a0a0a",
-            letterSpacing: "-.03em",
-          }}
-        >
+        <span className="font-cormorant text-[22px] md:text-[28px] font-semibold text-es-ink leading-tight tracking-[-0.02em]">
           The Equinox Edit —{" "}
-          <span style={{ color: "#3d1a4a" }}>10 days only, by invitation.</span>
+          <span className="text-es-champagne-dk italic">10 days only, by invitation.</span>
         </span>
       </div>
-      <Link href="/contact" className="es-btn-plum" style={{ textDecoration: "none" }}>RESERVE ACCESS →</Link>
+      <Link href="/contact" className="es-btn-champagne" style={{ textDecoration: "none" }}>
+        Reserve Access →
+      </Link>
     </section>
   );
 }

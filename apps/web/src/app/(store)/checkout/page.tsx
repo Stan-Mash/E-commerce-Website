@@ -201,7 +201,7 @@ export default function CheckoutPage() {
                   return (
                     <button key={opt.value} type="button" onClick={() => setDelivery(opt.value)} disabled={waiting}
                       style={optStyle(sel)} aria-pressed={sel}>
-                      <p style={{ fontSize: 10, letterSpacing: "0.2em", textTransform: "uppercase", color: sel ? "var(--es-plum)" : "var(--es-ink)", fontWeight: 600, marginBottom: 6 }}>{opt.label}</p>
+                      <p style={{ fontSize: 10, letterSpacing: "0.2em", textTransform: "uppercase", color: sel ? "var(--es-ink)" : "var(--es-ink)", fontWeight: 600, marginBottom: 6 }}>{opt.label}</p>
                       <p style={{ fontSize: 13, color: "var(--es-ink)", marginBottom: 2 }}>{opt.detail}</p>
                       <p style={{ fontSize: 12, color: "var(--es-mute)" }}>{opt.sub}</p>
                     </button>
@@ -230,7 +230,7 @@ export default function CheckoutPage() {
                   return (
                     <button key={opt.value} type="button" onClick={() => setMethod(opt.value)} disabled={waiting}
                       style={optStyle(sel)} aria-pressed={sel}>
-                      <p style={{ fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase", color: sel ? "var(--es-plum)" : "var(--es-ink)", fontWeight: 700, marginBottom: 4 }}>{opt.label}</p>
+                      <p style={{ fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase", color: sel ? "var(--es-ink)" : "var(--es-ink)", fontWeight: 700, marginBottom: 4 }}>{opt.label}</p>
                       <p style={{ fontSize: 12, color: "var(--es-mute)" }}>{opt.sub}</p>
                     </button>
                   );
@@ -296,7 +296,7 @@ export default function CheckoutPage() {
         @media (min-width: 900px) { .checkout-grid { grid-template-columns: 2fr 1fr !important; } }
         @media (max-width: 560px) { .opt-grid { grid-template-columns: 1fr !important; } }
         input::placeholder, textarea::placeholder { color: var(--es-faint); }
-        input:focus { border-bottom-color: var(--es-plum) !important; }
+        input:focus { border-bottom-color: var(--es-ink) !important; }
       `}</style>
     </div>
   );
@@ -305,7 +305,7 @@ export default function CheckoutPage() {
 const LABEL: React.CSSProperties = { fontSize: 11, letterSpacing: "0.3em", textTransform: "uppercase", color: "var(--es-mute)", marginBottom: 14 };
 const ERR: React.CSSProperties = { fontSize: 12, color: "#c0392b", marginTop: 6 };
 function optStyle(sel: boolean): React.CSSProperties {
-  return { padding: "16px 14px", border: sel ? "1.5px solid var(--es-plum)" : "1.5px solid var(--es-bone)", background: sel ? "var(--es-white)" : "var(--es-paper)", cursor: "pointer", textAlign: "left", transition: "border-color .15s, background .15s" };
+  return { padding: "16px 14px", border: sel ? "1.5px solid var(--es-ink)" : "1.5px solid var(--es-bone)", background: sel ? "var(--es-white)" : "var(--es-paper)", cursor: "pointer", textAlign: "left", transition: "border-color .15s, background .15s" };
 }
 
 function Row({ label, value }: { label: string; value: string }) {
@@ -320,7 +320,7 @@ function Row({ label, value }: { label: string; value: string }) {
 function WaitingState({ message }: { message: string }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "32px 24px", background: "var(--es-white)", border: "1px solid var(--es-bone)", textAlign: "center" }}>
-      <span aria-hidden="true" style={{ display: "inline-block", width: 36, height: 36, border: "3px solid var(--es-bone)", borderTopColor: "var(--es-plum)", borderRadius: "50%", animation: "es-spin 0.75s linear infinite" }} />
+      <span aria-hidden="true" style={{ display: "inline-block", width: 36, height: 36, border: "3px solid var(--es-bone)", borderTopColor: "var(--es-ink)", borderRadius: "50%", animation: "es-spin 0.75s linear infinite" }} />
       <p style={{ fontFamily: "var(--font-bodoni)", fontSize: 20, color: "var(--es-ink)", marginTop: 20, marginBottom: 8 }}>
         {message || "Waiting for M-Pesa confirmation…"}
       </p>

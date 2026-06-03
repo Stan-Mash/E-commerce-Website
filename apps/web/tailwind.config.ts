@@ -9,75 +9,68 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // ── Elite Style Co. design system ─────────────────────────────
+        // ── Elite Style Co. — Modern Premium design system ────────────
         es: {
-          white:   "#ffffff",
-          paper:   "#f6f5f2",
-          bone:    "#ecebe6",
-          ink:     "#0a0a0a",
-          char:    "#171717",
-          mute:    "#717171",
-          faint:   "#a8a8a8",
-          hair:    "rgba(10,10,10,0.10)",
-          plum:    "#3d1a4a",
-          "plum-dk": "#2a1135",
-          "plum-lt": "#f1e9f5",
-          gold:    "#c9a961",
-          "gold-dk": "#9b7b3f",
+          // Surfaces
+          white:             "#ffffff",
+          paper:             "#f7f6f4",
+          bone:              "#eeece8",
+
+          // Type & UI
+          ink:               "#0d0d0d",
+          char:              "#1a1a1a",
+          mute:              "#6b6b6b",
+          faint:             "#a8a8a8",
+
+          // Borders
+          hair:              "rgba(13,13,13,0.08)",
+          rule:              "rgba(13,13,13,0.12)",
+
+          // Accent — Antique Champagne (dry, muted bronze; not gold)
+          champagne:         "#b5a090",
+          "champagne-lt":    "#f0ece8",
+          "champagne-dk":    "#8c7262",
         },
-        // ── Legacy brand tokens (keep for existing components) ─────────
-        brand: {
-          50:  "#fdf8f0",
-          100: "#f9edda",
-          200: "#f2d9b0",
-          300: "#e8bf7e",
-          400: "#dca04c",
-          500: "#c8832a",
-          600: "#a66520",
-          700: "#854e1c",
-          800: "#6b3e1c",
-          900: "#59341b",
-          950: "#30190b",
-        },
+        // ── Semantic aliases (used by existing utility classes) ────────
         ink: {
-          DEFAULT: "#0a0a0a",
+          DEFAULT: "#0d0d0d",
           soft:    "#4a4a4a",
-          muted:   "#717171",
+          muted:   "#6b6b6b",
         },
         surface: {
           DEFAULT: "#ffffff",
-          soft:    "#f6f5f2",
-          warm:    "#ecebe6",
+          soft:    "#f7f6f4",
+          warm:    "#eeece8",
         },
       },
       fontFamily: {
-        sans:      ["var(--font-inter)", "Urbanist", "Century Gothic", "AppleGothic", "sans-serif"],
-        display:   ["var(--font-bodoni)", "var(--font-cormorant)", "Georgia", "serif"],
-        bodoni:    ["var(--font-bodoni)", "Georgia", "serif"],
-        cormorant: ["var(--font-cormorant)", "Georgia", "serif"],
+        sans:      ["var(--font-inter)",    "system-ui",  "sans-serif"],
+        display:   ["var(--font-cormorant)","Georgia",    "serif"],
+        cormorant: ["var(--font-cormorant)","Georgia",    "serif"],
       },
       fontSize: {
-        "10xl": ["7rem", { lineHeight: "0.92" }],   // 112px
-        "9xl":  ["5rem", { lineHeight: "0.96" }],   // 80px
-        "8xl":  ["4.5rem", { lineHeight: "1" }],    // 72px
-        "7xl":  ["4rem", { lineHeight: "1" }],      // 64px
-        "6xl":  ["3.5rem", { lineHeight: "1.05" }], // 56px
+        "10xl": ["7rem",   { lineHeight: "0.90" }],
+        "9xl":  ["5rem",   { lineHeight: "0.94" }],
+        "8xl":  ["4.5rem", { lineHeight: "0.98" }],
+        "7xl":  ["4rem",   { lineHeight: "1.00" }],
+        "6xl":  ["3.5rem", { lineHeight: "1.04" }],
       },
       letterSpacing: {
         "super":    ".45em",
         "display":  "-.03em",
         "headline": "-.025em",
-        "wide":     ".34em",
-        "wider":    ".42em",
+        "wide":     ".18em",
+        "wider":    ".26em",
+        "label":    ".12em",
       },
       screens: {
         xs: "375px",
       },
       aspectRatio: {
-        "product": "3/4",
+        "product":  "3/4",
         "portrait": "4/5",
-        "video":   "9/16",
-        "wide":    "5/4",
+        "hero":     "2/3",
+        "wide":     "5/4",
       },
       keyframes: {
         shimmer: {
@@ -85,13 +78,18 @@ const config: Config = {
           "100%": { transform: "translateX(100%)" },
         },
         "fade-up": {
-          "0%":   { opacity: "0", transform: "translateY(16px)" },
+          "0%":   { opacity: "0", transform: "translateY(12px)" },
           "100%": { opacity: "1", transform: "translateY(0)" },
+        },
+        "fade-in": {
+          "0%":   { opacity: "0" },
+          "100%": { opacity: "1" },
         },
       },
       animation: {
-        shimmer:  "shimmer 1.5s infinite",
-        "fade-up": "fade-up 0.6s ease forwards",
+        shimmer:   "shimmer 1.6s infinite",
+        "fade-up": "fade-up 0.7s cubic-bezier(0.22,1,0.36,1) forwards",
+        "fade-in": "fade-in 0.5s ease forwards",
       },
     },
   },

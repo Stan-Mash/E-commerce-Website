@@ -226,9 +226,9 @@ export default function JournalArticlePage({ params }: Props) {
               fontSize: 11,
               letterSpacing: ".34em",
               textTransform: "uppercase",
-              color: "var(--es-plum)",
+              color: "var(--es-ink)",
               textDecoration: "none",
-              borderBottom: "1px solid var(--es-plum)",
+              borderBottom: "1px solid var(--es-ink)",
               paddingBottom: 2,
             }}
           >

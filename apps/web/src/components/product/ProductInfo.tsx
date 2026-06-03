@@ -145,7 +145,7 @@ export function ProductInfo({ product }: Props) {
                 className={cn(
                   "w-8 h-8 rounded-full border-2 transition-all",
                   selectedColor === color
-                    ? "border-es-plum scale-110 shadow-md"
+                    ? "border-es-ink scale-110 shadow-md"
                     : "border-es-bone hover:border-es-mute"
                 )}
                 style={{ backgroundColor: colorHex ?? color! }}
@@ -184,9 +184,9 @@ export function ProductInfo({ product }: Props) {
                   className={cn(
                     "min-w-[44px] min-h-[44px] border px-3 py-2 text-sm font-medium transition-all",
                     selectedSize === size
-                      ? "border-es-plum text-es-plum"
+                      ? "border-es-ink text-es-ink"
                       : available
-                      ? "border-es-bone text-es-ink hover:border-es-plum"
+                      ? "border-es-bone text-es-ink hover:border-es-ink"
                       : "border-es-bone text-es-mute line-through cursor-not-allowed opacity-40"
                   )}
                   style={
@@ -221,13 +221,13 @@ export function ProductInfo({ product }: Props) {
             : "ADD TO BAG"}
         </button>
         <button
-          className="border border-es-bone p-3 hover:border-es-plum hover:text-es-plum transition-colors"
+          className="border border-es-bone p-3 hover:border-es-ink hover:text-es-ink transition-colors"
           aria-label="Save to wishlist"
         >
           <Heart size={20} />
         </button>
         <button
-          className="border border-es-bone p-3 hover:border-es-plum hover:text-es-plum transition-colors"
+          className="border border-es-bone p-3 hover:border-es-ink hover:text-es-ink transition-colors"
           aria-label="Share product"
           onClick={() =>
             navigator.share?.({

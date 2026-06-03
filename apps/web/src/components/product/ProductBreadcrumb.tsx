@@ -9,11 +9,11 @@ interface Props {
 export function ProductBreadcrumb({ category, productName }: Props) {
   return (
     <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs text-ink-muted">
-      <Link href="/" className="hover:text-brand-500 transition-colors">Home</Link>
+      <Link href="/" className="hover:text-es-champagne-dk transition-colors">Home</Link>
       <ChevronRight size={12} />
       <Link
         href={`/products?category=${encodeURIComponent(category)}`}
-        className="capitalize hover:text-brand-500 transition-colors"
+        className="capitalize hover:text-es-champagne-dk transition-colors"
       >
         {category}
       </Link>

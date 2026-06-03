@@ -79,7 +79,7 @@ export default async function ComingSoonPage() {
                     <span
                       style={{
                         position: "absolute", top: 10, left: 10,
-                        background: "#3d1a4a", color: "#fff",
+                        background: "var(--es-ink)", color: "#fff",
                         fontFamily: "var(--font-inter)", fontSize: 9, fontWeight: 800,
                         padding: "4px 8px", letterSpacing: "0.12em", textTransform: "uppercase",
                       }}

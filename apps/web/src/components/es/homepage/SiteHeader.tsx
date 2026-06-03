@@ -6,71 +6,38 @@ import { ShoppingBag, Search, User, Menu, X } from "lucide-react";
 import { useCart } from "@/components/checkout/CartProvider";
 
 const NAV = [
-  { label: "Women",    href: "/woman" },
-  { label: "Men",      href: "/man" },
-  { label: "Children", href: "/children" },
-  { label: "New In",   href: "/products" },
+  { label: "Women",       href: "/woman" },
+  { label: "Men",         href: "/man" },
+  { label: "Children",    href: "/children" },
+  { label: "New In",      href: "/products" },
   { label: "Coming Soon", href: "/coming-soon" },
-  { label: "Journal",  href: "/journal" },
+  { label: "Journal",     href: "/journal" },
 ] as const;
-
-const FONT = "'Inter','Urbanist',sans-serif";
 
 export function SiteHeader() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const { itemCount, openCart } = useCart();
 
   return (
-    <header style={{
-      background: "#fff",
-      borderBottom: "1px solid #e8e8e8",
-      position: "sticky",
-      top: 0,
-      zIndex: 50,
-    }}>
+    <header className="bg-white border-b border-es-hair sticky top-0 z-50">
+
       {/* Desktop */}
-      <div
-        className="hidden md:flex"
-        style={{
-          alignItems: "center",
-          justifyContent: "space-between",
-          padding: "0 40px",
-          height: 64,
-          maxWidth: 1400,
-          margin: "0 auto",
-          width: "100%",
-        }}
-      >
-        {/* Logo */}
-        <Link href="/" style={{ textDecoration: "none", flexShrink: 0 }}>
-          <span style={{
-            fontFamily: FONT,
-            fontSize: 20,
-            fontWeight: 900,
-            color: "#111",
-            letterSpacing: "-0.03em",
-          }}>
-            Elite<span style={{ color: "#3d1a4a" }}>Style</span>
+      <div className="hidden md:flex items-center justify-between px-10 h-16 max-w-[1400px] mx-auto w-full">
+
+        {/* Wordmark */}
+        <Link href="/" className="flex-shrink-0 no-underline" aria-label="Elite Style Co. — home">
+          <span className="font-cormorant text-[22px] font-semibold text-es-ink tracking-[-0.02em]">
+            Elite Style Co.
           </span>
         </Link>
 
         {/* Nav */}
-        <nav style={{ display: "flex", gap: 32, alignItems: "center" }}>
+        <nav className="flex gap-8 items-center">
           {NAV.map((item) => (
             <Link
               key={item.label}
               href={item.href}
-              style={{
-                fontFamily: FONT,
-                fontSize: 13,
-                fontWeight: 500,
-                color: "#111",
-                textDecoration: "none",
-                letterSpacing: "0.01em",
-                transition: "color .15s",
-              }}
-              onMouseEnter={e => (e.currentTarget.style.color = "#3d1a4a")}
-              onMouseLeave={e => (e.currentTarget.style.color = "#111")}
+              className="font-sans text-[13px] font-medium text-es-char hover:text-es-champagne-dk transition-colors duration-150 no-underline"
             >
               {item.label}
             </Link>
@@ -78,64 +45,29 @@ export function SiteHeader() {
         </nav>
 
         {/* Actions */}
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <Link
-            href="/search"
-            aria-label="Search"
-            style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 40, height: 40, color: "#111", borderRadius: 6, transition: "background .15s" }}
-            onMouseEnter={e => (e.currentTarget.style.background = "#f5f5f5")}
-            onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
-          >
-            <Search size={18} strokeWidth={2} />
-          </Link>
-          <Link
-            href="/account"
-            aria-label="Account"
-            style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 40, height: 40, color: "#111", borderRadius: 6, transition: "background .15s" }}
-            onMouseEnter={e => (e.currentTarget.style.background = "#f5f5f5")}
-            onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
-          >
-            <User size={18} strokeWidth={2} />
-          </Link>
+        <div className="flex items-center gap-1">
+          {[
+            { href: "/search",  icon: <Search size={18} strokeWidth={1.75} />,  label: "Search" },
+            { href: "/account", icon: <User   size={18} strokeWidth={1.75} />,  label: "Account" },
+          ].map((a) => (
+            <Link
+              key={a.href}
+              href={a.href}
+              aria-label={a.label}
+              className="flex items-center justify-center w-10 h-10 text-es-char hover:text-es-ink hover:bg-es-paper rounded-none transition-colors duration-150"
+            >
+              {a.icon}
+            </Link>
+          ))}
+
           <button
             onClick={openCart}
             aria-label={`Bag — ${itemCount} item${itemCount !== 1 ? "s" : ""}`}
-            style={{
-              position: "relative",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              width: 40,
-              height: 40,
-              background: "none",
-              border: "none",
-              cursor: "pointer",
-              color: "#111",
-              borderRadius: 6,
-              transition: "background .15s",
-            }}
-            onMouseEnter={e => (e.currentTarget.style.background = "#f5f5f5")}
-            onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
+            className="relative flex items-center justify-center w-10 h-10 bg-transparent border-0 cursor-pointer text-es-char hover:text-es-ink hover:bg-es-paper transition-colors duration-150"
           >
-            <ShoppingBag size={18} strokeWidth={2} />
+            <ShoppingBag size={18} strokeWidth={1.75} />
             {itemCount > 0 && (
-              <span style={{
-                position: "absolute",
-                top: 4,
-                right: 4,
-                background: "#3d1a4a",
-                color: "#fff",
-                borderRadius: "50%",
-                width: 16,
-                height: 16,
-                fontSize: 9,
-                fontFamily: FONT,
-                fontWeight: 800,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                lineHeight: 1,
-              }}>
+              <span className="absolute top-1 right-1 bg-es-ink text-white rounded-full w-4 h-4 text-[9px] font-bold font-sans flex items-center justify-center leading-none">
                 {itemCount > 9 ? "9+" : itemCount}
               </span>
             )}
@@ -143,43 +75,35 @@ export function SiteHeader() {
         </div>
       </div>
 
-      {/* Mobile */}
-      <div
-        className="flex md:hidden"
-        style={{ alignItems: "center", justifyContent: "space-between", padding: "0 16px", height: 56 }}
-      >
+      {/* Mobile bar */}
+      <div className="flex md:hidden items-center justify-between px-4 h-14">
         <button
           onClick={() => setMobileOpen(!mobileOpen)}
-          style={{ background: "none", border: "none", cursor: "pointer", padding: 8, color: "#111" }}
-          aria-label="Toggle menu"
+          className="bg-transparent border-0 cursor-pointer p-2 text-es-ink"
+          aria-label={mobileOpen ? "Close menu" : "Open menu"}
         >
-          {mobileOpen ? <X size={22} /> : <Menu size={22} />}
+          {mobileOpen ? <X size={22} strokeWidth={1.75} /> : <Menu size={22} strokeWidth={1.75} />}
         </button>
 
-        <Link href="/" style={{ textDecoration: "none" }}>
-          <span style={{ fontFamily: FONT, fontSize: 18, fontWeight: 900, color: "#111", letterSpacing: "-0.03em" }}>
-            Elite<span style={{ color: "#3d1a4a" }}>Style</span>
+        <Link href="/" className="no-underline" aria-label="Elite Style Co. — home">
+          <span className="font-cormorant text-[20px] font-semibold text-es-ink tracking-[-0.02em]">
+            Elite Style Co.
           </span>
         </Link>
 
-        <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
-          <Link href="/search" aria-label="Search" style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 40, height: 40, color: "#111" }}>
-            <Search size={18} strokeWidth={2} />
+        <div className="flex gap-1 items-center">
+          <Link href="/search" aria-label="Search" className="flex items-center justify-center w-10 h-10 text-es-char">
+            <Search size={18} strokeWidth={1.75} />
           </Link>
           <button
             onClick={openCart}
-            style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center", width: 40, height: 40, background: "none", border: "none", cursor: "pointer", color: "#111" }}
             aria-label="Bag"
+            className="relative flex items-center justify-center w-10 h-10 bg-transparent border-0 cursor-pointer text-es-char"
           >
-            <ShoppingBag size={18} strokeWidth={2} />
+            <ShoppingBag size={18} strokeWidth={1.75} />
             {itemCount > 0 && (
-              <span style={{
-                position: "absolute", top: 4, right: 4,
-                background: "#3d1a4a", color: "#fff", borderRadius: "50%",
-                width: 16, height: 16, fontSize: 9, fontFamily: FONT, fontWeight: 800,
-                display: "flex", alignItems: "center", justifyContent: "center",
-              }}>
-                {itemCount}
+              <span className="absolute top-1 right-1 bg-es-ink text-white rounded-full w-4 h-4 text-[9px] font-bold font-sans flex items-center justify-center leading-none">
+                {itemCount > 9 ? "9+" : itemCount}
               </span>
             )}
           </button>
@@ -188,25 +112,13 @@ export function SiteHeader() {
 
       {/* Mobile drawer */}
       {mobileOpen && (
-        <nav
-          className="flex md:hidden"
-          style={{ flexDirection: "column", borderTop: "1px solid #e8e8e8", background: "#fff" }}
-        >
+        <nav className="flex md:hidden flex-col border-t border-es-hair bg-white">
           {NAV.map((item) => (
             <Link
               key={item.label}
               href={item.href}
               onClick={() => setMobileOpen(false)}
-              style={{
-                fontFamily: FONT,
-                fontSize: 15,
-                fontWeight: 600,
-                color: "#111",
-                textDecoration: "none",
-                padding: "16px 20px",
-                borderBottom: "1px solid #f0f0f0",
-                display: "block",
-              }}
+              className="font-sans text-[15px] font-medium text-es-char no-underline px-5 py-4 border-b border-es-hair/50 hover:bg-es-paper transition-colors duration-150"
             >
               {item.label}
             </Link>

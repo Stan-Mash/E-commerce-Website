@@ -155,9 +155,9 @@ export function ProductGallery({ images, videos, productName }: Props) {
                 key={i}
                 onClick={() => setActiveIndex(i)}
                 className={cn(
-                  "relative flex-shrink-0 w-16 h-20 rounded-xl overflow-hidden border-2 transition-all",
+                  "relative flex-shrink-0 w-16 h-20 overflow-hidden border-2 transition-all",
                   activeIndex === i
-                    ? "border-brand-500 shadow-md"
+                    ? "border-es-ink shadow-sm"
                     : "border-transparent opacity-70 hover:opacity-100"
                 )}
                 aria-label={`View ${item.kind === "video" ? "video" : "image"} ${i + 1}`}

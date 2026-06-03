@@ -8,7 +8,7 @@ export default function AboutPage() {
       {/* Hero */}
       <section
         className="relative flex flex-col items-center justify-center text-center px-6"
-        style={{ height: "60vh", background: "#3d1a4a", color: "#ffffff" }}
+        style={{ height: "60vh", background: "var(--es-ink)", color: "#ffffff" }}
       >
         <div
           style={{

@@ -64,7 +64,7 @@ export default function ContactPage() {
         {/* Hero */}
         <section
           className="relative flex flex-col items-center justify-center text-center px-6"
-          style={{ height: "44vh", background: "#3d1a4a", color: "#ffffff" }}
+          style={{ height: "44vh", background: "var(--es-ink)", color: "#ffffff" }}
         >
           <div
             style={{
@@ -141,7 +141,7 @@ export default function ContactPage() {
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                       <div className="flex flex-col gap-1.5">
                         <label className="text-[11px] tracking-[.1em] uppercase text-es-mute font-semibold">
-                          Full Name <span style={{ color: "#3d1a4a" }}>*</span>
+                          Full Name <span style={{ color: "var(--es-ink)" }}>*</span>
                         </label>
                         <input
                           type="text"
@@ -150,14 +150,14 @@ export default function ContactPage() {
                           value={form.name}
                           onChange={handleChange}
                           placeholder="Jane Wanjiku"
-                          className="border border-[rgba(0,0,0,0.15)] px-4 py-3 text-[14px] text-es-ink placeholder:text-es-faint focus:outline-none focus:border-[#3d1a4a] transition-colors"
+                          className="border border-[rgba(0,0,0,0.15)] px-4 py-3 text-[14px] text-es-ink placeholder:text-es-faint focus:outline-none focus:border-[var(--es-ink)] transition-colors"
                           style={{ fontFamily: "var(--font-inter)" }}
                         />
                       </div>
 
                       <div className="flex flex-col gap-1.5">
                         <label className="text-[11px] tracking-[.1em] uppercase text-es-mute font-semibold">
-                          Email <span style={{ color: "#3d1a4a" }}>*</span>
+                          Email <span style={{ color: "var(--es-ink)" }}>*</span>
                         </label>
                         <input
                           type="email"
@@ -166,7 +166,7 @@ export default function ContactPage() {
                           value={form.email}
                           onChange={handleChange}
                           placeholder="jane@example.com"
-                          className="border border-[rgba(0,0,0,0.15)] px-4 py-3 text-[14px] text-es-ink placeholder:text-es-faint focus:outline-none focus:border-[#3d1a4a] transition-colors"
+                          className="border border-[rgba(0,0,0,0.15)] px-4 py-3 text-[14px] text-es-ink placeholder:text-es-faint focus:outline-none focus:border-[var(--es-ink)] transition-colors"
                           style={{ fontFamily: "var(--font-inter)" }}
                         />
                       </div>
@@ -186,21 +186,21 @@ export default function ContactPage() {
                           value={form.phone}
                           onChange={handleChange}
                           placeholder="+254 700 000 000"
-                          className="border border-[rgba(0,0,0,0.15)] px-4 py-3 text-[14px] text-es-ink placeholder:text-es-faint focus:outline-none focus:border-[#3d1a4a] transition-colors"
+                          className="border border-[rgba(0,0,0,0.15)] px-4 py-3 text-[14px] text-es-ink placeholder:text-es-faint focus:outline-none focus:border-[var(--es-ink)] transition-colors"
                           style={{ fontFamily: "var(--font-inter)" }}
                         />
                       </div>
 
                       <div className="flex flex-col gap-1.5">
                         <label className="text-[11px] tracking-[.1em] uppercase text-es-mute font-semibold">
-                          Subject <span style={{ color: "#3d1a4a" }}>*</span>
+                          Subject <span style={{ color: "var(--es-ink)" }}>*</span>
                         </label>
                         <select
                           name="subject"
                           required
                           value={form.subject}
                           onChange={handleChange}
-                          className="border border-[rgba(0,0,0,0.15)] px-4 py-3 text-[14px] text-es-ink focus:outline-none focus:border-[#3d1a4a] transition-colors bg-white appearance-none"
+                          className="border border-[rgba(0,0,0,0.15)] px-4 py-3 text-[14px] text-es-ink focus:outline-none focus:border-[var(--es-ink)] transition-colors bg-white appearance-none"
                           style={{ fontFamily: "var(--font-inter)" }}
                         >
                           <option value="" disabled>
@@ -217,7 +217,7 @@ export default function ContactPage() {
 
                     <div className="flex flex-col gap-1.5">
                       <label className="text-[11px] tracking-[.1em] uppercase text-es-mute font-semibold">
-                        Message <span style={{ color: "#3d1a4a" }}>*</span>
+                        Message <span style={{ color: "var(--es-ink)" }}>*</span>
                       </label>
                       <textarea
                         name="message"
@@ -226,7 +226,7 @@ export default function ContactPage() {
                         value={form.message}
                         onChange={handleChange}
                         placeholder="Tell us how we can help…"
-                        className="border border-[rgba(0,0,0,0.15)] px-4 py-3 text-[14px] text-es-ink placeholder:text-es-faint focus:outline-none focus:border-[#3d1a4a] transition-colors resize-none"
+                        className="border border-[rgba(0,0,0,0.15)] px-4 py-3 text-[14px] text-es-ink placeholder:text-es-faint focus:outline-none focus:border-[var(--es-ink)] transition-colors resize-none"
                         style={{ fontFamily: "var(--font-inter)" }}
                       />
                     </div>
@@ -276,7 +276,7 @@ export default function ContactPage() {
                     href="https://wa.me/254700000000"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-[15px] font-medium text-es-ink hover:text-[#3d1a4a] transition-colors"
+                    className="text-[15px] font-medium text-es-ink hover:text-[var(--es-ink)] transition-colors"
                     style={{ fontFamily: "var(--font-inter)" }}
                   >
                     +254 700 000 000
@@ -294,7 +294,7 @@ export default function ContactPage() {
               >
                 <div
                   className="flex-shrink-0 w-10 h-10 flex items-center justify-center"
-                  style={{ background: "#3d1a4a", color: "#fff" }}
+                  style={{ background: "var(--es-ink)", color: "#fff" }}
                 >
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <rect x="2" y="4" width="20" height="16" rx="2" />
@@ -307,7 +307,7 @@ export default function ContactPage() {
                   </p>
                   <a
                     href="mailto:hello@elitestyle.co.ke"
-                    className="text-[15px] font-medium text-es-ink hover:text-[#3d1a4a] transition-colors"
+                    className="text-[15px] font-medium text-es-ink hover:text-[var(--es-ink)] transition-colors"
                     style={{ fontFamily: "var(--font-inter)" }}
                   >
                     hello@elitestyle.co.ke
@@ -325,7 +325,7 @@ export default function ContactPage() {
               >
                 <div
                   className="flex-shrink-0 w-10 h-10 flex items-center justify-center"
-                  style={{ background: "#3d1a4a", color: "#fff" }}
+                  style={{ background: "var(--es-ink)", color: "#fff" }}
                 >
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 0 1 16 0Z" />
@@ -353,7 +353,7 @@ export default function ContactPage() {
               >
                 <div
                   className="flex-shrink-0 w-10 h-10 flex items-center justify-center"
-                  style={{ background: "#3d1a4a", color: "#fff" }}
+                  style={{ background: "var(--es-ink)", color: "#fff" }}
                 >
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <circle cx="12" cy="12" r="10" />

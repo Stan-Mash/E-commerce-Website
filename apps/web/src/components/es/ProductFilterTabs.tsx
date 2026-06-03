@@ -33,7 +33,7 @@ export function ProductFilterTabs() {
             className={cn(
               "pb-2 text-[11px] tracking-[.32em] uppercase transition-colors",
               isActive
-                ? "border-b-2 border-es-plum text-es-ink font-medium"
+                ? "border-b-2 border-es-ink text-es-ink font-medium"
                 : "text-es-mute hover:text-es-ink"
             )}
             aria-current={isActive ? "page" : undefined}

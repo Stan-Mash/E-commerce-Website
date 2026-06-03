@@ -1,6 +1,22 @@
 import type { Metadata, Viewport } from "next";
 import { Analytics } from "@vercel/analytics/next";
+import { Inter, Cormorant_Garamond } from "next/font/google";
 import "@/styles/globals.css";
+
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter",
+  display: "swap",
+  weight: ["300", "400", "500", "600", "700"],
+});
+
+const cormorant = Cormorant_Garamond({
+  subsets: ["latin"],
+  variable: "--font-cormorant",
+  display: "swap",
+  weight: ["300", "400", "500", "600", "700"],
+  style: ["normal", "italic"],
+});
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://elitestyle.co.ke"),
@@ -10,7 +26,7 @@ export const metadata: Metadata = {
   },
   description:
     "A maison built in Nairobi — for the woman, the man, and the children who follow. Atelier-led cuts, honest fabrics, KES pricing. Free delivery within Nairobi CBD.",
-  keywords: ["Elite Style", "Nairobi fashion", "luxury clothing Kenya", "bespoke tailoring Nairobi", "M-Pesa fashion"],
+  keywords: ["Elite Style", "Nairobi fashion", "premium clothing Kenya", "curated fashion Nairobi", "M-Pesa fashion"],
   authors: [{ name: "Elite Style Co." }],
   creator: "Elite Style Co.",
   openGraph: {
@@ -29,7 +45,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#3d1a4a",
+  themeColor: "#0d0d0d",
   width: "device-width",
   initialScale: 1,
   maximumScale: 5,
@@ -37,16 +53,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        {/* Inter — primary UI & display font; Urbanist — fallback */}
-        <link
-          href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Urbanist:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,300;1,400&display=swap"
-          rel="stylesheet"
-        />
-      </head>
+    <html lang="en" className={`${inter.variable} ${cormorant.variable}`}>
       <body>
         {children}
         <Analytics />

@@ -1,83 +1,32 @@
-export function MpesaMoment() {
-  const steps = [
-    { n: "01", label: "Enter your number",   detail: "Type your Safaricom number at checkout — no card details, no account needed." },
-    { n: "02", label: "M-Pesa push arrives", detail: "A prompt lands on your phone within seconds. The amount is pre-filled." },
-    { n: "03", label: "Confirm with PIN",    detail: "Enter your M-Pesa PIN. Payment clears instantly. Your order is confirmed." },
-  ];
+const steps = [
+  { n: "01", label: "Enter your number",   detail: "Type your Safaricom number at checkout — no card details, no account needed." },
+  { n: "02", label: "M-Pesa push arrives", detail: "A prompt lands on your phone within seconds. The amount is pre-filled." },
+  { n: "03", label: "Confirm with PIN",    detail: "Enter your M-Pesa PIN. Payment clears instantly. Your order is confirmed." },
+];
 
+export function MpesaMoment() {
   return (
-    <section
-      style={{
-        background: "#3d1a4a",
-        color: "#ffffff",
-        padding: "120px 64px",
-      }}
-    >
-      <div
-        style={{
-          maxWidth: 1200,
-          margin: "0 auto",
-          display: "grid",
-          gridTemplateColumns: "1fr 1fr",
-          gap: 96,
-          alignItems: "center",
-        }}
-        className="!grid-cols-1 lg:!grid-cols-2"
-      >
+    <section className="bg-es-ink text-white px-8 md:px-16 py-24 md:py-32">
+      <div className="max-w-[1200px] mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-24 items-center">
+
         {/* Left — headline */}
         <div>
-          <div
-            style={{
-              fontFamily: "var(--font-inter), sans-serif",
-              fontSize: 11,
-              letterSpacing: ".45em",
-              color: "#c9a961",
-              textTransform: "uppercase",
-              marginBottom: 24,
-            }}
-          >
-            SEAMLESS CHECKOUT&nbsp;·&nbsp;KENYA'S PREFERRED PAYMENT
-          </div>
+          <p className="font-sans text-[11px] tracking-label uppercase text-es-champagne mb-6">
+            Seamless Checkout · Kenya&apos;s Preferred Payment
+          </p>
 
-          <h2
-            style={{
-              fontFamily: "var(--font-inter), 'Inter', sans-serif",
-              fontSize: "clamp(40px, 5.5vw, 64px)",
-              fontWeight: 900,
-              lineHeight: 1.0,
-              letterSpacing: "-.04em",
-              margin: "0 0 32px",
-            }}
-          >
-            Tap once.
-            <br />
-            <span style={{ color: "#c9a961" }}>Your order is placed.</span>
+          <h2 className="font-cormorant font-semibold text-white mb-8" style={{ fontSize: "clamp(40px, 5.5vw, 64px)", lineHeight: 1.0, letterSpacing: "-0.025em" }}>
+            Tap once.<br />
+            <span className="text-es-champagne italic">Your order is placed.</span>
           </h2>
 
-          <p
-            style={{
-              fontFamily: "var(--font-inter), sans-serif",
-              fontSize: 16,
-              lineHeight: 1.65,
-              color: "rgba(255,255,255,.65)",
-              maxWidth: 440,
-              marginBottom: 40,
-            }}
-          >
+          <p className="font-sans text-[16px] leading-relaxed text-white/60 max-w-[440px] mb-10">
             No credit card. No foreign gateway fees. Your Safaricom number is
             all you need — the same way Kenyans have paid for everything
             for fifteen years.
           </p>
 
-          <div
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 10,
-              border: "1px solid rgba(201,169,97,.4)",
-              padding: "10px 20px",
-            }}
-          >
+          <div className="inline-flex items-center gap-2.5 border border-es-champagne/30 px-5 py-2.5">
             <svg width="28" height="18" viewBox="0 0 28 18" fill="none" aria-hidden>
               <rect width="28" height="18" rx="2" fill="#00A550" />
               <text x="14" y="12" textAnchor="middle" fill="#fff"
@@ -85,70 +34,32 @@ export function MpesaMoment() {
                 M-PESA
               </text>
             </svg>
-            <span
-              style={{
-                fontFamily: "var(--font-inter), sans-serif",
-                fontSize: 11,
-                letterSpacing: ".28em",
-                color: "rgba(255,255,255,.7)",
-                textTransform: "uppercase",
-              }}
-            >
+            <span className="font-sans text-[11px] tracking-wide uppercase text-white/60">
               Accepted at checkout
             </span>
           </div>
         </div>
 
         {/* Right — 3 steps */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+        <div className="flex flex-col">
           {steps.map((s, i) => (
             <div
               key={s.n}
-              style={{
-                display: "grid",
-                gridTemplateColumns: "56px 1fr",
-                gap: 24,
-                paddingTop: i === 0 ? 0 : 40,
-                paddingBottom: 40,
-                borderBottom: i < steps.length - 1 ? "1px solid rgba(255,255,255,.10)" : "none",
-              }}
+              className={[
+                "grid gap-6 py-10",
+                i === 0 ? "pt-0" : "",
+                i < steps.length - 1 ? "border-b border-white/10" : "",
+              ].join(" ")}
+              style={{ gridTemplateColumns: "56px 1fr" }}
             >
-              <div
-                style={{
-                  fontFamily: "var(--font-inter), 'Inter', sans-serif",
-                  fontSize: 28,
-                  fontWeight: 900,
-                  color: "rgba(201,169,97,.3)",
-                  lineHeight: 1,
-                  paddingTop: 2,
-                  letterSpacing: "-0.03em",
-                }}
-              >
+              <span className="font-cormorant text-[28px] font-light text-es-champagne/30 leading-none pt-0.5">
                 {s.n}
-              </div>
+              </span>
               <div>
-                <div
-                  style={{
-                    fontFamily: "var(--font-inter), sans-serif",
-                    fontSize: 13,
-                    fontWeight: 600,
-                    letterSpacing: ".12em",
-                    textTransform: "uppercase",
-                    color: "#ffffff",
-                    marginBottom: 8,
-                  }}
-                >
+                <p className="font-sans text-[13px] font-semibold tracking-label uppercase text-white mb-2">
                   {s.label}
-                </div>
-                <p
-                  style={{
-                    fontFamily: "var(--font-inter), sans-serif",
-                    fontSize: 14,
-                    lineHeight: 1.6,
-                    color: "rgba(255,255,255,.55)",
-                    margin: 0,
-                  }}
-                >
+                </p>
+                <p className="font-sans text-[14px] leading-relaxed text-white/55 m-0">
                   {s.detail}
                 </p>
               </div>

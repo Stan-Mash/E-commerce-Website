@@ -55,7 +55,7 @@ function StatusStepper({ status }: { status: OrderStatus }) {
         <div
           className="absolute top-5 left-0 h-[2px] -z-0 transition-all duration-500"
           style={{
-            background: "#3d1a4a",
+            background: "var(--es-ink)",
             width: `${(currentIndex / (STEPS.length - 1)) * 100}%`,
           }}
         />
@@ -76,13 +76,13 @@ function StatusStepper({ status }: { status: OrderStatus }) {
                 style={{
                   borderRadius: "50%",
                   background: isDone
-                    ? "#3d1a4a"
+                    ? "var(--es-ink)"
                     : isActive
-                    ? "#3d1a4a"
+                    ? "var(--es-ink)"
                     : "#fff",
                   border: isPending
                     ? "2px solid rgba(0,0,0,0.15)"
-                    : "2px solid #3d1a4a",
+                    : "2px solid var(--es-ink)",
                   color: isDone || isActive ? "#fff" : "rgba(0,0,0,0.3)",
                 }}
               >
@@ -163,7 +163,7 @@ export default function TrackOrderPage() {
         {/* Hero */}
         <section
           className="relative flex flex-col items-center justify-center text-center px-6"
-          style={{ height: "38vh", background: "#3d1a4a", color: "#ffffff" }}
+          style={{ height: "38vh", background: "var(--es-ink)", color: "#ffffff" }}
         >
           <div
             style={{
@@ -194,7 +194,7 @@ export default function TrackOrderPage() {
             <form onSubmit={handleSubmit} className="flex flex-col gap-5">
               <div className="flex flex-col gap-1.5">
                 <label className="text-[11px] tracking-[.1em] uppercase text-es-mute font-semibold">
-                  Phone Number <span style={{ color: "#3d1a4a" }}>*</span>
+                  Phone Number <span style={{ color: "var(--es-ink)" }}>*</span>
                 </label>
                 <input
                   type="tel"
@@ -202,7 +202,7 @@ export default function TrackOrderPage() {
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   placeholder="e.g. 254700000000"
-                  className="border border-[rgba(0,0,0,0.15)] px-4 py-3 text-[14px] text-es-ink placeholder:text-es-faint focus:outline-none focus:border-[#3d1a4a] transition-colors"
+                  className="border border-[rgba(0,0,0,0.15)] px-4 py-3 text-[14px] text-es-ink placeholder:text-es-faint focus:outline-none focus:border-[var(--es-ink)] transition-colors"
                   style={{ fontFamily: "var(--font-inter)" }}
                 />
                 <p className="text-[12px] text-es-faint">
@@ -212,7 +212,7 @@ export default function TrackOrderPage() {
 
               <div className="flex flex-col gap-1.5">
                 <label className="text-[11px] tracking-[.1em] uppercase text-es-mute font-semibold">
-                  Order Reference <span style={{ color: "#3d1a4a" }}>*</span>
+                  Order Reference <span style={{ color: "var(--es-ink)" }}>*</span>
                 </label>
                 <input
                   type="text"
@@ -220,7 +220,7 @@ export default function TrackOrderPage() {
                   value={ref}
                   onChange={(e) => setRef(e.target.value.toUpperCase())}
                   placeholder="e.g. ESC-001"
-                  className="border border-[rgba(0,0,0,0.15)] px-4 py-3 text-[14px] text-es-ink placeholder:text-es-faint focus:outline-none focus:border-[#3d1a4a] transition-colors"
+                  className="border border-[rgba(0,0,0,0.15)] px-4 py-3 text-[14px] text-es-ink placeholder:text-es-faint focus:outline-none focus:border-[var(--es-ink)] transition-colors"
                   style={{ fontFamily: "var(--font-inter)" }}
                 />
                 <p className="text-[12px] text-es-faint">

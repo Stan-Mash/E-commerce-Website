@@ -127,7 +127,7 @@ export function CartDrawer() {
                   paddingBottom: 2,
                 }}
               >
-                EXPLORE THE COLLECTION →
+                Explore the Collection →
               </Link>
             </div>
           ) : (
@@ -306,7 +306,7 @@ export function CartDrawer() {
                 className="es-btn-plum"
                 style={{ textAlign: "center", width: "100%", boxSizing: "border-box" }}
               >
-                PROCEED TO CHECKOUT →
+                Review &amp; Place Order →
               </Link>
               <button
                 onClick={closeCart}
@@ -318,7 +318,7 @@ export function CartDrawer() {
                   background: "none",
                 }}
               >
-                CONTINUE SHOPPING
+                Continue Browsing
               </button>
             </div>
           </div>

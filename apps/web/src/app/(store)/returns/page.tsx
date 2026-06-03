@@ -48,7 +48,7 @@ export default function ReturnsPage() {
       {/* Hero */}
       <section
         className="relative flex flex-col items-center justify-center text-center px-6"
-        style={{ height: "44vh", background: "#3d1a4a", color: "#ffffff" }}
+        style={{ height: "44vh", background: "var(--es-ink)", color: "#ffffff" }}
       >
         <div
           style={{
@@ -210,7 +210,7 @@ export default function ReturnsPage() {
       </section>
 
       {/* Refund methods */}
-      <section style={{ background: "#3d1a4a", color: "#fff" }}>
+      <section style={{ background: "var(--es-ink)", color: "#fff" }}>
         <div className="mx-auto w-full max-w-[800px] px-6 py-16 sm:px-16 sm:py-24 text-center">
           <p
             className="mb-4 text-[11px] tracking-[.48em] uppercase"

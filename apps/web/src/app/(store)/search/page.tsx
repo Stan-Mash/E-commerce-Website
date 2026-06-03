@@ -105,7 +105,7 @@ export default function SearchPage() {
               transition: "border-color 0.2s",
             }}
             onFocus={(e) => {
-              e.currentTarget.style.borderBottomColor = "#3d1a4a";
+              e.currentTarget.style.borderBottomColor = "var(--es-ink)";
             }}
             onBlur={(e) => {
               e.currentTarget.style.borderBottomColor = "#0a0a0a";
@@ -122,7 +122,7 @@ export default function SearchPage() {
                 width: 18,
                 height: 18,
                 border: "2px solid #e8e0d4",
-                borderTopColor: "#3d1a4a",
+                borderTopColor: "var(--es-ink)",
                 borderRadius: "50%",
                 animation: "es-spin 0.7s linear infinite",
               }}
