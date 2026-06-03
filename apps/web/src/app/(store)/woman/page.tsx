@@ -34,7 +34,7 @@ async function getWomenProducts(): Promise<ProductRow[]> {
          skus(size, stock_quantity)`
       )
       .eq("status", "active")
-      .eq("category", "women")
+      .in("category", ["women", "Woman", "WOMAN"])
       .order("created_at", { ascending: true });
 
     if (error || !data) return [];

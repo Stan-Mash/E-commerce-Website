@@ -34,7 +34,7 @@ async function getMenProducts(): Promise<ProductRow[]> {
          skus(size, stock_quantity)`
       )
       .eq("status", "active")
-      .eq("category", "men")
+      .in("category", ["men", "Man", "MAN"])
       .order("created_at", { ascending: true });
 
     if (error || !data) return [];
@@ -91,9 +91,17 @@ export default async function ManPage() {
         </header>
 
         {products.length === 0 ? (
-          <p className="text-es-mute text-sm tracking-[.25em] uppercase">
-            New arrivals coming soon.
-          </p>
+          <div className="flex flex-col items-start gap-6 py-10">
+            <p className="text-es-mute text-sm tracking-[.25em] uppercase">
+              New arrivals coming soon.
+            </p>
+            <p className="text-es-mute text-[15px] leading-relaxed max-w-md" style={{ fontFamily: "var(--font-cormorant)", fontStyle: "italic", fontSize: 18 }}>
+              We&apos;re curating the finest menswear for Nairobi. Drop by again soon — or see what&apos;s landing next.
+            </p>
+            <Link href="/coming-soon" className="es-btn-outline-ink px-8 py-3 text-[11px] tracking-[.38em] uppercase">
+              See Coming Soon →
+            </Link>
+          </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-10">
             {products.map((product, index) => {

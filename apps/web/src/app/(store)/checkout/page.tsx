@@ -272,7 +272,11 @@ export default function CheckoutPage() {
                     <li key={item.skuId} style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 12, paddingBottom: 14, borderBottom: "1px solid var(--es-bone)", marginBottom: 14 }}>
                       <div>
                         <p style={{ fontFamily: "var(--font-bodoni)", fontSize: 15, color: "var(--es-ink)" }}>{item.name}</p>
-                        {item.size && <p style={{ fontSize: 11, color: "var(--es-mute)", marginTop: 2, letterSpacing: "0.05em", textTransform: "uppercase" }}>Size: {item.size}{item.quantity > 1 ? ` · Qty ${item.quantity}` : ""}</p>}
+                        {(item.size || item.color) && (
+                          <p style={{ fontSize: 11, color: "var(--es-mute)", marginTop: 2, letterSpacing: "0.05em", textTransform: "uppercase" }}>
+                            {[item.size && `Size: ${item.size}`, item.color && item.color, item.quantity > 1 && `Qty ${item.quantity}`].filter(Boolean).join(" · ")}
+                          </p>
+                        )}
                       </div>
                       <span style={{ fontSize: 14, color: "var(--es-ink)", whiteSpace: "nowrap" }}>{formatKES(item.price * item.quantity)}</span>
                     </li>

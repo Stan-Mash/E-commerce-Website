@@ -94,7 +94,7 @@ export default function AboutPage() {
                 numeral: "02",
                 label: "PAY WITH M-PESA",
                 description:
-                  "At checkout, enter your Safaricom number. You&apos;ll get an M-Pesa push in seconds. Confirm your PIN — payment done. No card needed.",
+                  "At checkout, enter your Safaricom number. You'll get an M-Pesa push in seconds. Confirm your PIN — payment done. No card needed.",
               },
               {
                 numeral: "03",

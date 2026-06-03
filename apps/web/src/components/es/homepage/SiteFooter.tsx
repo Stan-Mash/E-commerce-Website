@@ -7,18 +7,18 @@ const COLS: FooterCol[] = [
   {
     h: "COMPANY",
     items: [
-      { label: "About Us",    href: "/atelier" },
-      { label: "How It Works", href: "/atelier#how-it-works" },
-      { label: "Contact Us",  href: "/contact" },
-      { label: "Press",       href: "/contact" },
+      { label: "About Us",      href: "/atelier" },
+      { label: "How It Works",  href: "/atelier#how-it-works" },
+      { label: "Contact Us",    href: "/contact" },
+      { label: "Partnerships",  href: "/contact" },
     ],
   },
   {
     h: "DEPARTMENTS",
     items: [
-      { label: "Woman",       href: "/woman" },
-      { label: "Man",         href: "/man" },
-      { label: "Children",    href: "/children" },
+      { label: "Woman",        href: "/woman" },
+      { label: "Man",          href: "/man" },
+      { label: "Children",     href: "/children" },
       { label: "New Arrivals", href: "/products" },
     ],
   },
@@ -26,7 +26,7 @@ const COLS: FooterCol[] = [
     h: "SUPPORT",
     items: [
       { label: "Delivery & Returns", href: "/returns" },
-      { label: "Sizing Guide",       href: "/products" },
+      { label: "Sizing Guide",       href: "/sizing-guide" },
       { label: "Track Order",        href: "/track" },
       { label: "Contact Us",         href: "/contact" },
     ],
@@ -151,7 +151,7 @@ export function SiteFooter() {
         }}
       >
         <span>© MMXXVI · ELITE STYLE CO.</span>
-        <Link href="/contact" style={{ color: "rgba(255,255,255,.5)", textDecoration: "none" }}>
+        <Link href="/legal" style={{ color: "rgba(255,255,255,.5)", textDecoration: "none" }}>
           PRIVACY · TERMS · COOKIES
         </Link>
         <span>NAIROBI · KENYA</span>

@@ -170,7 +170,7 @@ export function ProductInfo({ product }: Props) {
                 {selectedSize ?? "Select"}
               </span>
             </p>
-            <SizeGuide activeSize={selectedSize} />
+            {product.category?.toLowerCase() !== "accessories" && <SizeGuide activeSize={selectedSize} />}
           </div>
           <div className="flex gap-2 flex-wrap">
             {uniqueSizes.map((size) => {
