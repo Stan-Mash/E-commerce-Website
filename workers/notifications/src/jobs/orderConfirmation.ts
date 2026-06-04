@@ -2,8 +2,12 @@ import { supabase } from "../index";
 import { sendWhatsApp, sendSMS } from "../notifications/africastalking";
 import { maskPhone } from "./utils";
 
+const QUERY_TIMEOUT_MS = 10_000;
+
 export async function sendOrderConfirmation({ orderId }: { orderId: string }) {
-  // Fetch order with items
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), QUERY_TIMEOUT_MS);
+
   const { data: order, error } = await supabase
     .from("orders")
     .select(
@@ -11,10 +15,13 @@ export async function sendOrderConfirmation({ orderId }: { orderId: string }) {
        order_items(quantity, unit_price, sku:skus(size, color, product:products(name)))`
     )
     .eq("id", orderId)
-    .single();
+    .abortSignal(controller.signal)
+    .maybeSingle();
+
+  clearTimeout(timer);
 
   if (error || !order) {
-    throw new Error(`Order ${orderId} not found: ${error?.message}`);
+    throw new Error(`Order ${orderId} not found: ${error?.message ?? "no data"}`);
   }
 
   const itemLines = (order.order_items as any[])

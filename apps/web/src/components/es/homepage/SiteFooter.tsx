@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { SUPPORT_WHATSAPP_LINK } from "@/lib/supportConfig";
 
 type FooterItem = { label: string; href: string };
 type FooterCol = { h: string; items: FooterItem[] };
@@ -36,7 +37,7 @@ const COLS: FooterCol[] = [
     items: [
       { label: "Instagram", href: "https://instagram.com/elitestyleco" },
       { label: "TikTok",    href: "https://tiktok.com/@elitestyleco" },
-      { label: "WhatsApp",  href: "https://wa.me/254700000000" },
+      { label: "WhatsApp",  href: SUPPORT_WHATSAPP_LINK },
       { label: "Facebook",  href: "https://facebook.com/elitestyleco" },
     ],
   },

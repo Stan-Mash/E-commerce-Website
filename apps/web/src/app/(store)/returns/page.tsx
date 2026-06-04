@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { SUPPORT_PHONE } from "@/lib/supportConfig";
+import { SUPPORT_PHONE, SUPPORT_WHATSAPP_LINK } from "@/lib/supportConfig";
 
 export const metadata: Metadata = {
   title: "Returns & Exchanges",
@@ -250,7 +250,7 @@ export default function ReturnsPage() {
               Contact Support
             </a>
             <a
-              href="https://wa.me/254700000000"
+              href={SUPPORT_WHATSAPP_LINK}
               target="_blank"
               rel="noopener noreferrer"
               className="es-btn-outline-white px-10 py-4 text-[11px] tracking-[.38em] uppercase"

@@ -2,15 +2,23 @@ import { supabase } from "../index";
 import { sendWhatsApp, sendSMS } from "../notifications/africastalking";
 import { maskPhone } from "./utils";
 
+const QUERY_TIMEOUT_MS = 10_000;
+
 export async function sendPaymentFailed({ orderId }: { orderId: string }) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), QUERY_TIMEOUT_MS);
+
   const { data: order, error } = await supabase
     .from("orders")
     .select("order_ref, total, phone")
     .eq("id", orderId)
-    .single();
+    .abortSignal(controller.signal)
+    .maybeSingle();
+
+  clearTimeout(timer);
 
   if (error || !order) {
-    throw new Error(`Order ${orderId} not found: ${error?.message}`);
+    throw new Error(`Order ${orderId} not found: ${error?.message ?? "no data"}`);
   }
 
   const supportPhone = process.env.SUPPORT_PHONE ?? "0700 000 000";

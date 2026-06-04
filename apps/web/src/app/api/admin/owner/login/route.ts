@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { safeEqual } from "@/lib/adminAuth";
 
 /**
  * Owner login — issues owner_session cookie.
@@ -8,8 +9,9 @@ import { NextRequest, NextResponse } from "next/server";
  */
 export async function POST(request: NextRequest) {
   const { password } = await request.json() as { password: string };
+  const ownerPassword = process.env.OWNER_PASSWORD ?? "";
 
-  if (!password || password !== process.env.OWNER_PASSWORD) {
+  if (!password || !ownerPassword || !safeEqual(password, ownerPassword)) {
     return NextResponse.json({ error: "Incorrect password" }, { status: 401 });
   }
 

@@ -13,7 +13,7 @@
 export const ADMIN_SESSION_TOKEN = process.env.ADMIN_SESSION_TOKEN ?? "";
 
 /** Constant-time comparison to avoid timing side-channels. */
-function safeEqual(a: string, b: string): boolean {
+export function safeEqual(a: string, b: string): boolean {
   if (!a || !b || a.length !== b.length) return false;
   let mismatch = 0;
   for (let i = 0; i < a.length; i++) {

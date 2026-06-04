@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { SUPPORT_WHATSAPP_LINK, SUPPORT_EMAIL } from "@/lib/supportConfig";
 
 export const metadata: Metadata = { title: "Sizing Guide | Elite Style Co." };
 
@@ -116,8 +117,8 @@ export default function SizingGuidePage() {
 
         <p style={{ fontFamily: "var(--font-inter)", fontSize: 13, color: "var(--es-mute)", lineHeight: 1.65, marginBottom: 32 }}>
           Not sure? Our team is happy to help you find the right size. Reach us on{" "}
-          <a href="https://wa.me/254700000000" style={{ color: "var(--es-ink)" }}>WhatsApp</a> or at{" "}
-          <a href="mailto:hello@elitestyle.co.ke" style={{ color: "var(--es-ink)" }}>hello@elitestyle.co.ke</a>.
+          <a href={SUPPORT_WHATSAPP_LINK} style={{ color: "var(--es-ink)" }}>WhatsApp</a> or at{" "}
+          <a href={`mailto:${SUPPORT_EMAIL}`} style={{ color: "var(--es-ink)" }}>{SUPPORT_EMAIL}</a>.
         </p>
 
         <Link href="/products" style={{ fontFamily: "var(--font-inter)", fontSize: 11, letterSpacing: ".34em", textTransform: "uppercase", color: "var(--es-ink)", borderBottom: "1px solid var(--es-ink)", paddingBottom: 2, textDecoration: "none" }}>

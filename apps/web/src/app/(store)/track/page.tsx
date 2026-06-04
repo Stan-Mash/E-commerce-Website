@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { SUPPORT_WHATSAPP_LINK } from "@/lib/supportConfig";
 
 type OrderStatus = "paid" | "processing" | "shipped" | "delivered";
 
@@ -264,7 +265,7 @@ export default function TrackOrderPage() {
                 your phone number and order reference, then try again.
               </p>
               <a
-                href="https://wa.me/254700000000"
+                href={SUPPORT_WHATSAPP_LINK}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="es-btn-plum inline-flex px-8 py-3 text-[11px] tracking-[.38em]"
