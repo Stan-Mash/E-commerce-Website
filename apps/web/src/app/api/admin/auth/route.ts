@@ -26,15 +26,6 @@ const SESSION_COOKIE = [
   "Max-Age=28800",
 ].join("; ");
 
-// Non-HttpOnly fallback — readable by Edge Middleware
-const TOKEN_COOKIE = [
-  `admin_token=${encodeURIComponent(ADMIN_SESSION_TOKEN)}`,
-  "Path=/",
-  "Secure",
-  "SameSite=Lax",
-  "Max-Age=28800",
-].join("; ");
-
 /**
  * JSON endpoint — used by the old fetch-based login (kept for compatibility).
  * Prefer the form-POST flow below which is more reliable with Service Workers.
@@ -61,7 +52,6 @@ export async function POST(req: NextRequest) {
     const dest = new URL(from.startsWith("/") ? from : "/admin", req.url);
     const response = NextResponse.redirect(dest, { status: 303 });
     response.headers.append("Set-Cookie", SESSION_COOKIE);
-    response.headers.append("Set-Cookie", TOKEN_COOKIE);
     return response;
   }
 
@@ -74,6 +64,5 @@ export async function POST(req: NextRequest) {
 
   const response = NextResponse.json({ ok: true });
   response.headers.append("Set-Cookie", SESSION_COOKIE);
-  response.headers.append("Set-Cookie", TOKEN_COOKIE);
   return response;
 }

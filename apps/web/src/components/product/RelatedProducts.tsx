@@ -118,6 +118,8 @@ const SEED_RELATED: RelatedProductRow[] = [
 // ---------------------------------------------------------------------------
 // Data fetch
 // ---------------------------------------------------------------------------
+const RELATED_QUERY_TIMEOUT_MS = 6_000;
+
 async function getRelated(
   category: string,
   currentProductId: string
@@ -128,6 +130,10 @@ async function getRelated(
         "@/lib/supabase/server"
       );
       const supabase = createPublicSupabaseClient();
+
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), RELATED_QUERY_TIMEOUT_MS);
+
       const { data, error } = await supabase
         .from("products")
         .select(
@@ -138,13 +144,19 @@ async function getRelated(
         .eq("status", "active")
         .ilike("category", category)
         .neq("id", currentProductId)
-        .limit(4);
+        .limit(4)
+        .abortSignal(controller.signal);
+
+      clearTimeout(timer);
 
       if (!error && data && data.length > 0) {
         return data as unknown as RelatedProductRow[];
       }
-    } catch {
-      // Fall through to seed data
+      if (error) {
+        console.error("[related-products] Supabase error:", error.message);
+      }
+    } catch (err) {
+      console.error("[related-products] Query failed:", (err as Error).message);
     }
   }
 

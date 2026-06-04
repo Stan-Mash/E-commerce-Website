@@ -54,8 +54,10 @@ nairobi-fashion/
 - Africa's Talking sandbox account
 
 > **Security notes**
-> - `ADMIN_SESSION_TOKEN` must be set before the admin area is accessible (fail-closed if missing).
-> - `MPESA_WEBHOOK_SECRET` is appended as `?secret=...` to the Safaricom callback URL because Daraja v2 does not support custom request headers. Use a high-entropy value (`openssl rand -hex 32`), rotate it periodically, and scrub old values from logs.
+> - `ADMIN_SESSION_TOKEN` must be set before the admin area is accessible (fail-closed if missing). Only the `admin_session` **HttpOnly** cookie is accepted — the old JS-readable `admin_token` cookie is no longer issued or checked.
+> - `MPESA_WEBHOOK_SECRET` is appended as `?secret=...` to the Safaricom callback URL because Daraja v2 does not support custom request headers. Use a high-entropy value (`openssl rand -hex 32`) and rotate it periodically. **Add a log-scrub filter** in Vercel / Railway to redact `?secret=` query params from access logs before rotation — otherwise the old secret remains visible in historical logs.
+>   - Vercel: Settings → Log Drains → add a query-param redaction rule for `secret`.
+>   - Railway: use a log drain with a regex filter on the webhook path.
 > - `NEXT_PUBLIC_SUPPORT_PHONE` / `NEXT_PUBLIC_SUPPORT_EMAIL` — set these to real values before going live. The defaults are demo placeholders.
 
 ### 2. Environment setup

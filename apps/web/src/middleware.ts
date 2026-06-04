@@ -1,6 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { isValidAdminToken } from "@/lib/adminAuth";
 
+function timingSafeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  let mismatch = 0;
+  for (let i = 0; i < a.length; i++) {
+    mismatch |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  }
+  return mismatch === 0;
+}
+
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
@@ -11,7 +20,8 @@ export function middleware(req: NextRequest) {
   // Owner-only: finance module requires owner_session cookie
   if (pathname.startsWith("/admin/finance") && !pathname.startsWith("/admin/finance/login")) {
     const ownerSession = req.cookies.get("owner_session");
-    if (!ownerSession || ownerSession.value !== process.env.OWNER_SESSION_TOKEN) {
+    const ownerToken = process.env.OWNER_SESSION_TOKEN ?? "";
+    if (!ownerSession || !ownerToken || !timingSafeEqual(ownerSession.value, ownerToken)) {
       const loginUrl = new URL("/admin/finance/login", req.url);
       loginUrl.searchParams.set("from", pathname);
       return NextResponse.redirect(loginUrl);
