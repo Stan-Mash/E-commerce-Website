@@ -2,6 +2,16 @@ import { NextRequest, NextResponse } from "next/server";
 import { parseSTKCallback, type STKCallbackBody } from "@/lib/mpesa/daraja";
 import { createAdminSupabaseClient } from "@/lib/supabase/server";
 
+/** Constant-time string comparison — prevents timing side-channel on secret. */
+function timingSafeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  let mismatch = 0;
+  for (let i = 0; i < a.length; i++) {
+    mismatch |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  }
+  return mismatch === 0;
+}
+
 export async function POST(req: NextRequest) {
   // ── Secret token verification ────────────────────────────────────────
   // The CallbackURL registered with Safaricom includes a secret query param:
@@ -9,7 +19,10 @@ export async function POST(req: NextRequest) {
   // IP headers (x-forwarded-for) are trivially spoofable and NOT used here.
   // This secret is the only gate — any request missing it is rejected.
   const secret = req.nextUrl.searchParams.get("secret");
-  if (!secret || secret !== process.env.MPESA_WEBHOOK_SECRET) {
+  const expected = process.env.MPESA_WEBHOOK_SECRET ?? "";
+  // Use timing-safe comparison to prevent secret enumeration via response timing.
+  // Do NOT log `secret` — it would appear in Vercel/Railway logs.
+  if (!secret || !expected || !timingSafeEqual(secret, expected)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

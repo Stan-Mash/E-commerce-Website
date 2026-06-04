@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { Suspense } from "react";
 import type { Metadata } from "next";
 import { ProductGallery } from "@/components/product/ProductGallery";
 import { ProductInfo } from "@/components/product/ProductInfo";
@@ -6,6 +7,8 @@ import { ProductBreadcrumb } from "@/components/product/ProductBreadcrumb";
 import { RelatedProducts } from "@/components/product/RelatedProducts";
 import { ProductReviews } from "@/components/product/ProductReviews";
 import type { ProductDetail } from "@nairobi-fashion/lib";
+
+const PRODUCT_QUERY_TIMEOUT_MS = 8_000;
 
 interface Props {
   params: { slug: string };
@@ -25,10 +28,12 @@ async function getProduct(slug: string): Promise<ProductDetail | null> {
   // Try Supabase if configured
   if (process.env.NEXT_PUBLIC_SUPABASE_URL) {
     try {
-      // Use cookie-less client so ISR (revalidate = 60) is not broken.
-      // cookies() forces dynamic rendering — public product data never needs it.
       const { createPublicSupabaseClient } = await import("@/lib/supabase/server");
       const supabase = createPublicSupabaseClient();
+
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), PRODUCT_QUERY_TIMEOUT_MS);
+
       const { data, error } = await supabase
         .from("products")
         .select(
@@ -40,9 +45,19 @@ async function getProduct(slug: string): Promise<ProductDetail | null> {
         )
         .eq("slug", slug)
         .in("status", ["active", "coming_soon"])
-        .single();
-      if (!error && data) return data as unknown as ProductDetail;
-    } catch {
+        .abortSignal(controller.signal)
+        .maybeSingle();
+
+      clearTimeout(timer);
+
+      if (error) {
+        console.error("[product-page] Supabase error for slug:", slug, error.message);
+        // Fall through to seed data
+      } else if (data) {
+        return data as unknown as ProductDetail;
+      }
+    } catch (err) {
+      console.error("[product-page] Query failed for slug:", slug, (err as Error).message);
       // Fall through to seed data
     }
   }
@@ -112,12 +127,16 @@ export default async function ProductPage({ params }: Props) {
           <ProductInfo product={product} />
         </div>
         {product.status !== "coming_soon" && (
-          <ProductReviews productId={product.id} />
+          <Suspense fallback={null}>
+            <ProductReviews productId={product.id} />
+          </Suspense>
         )}
-        <RelatedProducts
-          category={product.category}
-          currentProductId={product.id}
-        />
+        <Suspense fallback={null}>
+          <RelatedProducts
+            category={product.category}
+            currentProductId={product.id}
+          />
+        </Suspense>
       </div>
     </>
   );

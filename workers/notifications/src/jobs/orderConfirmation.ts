@@ -29,7 +29,7 @@ export async function sendOrderConfirmation({ orderId }: { orderId: string }) {
   const message = [
     `✅ *Order Confirmed!* 🎉`,
     ``,
-    `Hi there! Your Nairobi Fashion order *${order.order_ref}* has been received.`,
+    `Hi there! Your Elite Style Co. order *${order.order_ref}* has been received.`,
     ``,
     `*Items:*`,
     itemLines,
@@ -38,7 +38,7 @@ export async function sendOrderConfirmation({ orderId }: { orderId: string }) {
     ``,
     deliveryLine,
     ``,
-    `Questions? Reply to this message or call us at 0700 000 000.`,
+    `Questions? Reply to this message or call us at ${process.env.SUPPORT_PHONE ?? "0700 000 000"}.`,
     ``,
     `Asante sana! 🇰🇪`,
   ].join("\n");
@@ -56,7 +56,7 @@ export async function sendOrderConfirmation({ orderId }: { orderId: string }) {
 
   // SMS fallback
   if (!notified) {
-    const smsText = `Nairobi Fashion: Order ${order.order_ref} confirmed! Total KES ${Number(order.total).toLocaleString("en-KE")}. ${order.delivery_type === "pickup" ? "Pickup: Westgate, Westlands." : "Delivery in 1-2 days."} Asante!`;
+    const smsText = `Elite Style Co.: Order ${order.order_ref} confirmed! Total KES ${Number(order.total).toLocaleString("en-KE")}. ${order.delivery_type === "pickup" ? "Pickup: Westgate, Westlands." : "Delivery in 1-2 days."} Asante!`;
     await sendSMS({ to: order.phone, message: smsText });
     console.log(`[notification] SMS sent to ${maskPhone(order.phone)} for order ${order.order_ref}`);
   }

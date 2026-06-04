@@ -1,6 +1,6 @@
-# Nairobi Fashion — E-Commerce MVP
+# Elite Style Co. — E-Commerce MVP
 
-Kenyan-made fashion brand. PWA storefront with M-Pesa STK Push checkout, video-first product pages, pickup + door delivery, and WhatsApp order notifications.
+Nairobi-made fashion storefront (project name: nairobi-fashion). PWA with M-Pesa STK Push checkout, video-first product pages, pickup + door delivery, and WhatsApp order notifications.
 
 ---
 
@@ -48,10 +48,15 @@ nairobi-fashion/
 
 - Node.js 20+
 - A Supabase project
-- An Upstash Redis instance
+- An Upstash Redis instance (**required in production** — rate limiting fails closed without it)
 - A Cloudinary account
 - Safaricom Daraja sandbox account
 - Africa's Talking sandbox account
+
+> **Security notes**
+> - `ADMIN_SESSION_TOKEN` must be set before the admin area is accessible (fail-closed if missing).
+> - `MPESA_WEBHOOK_SECRET` is appended as `?secret=...` to the Safaricom callback URL because Daraja v2 does not support custom request headers. Use a high-entropy value (`openssl rand -hex 32`), rotate it periodically, and scrub old values from logs.
+> - `NEXT_PUBLIC_SUPPORT_PHONE` / `NEXT_PUBLIC_SUPPORT_EMAIL` — set these to real values before going live. The defaults are demo placeholders.
 
 ### 2. Environment setup
 

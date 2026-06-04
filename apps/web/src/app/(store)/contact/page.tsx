@@ -2,6 +2,7 @@
 
 import type { Metadata } from "next";
 import { useState } from "react";
+import { SUPPORT_PHONE, SUPPORT_WHATSAPP_LINK } from "@/lib/supportConfig";
 
 // Note: metadata export cannot be used in a "use client" component.
 // The title is set via the head tag approach below.
@@ -273,13 +274,13 @@ export default function ContactPage() {
                     WhatsApp
                   </p>
                   <a
-                    href="https://wa.me/254700000000"
+                    href={SUPPORT_WHATSAPP_LINK}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-[15px] font-medium text-es-ink hover:text-[var(--es-ink)] transition-colors"
                     style={{ fontFamily: "var(--font-inter)" }}
                   >
-                    +254 700 000 000
+                    {SUPPORT_PHONE}
                   </a>
                   <p className="mt-1 text-[13px] text-es-mute">
                     Fastest way to reach us

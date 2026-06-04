@@ -4,6 +4,7 @@ import IORedis from "ioredis";
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@nairobi-fashion/lib";
 import { sendOrderConfirmation } from "./jobs/orderConfirmation";
+import { sendPaymentFailed } from "./jobs/paymentFailed";
 import { pollNotificationQueue } from "./poller";
 
 const redis = new IORedis(process.env.REDIS_URL!, {
@@ -28,6 +29,9 @@ const worker = new Worker(
     switch (job.name) {
       case "order_confirmation":
         await sendOrderConfirmation(job.data as { orderId: string });
+        break;
+      case "payment_failed":
+        await sendPaymentFailed(job.data as { orderId: string });
         break;
       default:
         console.warn(`[worker] Unknown job type: ${job.name}`);

@@ -29,9 +29,15 @@ export function isValidAdminToken(value: string | undefined | null): boolean {
 }
 
 /**
- * Check an incoming request for a valid admin session via any accepted
- * carrier: the HttpOnly session cookie, the JS-readable token cookie, or the
- * x-admin-token header (used by the POS terminal's adminFetch()).
+ * Check an incoming request for a valid admin session.
+ * Accepted carriers:
+ *   1. `admin_session` — HttpOnly, Secure, SameSite=Lax cookie (preferred).
+ *   2. `x-admin-token` header — used by the POS terminal's adminFetch() over
+ *      a server-to-server channel where cookies are unavailable.
+ *
+ * The `admin_token` JS-readable cookie is no longer accepted. Keeping a
+ * non-HttpOnly admin credential is a stored-XSS risk; all login paths must
+ * set the HttpOnly `admin_session` cookie instead.
  */
 export function isAuthenticatedAdminRequest(request: {
   cookies: { get(name: string): { value: string } | undefined };
@@ -39,7 +45,6 @@ export function isAuthenticatedAdminRequest(request: {
 }): boolean {
   return (
     isValidAdminToken(request.cookies.get("admin_session")?.value) ||
-    isValidAdminToken(request.cookies.get("admin_token")?.value) ||
     isValidAdminToken(request.headers.get("x-admin-token"))
   );
 }

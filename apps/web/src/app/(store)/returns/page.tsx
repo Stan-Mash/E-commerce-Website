@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { SUPPORT_PHONE } from "@/lib/supportConfig";
 
 export const metadata: Metadata = {
   title: "Returns & Exchanges",
@@ -8,7 +9,7 @@ const STEPS = [
   {
     num: "01",
     heading: "WhatsApp us",
-    body: 'Message us on WhatsApp (+254 700 000 000) with your order reference and reason for return. Say "I want to return order ESC-XXX".',
+    body: `Message us on WhatsApp (${SUPPORT_PHONE}) with your order reference and reason for return. Say "I want to return order ESC-XXX".`,
   },
   {
     num: "02",

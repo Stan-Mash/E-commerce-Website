@@ -88,7 +88,7 @@ export default function AboutPage() {
                 numeral: "01",
                 label: "BROWSE & ADD TO BAG",
                 description:
-                  "Shop woman, man, and children across thousands of curated styles. Filter by size, category, and price. Add your favourites to your bag.",
+                  "Shop woman, man, and children across our curated edit. Filter by size, category, and price. Add your favourites to your bag.",
               },
               {
                 numeral: "02",

@@ -5,11 +5,26 @@ import { createAdminSupabaseClient } from "@/lib/supabase/server";
 import { normaliseKenyanPhone, generateOrderRef } from "@/lib/utils";
 import { deliveryFeeFor, requiresAddress, normaliseDeliveryType } from "@/lib/delivery";
 
-/** Rate limiting is optional — only active when Upstash env vars are present. */
-async function checkRateLimit(ip: string): Promise<boolean> {
-  if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) {
-    return true; // no limiter configured — allow
+/**
+ * Rate limiting via Upstash Redis.
+ * - Development without Redis: logs a warning and allows the request.
+ * - Production without Redis: returns false (block) to prevent silent bypass.
+ * - Production with Redis misconfigured: returns false (fail closed).
+ */
+async function checkRateLimit(ip: string): Promise<{ allowed: boolean; unavailable?: boolean }> {
+  const isDev = process.env.NODE_ENV !== "production";
+  const hasRedis = !!(process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN);
+
+  if (!hasRedis) {
+    if (isDev) {
+      console.warn("[checkout] Rate limiting disabled — UPSTASH_REDIS_REST_URL/TOKEN not set (dev only).");
+      return { allowed: true };
+    }
+    // Production without Redis: service unavailable to prevent silent bypass.
+    console.error("[checkout] Rate limiting required in production but UPSTASH env vars are missing.");
+    return { allowed: false, unavailable: true };
   }
+
   try {
     const { Ratelimit } = await import("@upstash/ratelimit");
     const { Redis } = await import("@upstash/redis");
@@ -19,9 +34,11 @@ async function checkRateLimit(ip: string): Promise<boolean> {
       analytics: true,
     });
     const { success } = await rl.limit(ip);
-    return success;
-  } catch {
-    return true; // fail open if Redis is misconfigured
+    return { allowed: success };
+  } catch (err) {
+    console.error("[checkout] Rate limit check threw:", (err as Error).message);
+    if (isDev) return { allowed: true };
+    return { allowed: false, unavailable: true };
   }
 }
 
@@ -57,7 +74,7 @@ export async function POST(req: NextRequest) {
     return await _handlePost(req);
   } catch (err) {
     console.error("[checkout] Unhandled error:", err);
-    return NextResponse.json({ error: "Internal server error", detail: String(err) }, { status: 500 });
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
 
@@ -69,10 +86,13 @@ async function _handlePost(req: NextRequest) {
     );
   }
 
-  // Rate limit per IP (only when Upstash is configured)
+  // Rate limit per IP
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "anonymous";
-  const allowed = await checkRateLimit(ip);
-  if (!allowed) {
+  const rl = await checkRateLimit(ip);
+  if (!rl.allowed) {
+    if (rl.unavailable) {
+      return NextResponse.json({ error: "Checkout is temporarily unavailable. Please try again shortly." }, { status: 503 });
+    }
     return NextResponse.json({ error: "Too many requests. Please wait a moment." }, { status: 429 });
   }
 

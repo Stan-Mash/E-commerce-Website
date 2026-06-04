@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { SUPPORT_PHONE, SUPPORT_EMAIL } from "@/lib/supportConfig";
 
 export const metadata: Metadata = { title: "Privacy, Terms & Cookies | Elite Style Co." };
 
@@ -57,7 +58,7 @@ export default function LegalPage() {
           </p>
           <p style={P_STYLE}>
             <strong>Your rights:</strong> You may request access to, correction of, or deletion of your personal data by contacting us at{" "}
-            <a href="mailto:hello@elitestyle.co.ke" style={{ color: "var(--es-ink)" }}>hello@elitestyle.co.ke</a> or via WhatsApp at +254 700 000 000.
+            <a href={`mailto:${SUPPORT_EMAIL}`} style={{ color: "var(--es-ink)" }}>{SUPPORT_EMAIL}</a> or via WhatsApp at {SUPPORT_PHONE}.
           </p>
         </section>
 

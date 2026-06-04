@@ -18,13 +18,9 @@ export function middleware(req: NextRequest) {
     }
   }
 
-  // Staff: all other /admin routes require admin_session OR admin_token
-  // admin_session is the HttpOnly cookie set by the server.
-  // admin_token is a non-HttpOnly fallback set via document.cookie on login.
+  // Staff: all other /admin routes require the HttpOnly admin_session cookie.
   if (pathname.startsWith("/admin") && !pathname.startsWith("/admin/login") && !pathname.startsWith("/admin/finance")) {
-    const valid =
-      isValidAdminToken(req.cookies.get("admin_session")?.value) ||
-      isValidAdminToken(req.cookies.get("admin_token")?.value);
+    const valid = isValidAdminToken(req.cookies.get("admin_session")?.value);
     if (!valid) {
       const loginUrl = new URL("/admin/login", req.url);
       loginUrl.searchParams.set("from", pathname);
