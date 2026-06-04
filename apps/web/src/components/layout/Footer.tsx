@@ -48,7 +48,7 @@ export function Footer() {
           </div>
         </div>
         <div className="border-t border-white/10 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs">
-          <p>© {new Date().getFullYear()} Nairobi Fashion. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} Elite Style Co. All rights reserved.</p>
           <div className="flex items-center gap-4">
             <Link href="/legal/privacy" className="hover:text-white transition-colors">Privacy</Link>
             <Link href="/legal/terms" className="hover:text-white transition-colors">Terms</Link>

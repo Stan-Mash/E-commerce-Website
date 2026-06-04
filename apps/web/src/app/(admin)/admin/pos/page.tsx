@@ -21,17 +21,10 @@ import React, { useState, useEffect, useCallback, useRef, memo } from "react";
 import { createClient } from "@supabase/supabase-js";
 
 // ── Auth helper ───────────────────────────────────────────────────────────────
-// Wraps fetch to always include the X-Admin-Token header from localStorage.
-// This is a fallback for browsers where the session cookie is not reliably
-// sent with API requests (observed with SameSite=Lax on some Vercel deployments).
+// Wraps fetch to always send the admin_session HttpOnly cookie.
+// credentials:"include" is sufficient — the token no longer comes from localStorage.
 function adminFetch(url: string, init: RequestInit = {}): Promise<Response> {
-  let token = "";
-  try { token = localStorage.getItem("esc_admin_token") ?? ""; } catch {}
-  return fetch(url, {
-    ...init,
-    credentials: "include",
-    headers: { ...(init.headers as Record<string, string> | undefined), "x-admin-token": token },
-  });
+  return fetch(url, { ...init, credentials: "include" });
 }
 
 // ── Types ─────────────────────────────────────────────────────────────────────

@@ -14,10 +14,6 @@ interface Review {
   product: { name: string; slug: string } | null;
 }
 
-function adminToken(): string {
-  try { return localStorage.getItem("esc_admin_token") ?? ""; } catch { return ""; }
-}
-
 export default function AdminReviewsPage() {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
@@ -26,7 +22,7 @@ export default function AdminReviewsPage() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/admin/reviews", { headers: { "x-admin-token": adminToken() } });
+      const res = await fetch("/api/admin/reviews", { credentials: "include" });
       const data = await res.json();
       setReviews(data.reviews ?? []);
     } finally {
@@ -39,7 +35,8 @@ export default function AdminReviewsPage() {
   async function setApproved(id: string, is_approved: boolean) {
     await fetch("/api/admin/reviews", {
       method: "PATCH",
-      headers: { "Content-Type": "application/json", "x-admin-token": adminToken() },
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id, is_approved }),
     });
     load();
@@ -47,7 +44,7 @@ export default function AdminReviewsPage() {
 
   async function remove(id: string) {
     if (!confirm("Delete this review permanently?")) return;
-    await fetch(`/api/admin/reviews?id=${id}`, { method: "DELETE", headers: { "x-admin-token": adminToken() } });
+    await fetch(`/api/admin/reviews?id=${id}`, { method: "DELETE", credentials: "include" });
     load();
   }
 

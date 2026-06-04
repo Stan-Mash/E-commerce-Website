@@ -130,7 +130,6 @@ export default function NewProductPage() {
       const res = await fetch("/api/admin/products/upload-image", {
         method: "POST",
         credentials: "include",
-        headers: { "x-admin-token": localStorage.getItem("esc_admin_token") ?? "" },
         body: fd,
       });
 

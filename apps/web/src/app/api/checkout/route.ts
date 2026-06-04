@@ -203,7 +203,7 @@ async function _handlePost(req: NextRequest) {
       phone: normalisedPhone,
       amount: total,
       orderId: orderRef,
-      description: "NairobiFashion Order",
+      description: "EliteStyle Order",
     });
   } catch (err) {
     // Daraja timed out, went down, or rejected the payload.

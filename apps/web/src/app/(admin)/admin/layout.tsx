@@ -100,7 +100,7 @@ export default function AdminLayout({
           </div>
         </nav>
 
-        {/* Syncs admin_token cookie → localStorage for POS adminFetch() */}
+        {/* Clears stale esc_admin_token from localStorage (legacy cleanup) */}
         <AdminSessionSync />
 
         {/* ── Main Content ── */}

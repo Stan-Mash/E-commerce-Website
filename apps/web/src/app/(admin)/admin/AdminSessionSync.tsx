@@ -3,23 +3,17 @@
 import { useEffect } from "react";
 
 /**
- * Syncs the admin_token cookie to localStorage on every admin page mount.
- * The POS terminal uses localStorage.getItem("esc_admin_token") for its
- * adminFetch() helper, so we need to keep it in sync with the cookie session.
+ * Clears any stale esc_admin_token from localStorage on mount.
+ *
+ * The old flow read the non-HttpOnly admin_token cookie into localStorage
+ * so that adminFetch() could pass it as an x-admin-token header.  That
+ * cookie is no longer issued — all admin API calls now rely on the HttpOnly
+ * admin_session cookie via credentials:"include".  This component's only
+ * job now is to scrub the stale localStorage value on existing browsers.
  */
 export default function AdminSessionSync() {
   useEffect(() => {
-    // admin_token is a non-HttpOnly cookie readable from JS.
-    // If it's present, mirror it to localStorage for the POS adminFetch() helper.
-    const match = document.cookie
-      .split("; ")
-      .find((c) => c.startsWith("admin_token="));
-    if (match) {
-      const value = match.split("=")[1] ?? "";
-      if (value) {
-        try { localStorage.setItem("esc_admin_token", value); } catch {}
-      }
-    }
+    try { localStorage.removeItem("esc_admin_token"); } catch {}
   }, []);
 
   return null;
