@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { normaliseKenyanPhone } from "@/lib/utils";
+import { rateLimit, clientIp } from "@/lib/rateLimit";
 
 function getSupabaseClient() {
   return createClient(
@@ -17,6 +18,9 @@ export async function GET(req: NextRequest) {
 
   if (!phoneRaw || !ref) {
     return NextResponse.json({ error: "Missing required query params: phone and ref" }, { status: 400 });
+  }
+  if (!(await rateLimit(`track:${clientIp(req)}`, 20))) {
+    return NextResponse.json({ error: "Too many lookups. Please wait a moment." }, { status: 429 });
   }
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
     return NextResponse.json({ error: "Order not found" }, { status: 404 });

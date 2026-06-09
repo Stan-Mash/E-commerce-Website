@@ -76,7 +76,7 @@ export default function AccountPage() {
             </div>
             <div>
               <label className="block text-[11px] tracking-[.3em] uppercase text-es-mute mb-2">An order reference</label>
-              <input value={ref} onChange={(e) => setRef(e.target.value.toUpperCase())} placeholder="ESC-XXXX"
+              <input value={ref} onChange={(e) => setRef(e.target.value.toUpperCase())} placeholder="NF-XXXX-XXXX"
                 className="w-full border-b border-es-bone bg-transparent py-2 text-es-ink outline-none focus:border-es-ink" />
             </div>
             {error && <p className="text-[13px]" style={{ color: "#c0392b" }}>{error}</p>}

@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminSupabaseClient } from "@/lib/supabase/server";
+import { rateLimit, clientIp } from "@/lib/rateLimit";
 
 export async function POST(req: NextRequest) {
   try {
+    if (!(await rateLimit(`newsletter:${clientIp(req)}`, 5))) {
+      return NextResponse.json({ ok: false, error: "Too many requests." }, { status: 429 });
+    }
     const body = await req.json();
     const email = (body?.email ?? "").toString().trim().toLowerCase();
     const source = (body?.source ?? "footer").toString().slice(0, 40);

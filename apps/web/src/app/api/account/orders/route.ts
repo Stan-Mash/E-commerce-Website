@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminSupabaseClient } from "@/lib/supabase/server";
 import { normaliseKenyanPhone } from "@/lib/utils";
+import { rateLimit, clientIp } from "@/lib/rateLimit";
 
 export const dynamic = "force-dynamic";
 
@@ -17,6 +18,9 @@ export async function GET(req: NextRequest) {
   }
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
     return NextResponse.json({ error: "Accounts are not available yet." }, { status: 503 });
+  }
+  if (!(await rateLimit(`account:${clientIp(req)}`, 15))) {
+    return NextResponse.json({ error: "Too many lookups. Please wait a moment." }, { status: 429 });
   }
 
   let phone: string;

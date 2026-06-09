@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { createAdminSupabaseClient } from "@/lib/supabase/server";
+import { rateLimit, clientIp } from "@/lib/rateLimit";
 
 // POST /api/returns — a customer requests a return/exchange for a paid order.
 const Schema = z.object({
@@ -14,6 +15,9 @@ const INELIGIBLE = new Set(["pending_payment", "payment_failed", "cancelled"]);
 export async function POST(req: NextRequest) {
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
     return NextResponse.json({ error: "Returns are not available yet." }, { status: 503 });
+  }
+  if (!(await rateLimit(`returns:${clientIp(req)}`, 10))) {
+    return NextResponse.json({ error: "Too many requests. Please wait a moment." }, { status: 429 });
   }
 
   let body: unknown;

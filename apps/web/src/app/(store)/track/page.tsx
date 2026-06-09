@@ -229,7 +229,7 @@ export default function TrackOrderPage() {
                   required
                   value={ref}
                   onChange={(e) => setRef(e.target.value.toUpperCase())}
-                  placeholder="e.g. ESC-001"
+                  placeholder="e.g. NF-XXXX-XXXX"
                   className="border border-[rgba(0,0,0,0.15)] px-4 py-3 text-[14px] text-es-ink placeholder:text-es-faint focus:outline-none focus:border-[var(--es-ink)] transition-colors"
                   style={{ fontFamily: "var(--font-inter)" }}
                 />

@@ -3,6 +3,7 @@ import { z } from "zod";
 import { createAdminSupabaseClient } from "@/lib/supabase/server";
 import { deliveryFeeFor, normaliseDeliveryType } from "@/lib/delivery";
 import { applyDiscounts, type Promotion } from "@/lib/promotions/engine";
+import { rateLimit, clientIp } from "@/lib/rateLimit";
 
 // POST /api/promotions/validate — read-only price quote with a promo code.
 // Lets the checkout page show the live discount before an order is created.
@@ -18,6 +19,9 @@ const Schema = z.object({
 export async function POST(req: NextRequest) {
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
     return NextResponse.json({ error: "Not configured" }, { status: 503 });
+  }
+  if (!(await rateLimit(`promo:${clientIp(req)}`, 20))) {
+    return NextResponse.json({ error: "Too many attempts. Please wait a moment." }, { status: 429 });
   }
 
   let body: unknown;

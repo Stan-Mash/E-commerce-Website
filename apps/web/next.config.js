@@ -1,4 +1,5 @@
 // @ts-check
+const { withSentryConfig } = require("@sentry/nextjs");
 const withPWA = require("next-pwa")({
   dest: "public",
   disable: process.env.NODE_ENV === "development",
@@ -50,6 +51,9 @@ const withPWA = require("next-pwa")({
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  experimental: {
+    instrumentationHook: true,
+  },
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "res.cloudinary.com" },
@@ -74,8 +78,8 @@ const nextConfig = {
               "style-src 'self' 'unsafe-inline' fonts.googleapis.com",
               "font-src 'self' fonts.gstatic.com",
               "img-src 'self' data: blob: res.cloudinary.com images.unsplash.com *.supabase.co",
-              "media-src 'self' res.cloudinary.com",
-              "connect-src 'self' *.supabase.co *.sentry.io",
+              "media-src 'self' blob: res.cloudinary.com *.supabase.co",
+              "connect-src 'self' *.supabase.co *.sentry.io https://api.resend.com",
               "frame-ancestors 'none'",
             ].join("; "),
           },
@@ -85,4 +89,12 @@ const nextConfig = {
   },
 };
 
-module.exports = withPWA(nextConfig);
+// Sentry wraps the config for runtime error monitoring. With no SENTRY_DSN /
+// SENTRY_AUTH_TOKEN set, init is a no-op and source-map upload is skipped.
+module.exports = withSentryConfig(withPWA(nextConfig), {
+  silent: true,
+  disableLogger: true,
+  org: process.env.SENTRY_ORG,
+  project: process.env.SENTRY_PROJECT,
+});
+
