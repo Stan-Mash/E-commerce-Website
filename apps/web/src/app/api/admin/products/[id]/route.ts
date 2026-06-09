@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { isAuthenticatedAdminRequest } from "@/lib/adminAuth";
+import { syncProductImages, resolveImageList } from "@/lib/productImages";
 
 function getAdminClient() {
   return createClient(
@@ -29,7 +30,7 @@ export async function GET(
   const supabase = getAdminClient();
   const { data, error } = await supabase
     .from("products")
-    .select("*, skus(*)")
+    .select("*, skus(*), product_images(id, url, alt, sort_order, media_type)")
     .eq("id", params.id)
     .single();
 
@@ -64,12 +65,16 @@ export async function PUT(
     care_instructions,
     is_featured,
     status,
-    image_url,
     skus: skuList,
   } = body;
 
   const supabase = getAdminClient();
   const normalizedCategory = (category as string).toLowerCase();
+
+  // Resolve the full ordered image list (new `images` array, or legacy single
+  // `image_url`). products.image_url stays as the primary for card thumbnails.
+  const imageList = resolveImageList(body);
+  const primaryImageUrl = imageList ? (imageList[0] ?? null) : undefined;
 
   const { data: product, error: productError } = await supabase
     .from("products")
@@ -84,7 +89,7 @@ export async function PUT(
       care_instructions: care_instructions ?? null,
       is_featured: Boolean(is_featured),
       status: status ?? "draft",
-      image_url: image_url !== undefined ? (image_url ?? null) : undefined,
+      image_url: primaryImageUrl,
     })
     .eq("id", params.id)
     .select()
@@ -94,28 +99,9 @@ export async function PUT(
     return NextResponse.json({ error: productError.message }, { status: 500 });
   }
 
-  // Sync primary image into product_images table (used by the public storefront)
-  if (image_url !== undefined) {
-    if (image_url) {
-      // Upsert the primary (sort_order=0) image row
-      await supabase.from("product_images").upsert(
-        {
-          product_id: params.id,
-          url: image_url,
-          alt: name ?? null,
-          media_type: "image",
-          sort_order: 0,
-        },
-        { onConflict: "product_id,sort_order" }
-      );
-    } else {
-      // Image was removed - delete the admin-managed primary image
-      await supabase
-        .from("product_images")
-        .delete()
-        .eq("product_id", params.id)
-        .eq("sort_order", 0);
-    }
+  // Replace the product's gallery with the submitted images.
+  if (imageList !== undefined) {
+    await syncProductImages(supabase, params.id, imageList, name ?? null);
   }
 
   // Reconcile SKUs in place. A blind delete-all + insert-all breaks when a SKU

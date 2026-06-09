@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import MultiImageUploader from "@/components/admin/MultiImageUploader";
 
 const INPUT_STYLE: React.CSSProperties = {
   display: "block",
@@ -87,12 +88,9 @@ export default function NewProductPage() {
   const [submitting, setSubmitting] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
 
-  // Image state
-  const [imageUrl, setImageUrl]         = useState<string>("");
-  const [imagePreview, setImagePreview] = useState<string>("");
+  // Image gallery state
+  const [images, setImages] = useState<string[]>([]);
   const [imageUploading, setImageUploading] = useState(false);
-  const [imageError, setImageError]     = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleNameChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const name = e.target.value;
@@ -111,53 +109,6 @@ export default function NewProductPage() {
   const handleFeaturedToggle = useCallback(() => {
     setForm((prev) => ({ ...prev, is_featured: !prev.is_featured }));
   }, []);
-
-  // Image upload
-  async function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    // Local preview immediately
-    const localPreview = URL.createObjectURL(file);
-    setImagePreview(localPreview);
-    setImageError(null);
-    setImageUploading(true);
-
-    try {
-      const fd = new FormData();
-      fd.append("file", file);
-
-      const res = await fetch("/api/admin/products/upload-image", {
-        method: "POST",
-        credentials: "include",
-        body: fd,
-      });
-
-      const json = await res.json() as { url?: string; error?: string };
-
-      if (!res.ok || !json.url) {
-        setImageError(json.error ?? "Upload failed.");
-        setImagePreview("");
-      } else {
-        setImageUrl(json.url);
-        setImagePreview(json.url);
-      }
-    } catch {
-      setImageError("Network error during upload.");
-      setImagePreview("");
-    } finally {
-      setImageUploading(false);
-      // Reset input so the same file can be re-selected if needed
-      if (fileInputRef.current) fileInputRef.current.value = "";
-    }
-  }
-
-  function removeImage() {
-    setImageUrl("");
-    setImagePreview("");
-    setImageError(null);
-    if (fileInputRef.current) fileInputRef.current.value = "";
-  }
 
   function addSku() {
     setSkus((prev) => [...prev, { ...BLANK_SKU }]);
@@ -203,7 +154,8 @@ export default function NewProductPage() {
         care_instructions: form.care_instructions || null,
         is_featured: form.is_featured,
         status: form.status,
-        image_url: imageUrl || null,
+        image_url: images[0] ?? null,
+        images,
         skus: skus
           .filter((s) => s.sku_code.trim() && s.size.trim())
           .map((s) => ({
@@ -312,179 +264,14 @@ export default function NewProductPage() {
 
       <form onSubmit={(e) => void handleSubmit(e)} noValidate style={{ maxWidth: 760 }}>
 
-        {/* Product Image */}
+        {/* Product Images */}
         <div style={{ marginBottom: 36 }}>
-          <label style={LABEL_STYLE}>Product Image</label>
-          <div
-            style={{
-              display: "flex",
-              gap: 20,
-              alignItems: "flex-start",
-              flexWrap: "wrap",
-            }}
-          >
-            {/* Preview box */}
-            <div
-              style={{
-                width: 160,
-                height: 160,
-                border: "2px dashed var(--es-bone)",
-                borderRadius: 8,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                overflow: "hidden",
-                flexShrink: 0,
-                background: "var(--es-white)",
-                position: "relative",
-              }}
-            >
-              {imagePreview ? (
-                <>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={imagePreview}
-                    alt="Product preview"
-                    style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                  />
-                  {imageUploading && (
-                    <div
-                      style={{
-                        position: "absolute",
-                        inset: 0,
-                        background: "rgba(255,255,255,0.75)",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        fontFamily: "var(--font-inter)",
-                        fontSize: 12,
-                        color: "var(--es-mute)",
-                      }}
-                    >
-                      Uploading…
-                    </div>
-                  )}
-                </>
-              ) : (
-                <div style={{ textAlign: "center", padding: 16 }}>
-                  <svg
-                    width="32"
-                    height="32"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="var(--es-bone)"
-                    strokeWidth="1.5"
-                    style={{ display: "block", margin: "0 auto 8px" }}
-                  >
-                    <rect x="3" y="3" width="18" height="18" rx="2" />
-                    <circle cx="8.5" cy="8.5" r="1.5" />
-                    <polyline points="21 15 16 10 5 21" />
-                  </svg>
-                  <span
-                    style={{
-                      fontFamily: "var(--font-inter)",
-                      fontSize: 10,
-                      color: "var(--es-mute)",
-                      letterSpacing: "0.1em",
-                    }}
-                  >
-                    No image
-                  </span>
-                </div>
-              )}
-            </div>
-
-            {/* Upload controls */}
-            <div style={{ flex: 1, minWidth: 200 }}>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/jpeg,image/png,image/webp,image/gif,image/avif"
-                onChange={(e) => void handleImageChange(e)}
-                style={{ display: "none" }}
-                id="image-upload-input"
-              />
-              <label
-                htmlFor="image-upload-input"
-                style={{
-                  display: "inline-block",
-                  fontFamily: "var(--font-inter)",
-                  fontSize: 11,
-                  letterSpacing: "0.25em",
-                  textTransform: "uppercase",
-                  color: imageUploading ? "var(--es-mute)" : "var(--es-plum)",
-                  border: "1px solid currentColor",
-                  padding: "8px 18px",
-                  borderRadius: 3,
-                  cursor: imageUploading ? "not-allowed" : "pointer",
-                  marginBottom: 10,
-                }}
-              >
-                {imageUploading ? "Uploading…" : imagePreview ? "Change Image" : "Choose Image"}
-              </label>
-
-              {imagePreview && !imageUploading && (
-                <button
-                  type="button"
-                  onClick={removeImage}
-                  style={{
-                    display: "block",
-                    fontFamily: "var(--font-inter)",
-                    fontSize: 11,
-                    letterSpacing: "0.2em",
-                    textTransform: "uppercase",
-                    color: "#c0392b",
-                    background: "none",
-                    border: "none",
-                    cursor: "pointer",
-                    padding: 0,
-                    marginBottom: 8,
-                  }}
-                >
-                  Remove
-                </button>
-              )}
-
-              <p
-                style={{
-                  fontFamily: "var(--font-inter)",
-                  fontSize: 11,
-                  color: "var(--es-mute)",
-                  margin: 0,
-                  lineHeight: 1.6,
-                }}
-              >
-                JPEG, PNG, WebP or GIF · Max 10 MB<br />
-                Recommended: square, at least 800×800 px
-              </p>
-
-              {imageError && (
-                <p
-                  style={{
-                    fontFamily: "var(--font-inter)",
-                    fontSize: 12,
-                    color: "#c0392b",
-                    marginTop: 8,
-                  }}
-                >
-                  {imageError}
-                </p>
-              )}
-
-              {imageUrl && !imageError && (
-                <p
-                  style={{
-                    fontFamily: "var(--font-inter)",
-                    fontSize: 11,
-                    color: "#2e7d32",
-                    marginTop: 8,
-                  }}
-                >
-                  ✓ Image uploaded successfully
-                </p>
-              )}
-            </div>
-          </div>
+          <label style={LABEL_STYLE}>Product Images</label>
+          <MultiImageUploader
+            value={images}
+            onChange={setImages}
+            onUploadingChange={setImageUploading}
+          />
         </div>
 
         {/* Name + Slug */}

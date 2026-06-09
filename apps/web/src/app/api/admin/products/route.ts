@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { isAuthenticatedAdminRequest } from "@/lib/adminAuth";
+import { syncProductImages, resolveImageList } from "@/lib/productImages";
 
 function getAdminClient() {
   return createClient(
@@ -57,7 +58,6 @@ export async function POST(request: NextRequest) {
     care_instructions,
     is_featured,
     status,
-    image_url,
     skus: skuList,
   } = body;
 
@@ -65,6 +65,9 @@ export async function POST(request: NextRequest) {
 
   // Normalize category to lowercase for DB constraint
   const normalizedCategory = (category as string).toLowerCase();
+
+  // Resolve the full ordered image list; first image is the primary thumbnail.
+  const imageList = resolveImageList(body) ?? [];
 
   const { data: product, error: productError } = await supabase
     .from("products")
@@ -79,7 +82,7 @@ export async function POST(request: NextRequest) {
       care_instructions: care_instructions ?? null,
       is_featured: Boolean(is_featured),
       status: status ?? "draft",
-      image_url: image_url ?? null,
+      image_url: imageList[0] ?? null,
     })
     .select()
     .single();
@@ -88,18 +91,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: productError.message }, { status: 500 });
   }
 
-  // Sync primary image into product_images table (used by the public storefront)
-  if (image_url) {
-    await supabase.from("product_images").upsert(
-      {
-        product_id: product.id,
-        url: image_url,
-        alt: name ?? null,
-        media_type: "image",
-        sort_order: 0,
-      },
-      { onConflict: "product_id,sort_order" }
-    );
+  // Populate the product's gallery.
+  if (imageList.length > 0) {
+    await syncProductImages(supabase, product.id, imageList, name ?? null);
   }
 
   // Insert SKUs + inventory_levels rows (so stock is tracked per location)
