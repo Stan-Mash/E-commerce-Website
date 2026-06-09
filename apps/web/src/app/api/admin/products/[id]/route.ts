@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { isAuthenticatedAdminRequest } from "@/lib/adminAuth";
 import { syncProductImages, resolveImageList, syncProductVideos, resolveVideoList } from "@/lib/productImages";
+import { recordAudit, getOperator } from "@/lib/audit";
 
 function getAdminClient() {
   return createClient(
@@ -98,6 +99,14 @@ export async function PUT(
   if (productError) {
     return NextResponse.json({ error: productError.message }, { status: 500 });
   }
+
+  await recordAudit(supabase, {
+    actor: getOperator(request),
+    action: "product.update",
+    entity: "product",
+    entityId: params.id,
+    detail: { name, base_price: Number(base_price), status: status ?? "draft" },
+  });
 
   // Replace the product's gallery with the submitted images.
   if (imageList !== undefined) {
@@ -228,6 +237,13 @@ export async function DELETE(
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
+
+  await recordAudit(supabase, {
+    actor: getOperator(request),
+    action: "product.archive",
+    entity: "product",
+    entityId: params.id,
+  });
 
   return NextResponse.json({ ok: true });
 }

@@ -99,6 +99,11 @@ export function paymentFailedSMS(orderRef: string): string {
   return `Elite Style Co: Payment for order ${orderRef} was not completed. Please try again at e-commerce-website-web.vercel.app or contact us for help.`;
 }
 
+export function cartReminderSMS(orderRef: string, total: number): string {
+  const kes = new Intl.NumberFormat("en-KE", { style: "currency", currency: "KES", minimumFractionDigits: 0 }).format(total);
+  return `Elite Style Co: You're one step away! Complete your ${kes} order ${orderRef} on M-Pesa to secure your pieces. Need help? Just reply.`;
+}
+
 export function orderShippedSMS(orderRef: string): string {
   return `Elite Style Co: Great news! Order ${orderRef} is on its way. You'll receive it within 1-3 business days. Track your order on our website.`;
 }

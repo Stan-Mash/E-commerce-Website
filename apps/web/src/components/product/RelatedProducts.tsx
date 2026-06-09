@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -144,11 +145,12 @@ export async function RelatedProducts({ category, currentProductId }: Props) {
               <div className="relative w-full overflow-hidden bg-es-bone mb-3">
                 <div style={{ paddingBottom: "125%" }} />
                 {primaryImage ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
+                  <Image
                     src={primaryImage.url}
                     alt={primaryImage.alt ?? product.name}
-                    className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+                    fill
+                    sizes="(max-width: 640px) 50vw, 25vw"
+                    className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
                   />
                 ) : (
                   <div

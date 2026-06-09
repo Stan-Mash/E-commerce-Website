@@ -66,6 +66,17 @@ export function orderConfirmationEmail(orderRef: string, total: number): { subje
   };
 }
 
+export function cartReminderEmail(orderRef: string, total: number): { subject: string; html: string } {
+  return {
+    subject: `Still thinking it over? Your order ${orderRef} is waiting`,
+    html: shell(
+      "You're one step away",
+      `<p>Your order <strong>${orderRef}</strong> (${fmtKES(total)}) is reserved but payment isn't complete yet.</p>
+       <p>Complete the M-Pesa payment to secure your pieces before they sell out. Need a hand? Just reply to this email.</p>`
+    ),
+  };
+}
+
 export function orderShippedEmail(orderRef: string, courier: string | null, trackingNumber: string | null, trackingUrl: string | null): { subject: string; html: string } {
   const track = trackingNumber
     ? `<p style="margin:16px 0"><strong>${courier ?? "Courier"}:</strong> ${trackingNumber}${trackingUrl ? `<br/><a href="${trackingUrl}">Track your parcel →</a>` : ""}</p>`

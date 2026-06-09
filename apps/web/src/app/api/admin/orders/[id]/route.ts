@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { isAuthenticatedAdminRequest } from "@/lib/adminAuth";
+import { recordAudit, getOperator } from "@/lib/audit";
 
 function getAdminClient() {
   return createClient(
@@ -110,6 +111,14 @@ export async function PUT(
     });
   }
 
+  await recordAudit(supabase, {
+    actor: getOperator(request),
+    action: "order.fulfilment",
+    entity: "order",
+    entityId: params.id,
+    detail: patch,
+  });
+
   return NextResponse.json({ order: data });
 }
 
@@ -139,6 +148,14 @@ export async function PATCH(
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
+
+  await recordAudit(supabase, {
+    actor: getOperator(request),
+    action: "order.status",
+    entity: "order",
+    entityId: params.id,
+    detail: { status },
+  });
 
   return NextResponse.json({ order: data });
 }

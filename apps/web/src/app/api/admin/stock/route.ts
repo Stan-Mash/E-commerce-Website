@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { isAuthenticatedAdminRequest } from "@/lib/adminAuth";
+import { recordAudit, getOperator } from "@/lib/audit";
 
 function getAdminClient() {
   return createClient(
@@ -107,6 +108,14 @@ export async function POST(request: NextRequest) {
     .select("stock_quantity")
     .eq("id", sku_id)
     .single();
+
+  await recordAudit(supabase, {
+    actor: getOperator(request),
+    action: "stock.adjust",
+    entity: "sku",
+    entityId: sku_id,
+    detail: { delta: Number(delta), reason: reason ?? "adjustment", new_quantity: after?.stock_quantity ?? null },
+  });
 
   return NextResponse.json({ ok: true, new_quantity: after?.stock_quantity ?? null });
 }

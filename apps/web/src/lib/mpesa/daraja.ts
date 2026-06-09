@@ -102,6 +102,61 @@ export async function initiateSTKPush(params: STKPushParams): Promise<STKPushRes
   return res.data;
 }
 
+// ── B2C (refunds / payouts) ──────────────────────────────────────────────
+// Requires a separate Daraja B2C app: an initiator name, the encrypted
+// SecurityCredential, and a B2C shortcode. No-op-safe: isB2CConfigured()
+// lets callers degrade gracefully when refunds aren't set up.
+export function isB2CConfigured(): boolean {
+  return (
+    !!process.env.MPESA_INITIATOR_NAME &&
+    !!process.env.MPESA_SECURITY_CREDENTIAL &&
+    !!process.env.MPESA_B2C_SHORTCODE &&
+    !!process.env.MPESA_CONSUMER_KEY &&
+    !!process.env.MPESA_CONSUMER_SECRET
+  );
+}
+
+export interface B2CResult {
+  ConversationID: string;
+  OriginatorConversationID: string;
+  ResponseCode: string;
+  ResponseDescription: string;
+}
+
+export async function initiateB2CPayment(params: {
+  phone: string;   // 2547XXXXXXXX
+  amount: number;  // whole KES
+  remarks: string;
+  occasion?: string;
+}): Promise<B2CResult> {
+  if (!isB2CConfigured()) {
+    throw new Error("M-Pesa B2C is not configured");
+  }
+  const token = await getAccessToken();
+  const callbackBase = process.env.MPESA_B2C_RESULT_URL ?? process.env.MPESA_CALLBACK_URL ?? "";
+  const secret = process.env.MPESA_WEBHOOK_SECRET ?? "";
+
+  const payload = {
+    InitiatorName: process.env.MPESA_INITIATOR_NAME,
+    SecurityCredential: process.env.MPESA_SECURITY_CREDENTIAL,
+    CommandID: "BusinessPayment",
+    Amount: Math.round(params.amount),
+    PartyA: process.env.MPESA_B2C_SHORTCODE,
+    PartyB: params.phone,
+    Remarks: params.remarks.slice(0, 100),
+    QueueTimeOutURL: `${callbackBase}?type=b2c-timeout&secret=${secret}`,
+    ResultURL: `${callbackBase}?type=b2c-result&secret=${secret}`,
+    Occasion: (params.occasion ?? "").slice(0, 100),
+  };
+
+  const res = await axios.post<B2CResult>(
+    `${BASE_URL}/mpesa/b2c/v1/paymentrequest`,
+    payload,
+    { headers: { Authorization: `Bearer ${token}` } }
+  );
+  return res.data;
+}
+
 export interface STKCallbackBody {
   Body: {
     stkCallback: {

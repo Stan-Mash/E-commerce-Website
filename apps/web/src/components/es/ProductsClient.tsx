@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useState, useEffect, useCallback } from "react";
 
 // ---------------------------------------------------------------------------
@@ -515,10 +516,11 @@ export function ProductsClient({ products, activeCategory }: ProductsClientProps
                     <span className="es-stock-badge">Only {stock} left</span>
                   ) : null}
                   {primaryImage ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
+                    <Image
                       src={primaryImage.url}
                       alt={primaryImage.alt ?? product.name}
+                      fill
+                      sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
                       className="es-card-img"
                     />
                   ) : (

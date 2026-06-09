@@ -26,6 +26,18 @@ const SESSION_COOKIE = [
   "Max-Age=28800",
 ].join("; ");
 
+// Non-secret label cookie used only to attribute admin actions in the audit log.
+function operatorCookie(name: string): string {
+  return [
+    `admin_operator=${encodeURIComponent(name)}`,
+    "Path=/",
+    "HttpOnly",
+    "Secure",
+    "SameSite=Lax",
+    "Max-Age=28800",
+  ].join("; ");
+}
+
 /**
  * JSON endpoint - used by the old fetch-based login (kept for compatibility).
  * Prefer the form-POST flow below which is more reliable with Service Workers.
@@ -43,6 +55,7 @@ export async function POST(req: NextRequest) {
     const formData = await req.formData();
     const password = (formData.get("password") as string | null) ?? "";
     const from     = (formData.get("from")     as string | null) ?? "/admin";
+    const operator = ((formData.get("operator") as string | null) ?? "").trim().slice(0, 60);
 
     if (!ADMIN_PASSWORD || !safeEqual(password, ADMIN_PASSWORD)) {
       const loginUrl = new URL(`/admin/login?error=1&from=${encodeURIComponent(from)}`, req.url);
@@ -52,6 +65,7 @@ export async function POST(req: NextRequest) {
     const dest = new URL(from.startsWith("/") ? from : "/admin", req.url);
     const response = NextResponse.redirect(dest, { status: 303 });
     response.headers.append("Set-Cookie", SESSION_COOKIE);
+    if (operator) response.headers.append("Set-Cookie", operatorCookie(operator));
     return response;
   }
 

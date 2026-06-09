@@ -51,6 +51,19 @@ export default function AdminReturnsPage() {
     load();
   }
 
+  async function refund(id: string) {
+    if (!confirm("Send this refund to the customer's M-Pesa now?")) return;
+    const res = await fetch("/api/admin/returns/refund", {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ returnId: id }),
+    });
+    const data = await res.json();
+    alert(res.ok ? (data.message ?? "Refund sent.") : (data.error ?? "Refund failed."));
+    if (res.ok) load();
+  }
+
   const shown = returns.filter((r) => (filter === "all" ? true : r.status === "requested" || r.status === "approved"));
   const openCount = returns.filter((r) => r.status === "requested").length;
 
@@ -135,6 +148,15 @@ export default function AdminReturnsPage() {
                     style={{ ...SELECT, width: 110 }}
                   />
                 </label>
+                {r.status !== "refunded" && (
+                  <button
+                    onClick={() => refund(r.id)}
+                    className="es-btn-plum"
+                    style={{ fontSize: 12, padding: "7px 14px", cursor: "pointer" }}
+                  >
+                    Refund via M-Pesa
+                  </button>
+                )}
               </div>
             </div>
           ))}

@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
+import Image from "next/image";
 
 interface WishProduct {
   id: string;
@@ -89,8 +90,7 @@ export default function WishlistPage() {
                   <Link href={`/products/${product.slug}`} className="block">
                     <div className="relative w-full overflow-hidden bg-es-bone mb-3" style={{ paddingBottom: "125%" }}>
                       {img ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={img.url} alt={product.name} className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]" />
+                        <Image src={img.url} alt={product.name} fill sizes="(max-width: 640px) 50vw, 25vw" className="object-cover transition-transform duration-500 group-hover:scale-[1.03]" />
                       ) : (
                         <div className="absolute inset-0 bg-gradient-to-br from-[#e8dff0] to-[#c9a96130]" />
                       )}

@@ -21,6 +21,7 @@ import {
   paymentFailedSMS,
   orderShippedSMS,
   orderReadyForPickupSMS,
+  cartReminderSMS,
 } from "@/lib/africastalking/sms";
 import {
   sendOrderConfirmationWA,
@@ -33,6 +34,7 @@ import {
   isEmailConfigured,
   orderConfirmationEmail,
   orderShippedEmail,
+  cartReminderEmail,
 } from "@/lib/email/client";
 
 // WhatsApp is attempted first - higher open rates and free for 1k conversations/month.
@@ -84,6 +86,9 @@ export async function GET(req: NextRequest) {
   }
 
   const supabase = createAdminSupabaseClient();
+
+  // 0. Enqueue abandoned-cart reminders for orders left unpaid.
+  await enqueueCartReminders(supabase);
 
   // 1. Atomically claim queued jobs (SKIP LOCKED prevents double-processing)
   const { data: jobs, error: claimErr } = await supabase
@@ -141,6 +146,10 @@ export async function GET(req: NextRequest) {
           case "order_ready_for_pickup":
             waResult = await sendOrderReadyForPickupWA(order.phone, order.order_ref);
             break;
+          case "cart_reminder":
+            // No approved WhatsApp template for marketing reminders; use SMS/email.
+            waResult = { success: false, error: "cart_reminder uses SMS/email" };
+            break;
           default:
             await markFailed(supabase, job.id, `Unknown job type: ${job.job_type}`);
             results.push({ id: job.id, job_type: job.job_type, success: false, error: "Unknown job type" });
@@ -172,6 +181,9 @@ export async function GET(req: NextRequest) {
           case "order_ready_for_pickup":
             smsText = orderReadyForPickupSMS(order.order_ref);
             break;
+          case "cart_reminder":
+            smsText = cartReminderSMS(order.order_ref, order.total);
+            break;
           default:
             await markFailed(supabase, job.id, `Unknown job type: ${job.job_type}`);
             results.push({ id: job.id, job_type: job.job_type, success: false, error: "Unknown job type" });
@@ -187,10 +199,12 @@ export async function GET(req: NextRequest) {
       }
 
       // Email as an additional best-effort channel (does not affect job status).
-      if (isEmailConfigured() && order.email && (job.job_type === "order_confirmation" || job.job_type === "order_shipped")) {
+      const EMAILABLE = ["order_confirmation", "order_shipped", "cart_reminder"];
+      if (isEmailConfigured() && order.email && EMAILABLE.includes(job.job_type)) {
         try {
-          const tmpl = job.job_type === "order_confirmation"
-            ? orderConfirmationEmail(order.order_ref, order.total)
+          const tmpl =
+            job.job_type === "order_confirmation" ? orderConfirmationEmail(order.order_ref, order.total)
+            : job.job_type === "cart_reminder"     ? cartReminderEmail(order.order_ref, order.total)
             : orderShippedEmail(order.order_ref, order.courier ?? null, order.tracking_number ?? null, order.tracking_url ?? null);
           await sendEmail({ to: order.email, subject: tmpl.subject, html: tmpl.html });
         } catch (e) {
@@ -230,6 +244,47 @@ export async function GET(req: NextRequest) {
 }
 
 // Helpers
+
+// Queue one cart_reminder per order that's been stuck in pending_payment for
+// 30 min – 48 h and hasn't already been reminded. Best-effort; never throws.
+async function enqueueCartReminders(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  supabase: any
+): Promise<void> {
+  try {
+    const now = Date.now();
+    const from = new Date(now - 48 * 60 * 60 * 1000).toISOString();
+    const to = new Date(now - 30 * 60 * 1000).toISOString();
+
+    const { data: stale } = await supabase
+      .from("orders")
+      .select("id, phone")
+      .eq("status", "pending_payment")
+      .gte("created_at", from)
+      .lte("created_at", to)
+      .limit(100);
+
+    if (!stale || stale.length === 0) return;
+
+    const ids = stale.map((o: { id: string }) => o.id);
+    const { data: already } = await supabase
+      .from("notification_jobs")
+      .select("order_id")
+      .eq("job_type", "cart_reminder")
+      .in("order_id", ids);
+
+    const remindedIds = new Set((already ?? []).map((r: { order_id: string }) => r.order_id));
+    const toInsert = stale
+      .filter((o: { id: string; phone: string }) => o.phone && !remindedIds.has(o.id))
+      .map((o: { id: string }) => ({ order_id: o.id, job_type: "cart_reminder", status: "queued" }));
+
+    if (toInsert.length > 0) {
+      await supabase.from("notification_jobs").insert(toInsert);
+    }
+  } catch (e) {
+    console.warn("[notifications-cron] cart reminder enqueue failed:", (e as Error).message);
+  }
+}
 
 async function markFailed(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

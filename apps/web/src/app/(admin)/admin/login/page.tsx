@@ -62,6 +62,28 @@ function LoginForm() {
           {/* Pass the destination so the server can redirect back there */}
           <input type="hidden" name="from" value={from} />
 
+          <div style={{ marginBottom: 24 }}>
+            <input
+              type="text"
+              name="operator"
+              placeholder="Your name (for the activity log)"
+              autoComplete="off"
+              style={{
+                display: "block",
+                width: "100%",
+                padding: "12px 0",
+                border: "none",
+                borderBottom: "1px solid #333",
+                background: "transparent",
+                fontFamily: "var(--font-inter)",
+                fontSize: 15,
+                color: "#ffffff",
+                outline: "none",
+                boxSizing: "border-box",
+              }}
+            />
+          </div>
+
           <div style={{ marginBottom: 32 }}>
             <input
               type="password"
