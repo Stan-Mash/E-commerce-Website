@@ -1,19 +1,9 @@
-/**
- * Safaricom Daraja C2B webhook handler.
- *
- * Register two URLs in the Daraja portal (Apps → C2B → Register URLs):
- *   Validation URL   : https://yourdomain.com/api/webhooks/mpesa/c2b?secret=MPESA_WEBHOOK_SECRET&type=validation
- *   Confirmation URL : https://yourdomain.com/api/webhooks/mpesa/c2b?secret=MPESA_WEBHOOK_SECRET&type=confirmation
- *
- * Flow:
- *   1. Cashier creates a C2B order via /api/admin/pos (returns order_ref).
- *   2. Cashier tells customer: "Pay KES X to our Till and enter <order_ref> as reference."
- *   3. Customer pays on their phone.
- *   4. Safaricom hits Validation URL (if registered) — we accept all.
- *   5. Safaricom hits Confirmation URL — we match BillRefNumber to c2b_payments,
- *      mark order as paid, and update via Supabase Realtime so the POS screen
- *      immediately shows "Payment Received" without polling.
- */
+// Safaricom Daraja C2B webhook handler.
+// Register in the Daraja portal (Apps -> C2B -> Register URLs):
+//   Validation:   .../api/webhooks/mpesa/c2b?secret=MPESA_WEBHOOK_SECRET&type=validation
+//   Confirmation: .../api/webhooks/mpesa/c2b?secret=MPESA_WEBHOOK_SECRET&type=confirmation
+// Validation accepts all; confirmation matches BillRefNumber to c2b_payments,
+// marks the order paid, and notifies the POS via Supabase Realtime.
 
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminSupabaseClient } from "@/lib/supabase/server";
@@ -66,7 +56,7 @@ export async function POST(req: NextRequest) {
     .maybeSingle();
 
   if (!pending || pending.status !== "pending") {
-    // Unknown order ref or already processed — accept silently
+    // Unknown order ref or already processed - accept silently
     return NextResponse.json(ACCEPTED);
   }
 
@@ -89,7 +79,7 @@ export async function POST(req: NextRequest) {
     .eq("id", pending.id);
 
   if (matchStatus === "matched" || matchStatus === "overpaid") {
-    // Mark order paid — Supabase Realtime broadcasts this change to the POS page
+    // Mark order paid - Supabase Realtime broadcasts this change to the POS page
     await supabase
       .from("orders")
       .update({ status: "paid", paid_at: new Date().toISOString() })

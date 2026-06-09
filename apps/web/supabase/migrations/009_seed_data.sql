@@ -1,9 +1,9 @@
--- ─────────────────────────────────────────────────────────────────────────────
+--
 -- Migration 009: Comprehensive mock data
 -- 25 products · ~260 SKUs · 2 locations · 40 customers · 85 orders · receipts
--- ─────────────────────────────────────────────────────────────────────────────
+--
 
--- ── HELPER: SKU INSERT (must be a real function, not inline) ──────────────────
+-- HELPER: SKU INSERT (must be a real function, not inline)
 CREATE OR REPLACE FUNCTION _seed_sku(
   pid uuid, code text, sz text, col text, hex text, qw integer, qs integer
 ) RETURNS void LANGUAGE plpgsql AS $$
@@ -19,7 +19,7 @@ BEGIN
 END;
 $$;
 
--- ── PRODUCTS + SKUS + INVENTORY ───────────────────────────────────────────────
+-- PRODUCTS + SKUS + INVENTORY
 DO $$
 DECLARE
   v_pid   uuid;
@@ -27,11 +27,11 @@ DECLARE
   v_size  text;
 BEGIN
 
-  -- ════════════════════════════════════════════════════════════
+  --
   -- WOMEN (10 products)
-  -- ════════════════════════════════════════════════════════════
+  --
 
-  -- 1. Tweed Jacket & Skirt Set ─────────────────────────────────
+  -- 1. Tweed Jacket & Skirt Set
   INSERT INTO products (name,slug,description,category,base_price,compare_price,material,care_instructions,status,is_featured)
   VALUES ('Tweed Jacket & Skirt Set','tweed-jacket-skirt-set',
     'An elegant co-ord set featuring a cropped tweed jacket with gold-tone button detailing paired with a matching asymmetric mini skirt. A wardrobe essential for the modern Nairobi woman — equally perfect for brunch, office days, and evening events.',
@@ -51,7 +51,7 @@ BEGIN
     END LOOP;
   END LOOP;
 
-  -- 2. Ribbed Turtleneck Sweater ────────────────────────────────
+  -- 2. Ribbed Turtleneck Sweater
   INSERT INTO products (name,slug,description,category,base_price,compare_price,material,care_instructions,status,is_featured)
   VALUES ('Ribbed Turtleneck Sweater','ribbed-turtleneck-sweater',
     'A classic ribbed turtleneck in a slim silhouette. The perfect layering piece — wear under the Tweed Set or styled alone with wide-leg trousers. Soft, stretchy, and supremely comfortable.',
@@ -71,7 +71,7 @@ BEGIN
     END LOOP;
   END LOOP;
 
-  -- 3. Satin Slip Midi Dress ────────────────────────────────────
+  -- 3. Satin Slip Midi Dress
   INSERT INTO products (name,slug,description,category,base_price,compare_price,material,care_instructions,status,is_featured)
   VALUES ('Satin Slip Midi Dress','satin-slip-midi-dress',
     'A luxurious satin slip dress with adjustable spaghetti straps and a delicate lace trim hemline. Effortlessly transitions from daytime sophistication to evening glamour.',
@@ -90,7 +90,7 @@ BEGIN
     END LOOP;
   END LOOP;
 
-  -- 4. Floral Wrap Midi Dress ───────────────────────────────────
+  -- 4. Floral Wrap Midi Dress
   INSERT INTO products (name,slug,description,category,base_price,compare_price,material,care_instructions,status,is_featured)
   VALUES ('Floral Wrap Midi Dress','floral-wrap-midi-dress',
     'A flattering wrap-style midi dress featuring an all-over tropical floral print. The adjustable self-tie waist creates a beautiful silhouette for every body type.',
@@ -108,7 +108,7 @@ BEGIN
     END LOOP;
   END LOOP;
 
-  -- 5. Bodycon Mini Dress ───────────────────────────────────────
+  -- 5. Bodycon Mini Dress
   INSERT INTO products (name,slug,description,category,base_price,compare_price,material,care_instructions,status,is_featured)
   VALUES ('Bodycon Mini Dress','bodycon-mini-dress',
     'A sleek figure-hugging mini dress in premium stretch fabric. Clean lines, minimal detailing, maximum impact. The go-to choice for Nairobi nights out.',
@@ -127,7 +127,7 @@ BEGIN
     END LOOP;
   END LOOP;
 
-  -- 6. Wide Leg Linen Trousers ──────────────────────────────────
+  -- 6. Wide Leg Linen Trousers
   INSERT INTO products (name,slug,description,category,base_price,compare_price,material,care_instructions,status,is_featured)
   VALUES ('Wide Leg Linen Trousers','wide-leg-linen-trousers',
     'Effortlessly chic wide-leg trousers in breathable linen blend. High-waisted silhouette with side pockets and a hidden zip closure. A must-have for Nairobi''s warm climate.',
@@ -146,7 +146,7 @@ BEGIN
     END LOOP;
   END LOOP;
 
-  -- 7. Off-Shoulder Ruched Blouse ───────────────────────────────
+  -- 7. Off-Shoulder Ruched Blouse
   INSERT INTO products (name,slug,description,category,base_price,compare_price,material,care_instructions,status,is_featured)
   VALUES ('Off-Shoulder Ruched Blouse','off-shoulder-ruched-blouse',
     'A romantic off-shoulder blouse with delicate ruching detail across the bust. Pairs perfectly with the Pleated Satin Midi Skirt or wide-leg trousers.',
@@ -165,7 +165,7 @@ BEGIN
     END LOOP;
   END LOOP;
 
-  -- 8. Pleated Satin Midi Skirt ─────────────────────────────────
+  -- 8. Pleated Satin Midi Skirt
   INSERT INTO products (name,slug,description,category,base_price,compare_price,material,care_instructions,status,is_featured)
   VALUES ('Pleated Satin Midi Skirt','pleated-satin-midi-skirt',
     'An elegant pleated midi skirt in luxurious satin with a high-waisted silhouette and a subtle slit at the back. Dress up with heels or dress down with sneakers.',
@@ -184,7 +184,7 @@ BEGIN
     END LOOP;
   END LOOP;
 
-  -- 9. Structured Power Blazer ──────────────────────────────────
+  -- 9. Structured Power Blazer
   INSERT INTO products (name,slug,description,category,base_price,compare_price,material,care_instructions,status,is_featured)
   VALUES ('Structured Power Blazer','structured-power-blazer',
     'A sharp double-breasted blazer with padded shoulders and a nipped waist. The cornerstone of a professional wardrobe. Wear open over a slip dress or buttoned as a jacket-dress.',
@@ -203,7 +203,7 @@ BEGIN
     END LOOP;
   END LOOP;
 
-  -- 10. Silk Cami & Shorts Co-ord ───────────────────────────────
+  -- 10. Silk Cami & Shorts Co-ord
   INSERT INTO products (name,slug,description,category,base_price,compare_price,material,care_instructions,status,is_featured)
   VALUES ('Silk Cami & Shorts Co-ord','silk-cami-shorts-coord',
     'A relaxed yet polished two-piece set with a satin cami top and matching high-waisted shorts. Versatile enough for lounging, brunch, or a casual evening out.',
@@ -221,11 +221,11 @@ BEGIN
     END LOOP;
   END LOOP;
 
-  -- ════════════════════════════════════════════════════════════
+  --
   -- MEN (5 products)
-  -- ════════════════════════════════════════════════════════════
+  --
 
-  -- 11. Slim Fit Chino Trousers ─────────────────────────────────
+  -- 11. Slim Fit Chino Trousers
   INSERT INTO products (name,slug,description,category,base_price,compare_price,material,care_instructions,status,is_featured)
   VALUES ('Slim Fit Chino Trousers','slim-fit-chino-trousers',
     'Tailored slim-fit chinos with a mid-rise waist and tapered leg. A versatile trouser that bridges the gap between smart and casual — pair with an Oxford shirt or a plain tee.',
@@ -244,7 +244,7 @@ BEGIN
     END LOOP;
   END LOOP;
 
-  -- 12. Oxford Button-Down Shirt ────────────────────────────────
+  -- 12. Oxford Button-Down Shirt
   INSERT INTO products (name,slug,description,category,base_price,compare_price,material,care_instructions,status,is_featured)
   VALUES ('Oxford Button-Down Shirt','oxford-button-down-shirt',
     'A classic Oxford weave button-down shirt with a regular fit. The ideal smart-casual staple — tuck it in with chinos for the office or wear it open over a plain tee at the weekend.',
@@ -263,7 +263,7 @@ BEGIN
     END LOOP;
   END LOOP;
 
-  -- 13. Leather Bomber Jacket ───────────────────────────────────
+  -- 13. Leather Bomber Jacket
   INSERT INTO products (name,slug,description,category,base_price,compare_price,material,care_instructions,status,is_featured)
   VALUES ('Leather Bomber Jacket','leather-bomber-jacket',
     'A premium faux-leather bomber jacket with ribbed collar, cuffs and hem. The statement outerwear piece that elevates any outfit from ordinary to extraordinary.',
@@ -282,7 +282,7 @@ BEGIN
     END LOOP;
   END LOOP;
 
-  -- 14. Linen Resort Shirt ──────────────────────────────────────
+  -- 14. Linen Resort Shirt
   INSERT INTO products (name,slug,description,category,base_price,compare_price,material,care_instructions,status,is_featured)
   VALUES ('Linen Resort Shirt','linen-resort-shirt',
     'A lightweight linen shirt with a relaxed Cuban collar and short sleeves. The ultimate warm-weather shirt for Nairobi''s sunny days — breathable, stylish, and effortlessly cool.',
@@ -300,7 +300,7 @@ BEGIN
     END LOOP;
   END LOOP;
 
-  -- 15. Matching Tracksuit Set ──────────────────────────────────
+  -- 15. Matching Tracksuit Set
   INSERT INTO products (name,slug,description,category,base_price,compare_price,material,care_instructions,status,is_featured)
   VALUES ('Matching Tracksuit Set','matching-tracksuit-set',
     'A premium co-ord tracksuit set with zip-up jacket and tapered joggers. Soft fleece interior for comfort without compromising on style. Perfect for gym, travel, or weekend errands.',
@@ -318,11 +318,11 @@ BEGIN
     END LOOP;
   END LOOP;
 
-  -- ════════════════════════════════════════════════════════════
+  --
   -- CHILDREN (3 products)
-  -- ════════════════════════════════════════════════════════════
+  --
 
-  -- 16. Girls Floral Sundress ───────────────────────────────────
+  -- 16. Girls Floral Sundress
   INSERT INTO products (name,slug,description,category,base_price,compare_price,material,care_instructions,status,is_featured)
   VALUES ('Girls Floral Sundress','girls-floral-sundress',
     'A sweet smocked sundress with an all-over floral print and adjustable shoulder straps. Easy to put on, easy to wash, and absolutely adorable.',
@@ -335,7 +335,7 @@ BEGIN
       CASE v_size WHEN '4-5Y' THEN 8  WHEN '6-7Y' THEN 9  WHEN '8-9Y' THEN 7  WHEN '2-3Y' THEN 5  ELSE 4  END);
   END LOOP;
 
-  -- 17. Boys Classic Polo Shirt ─────────────────────────────────
+  -- 17. Boys Classic Polo Shirt
   INSERT INTO products (name,slug,description,category,base_price,compare_price,material,care_instructions,status,is_featured)
   VALUES ('Boys Classic Polo Shirt','boys-classic-polo-shirt',
     'A crisp piqué cotton polo shirt in a classic fit with ribbed collar and cuffs. School-ready and weekend-ready in equal measure.',
@@ -353,7 +353,7 @@ BEGIN
     END LOOP;
   END LOOP;
 
-  -- 18. Kids Cargo Shorts ───────────────────────────────────────
+  -- 18. Kids Cargo Shorts
   INSERT INTO products (name,slug,description,category,base_price,compare_price,material,care_instructions,status,is_featured)
   VALUES ('Kids Cargo Shorts','kids-cargo-shorts',
     'Practical and stylish cargo shorts with multiple pockets, an elastic waistband, and a relaxed fit. Built for adventure.',
@@ -371,11 +371,11 @@ BEGIN
     END LOOP;
   END LOOP;
 
-  -- ════════════════════════════════════════════════════════════
+  --
   -- ACCESSORIES (7 products)
-  -- ════════════════════════════════════════════════════════════
+  --
 
-  -- 19. French Beret Cap (the one in the photo) ─────────────────
+  -- 19. French Beret Cap (the one in the photo)
   INSERT INTO products (name,slug,description,category,base_price,compare_price,material,care_instructions,status,is_featured)
   VALUES ('French Beret Cap','french-beret-cap',
     'An effortlessly chic French-inspired beret featuring a structured body with a glossy PU leather brim and a single side button detail. The finishing touch to any sophisticated outfit.',
@@ -386,7 +386,7 @@ BEGIN
   PERFORM _seed_sku(v_pid,'BRT-BLK-SM','S/M','Black','#1A1A1A',35,15);
   PERFORM _seed_sku(v_pid,'BRT-BLK-LX','L/XL','Black','#1A1A1A',25,10);
 
-  -- 20. Mini Structured Tote Bag ────────────────────────────────
+  -- 20. Mini Structured Tote Bag
   INSERT INTO products (name,slug,description,category,base_price,compare_price,material,care_instructions,status,is_featured)
   VALUES ('Mini Structured Tote Bag','mini-structured-tote-bag',
     'A compact structured tote bag with a top handle and optional crossbody strap. Features a top zip closure and an interior slip pocket. The ideal everyday bag that goes with everything.',
@@ -398,7 +398,7 @@ BEGIN
   PERFORM _seed_sku(v_pid,'MTB-CML-OS','One Size','Camel','#C19A6B',15,6);
   PERFORM _seed_sku(v_pid,'MTB-PNK-OS','One Size','Dusty Pink','#D4A0A0',12,5);
 
-  -- 21. Gold Coin Pendant Necklace ──────────────────────────────
+  -- 21. Gold Coin Pendant Necklace
   INSERT INTO products (name,slug,description,category,base_price,compare_price,material,care_instructions,status,is_featured)
   VALUES ('Gold Coin Pendant Necklace','gold-coin-pendant-necklace',
     'A delicate 18-carat gold-plated chain featuring a textured ancient coin pendant. Timeless, versatile, and effortlessly elegant. Seen in our lookbook paired with the Ribbed Turtleneck.',
@@ -408,7 +408,7 @@ BEGIN
 
   PERFORM _seed_sku(v_pid,'GCN-GLD-OS','One Size','Gold','#FFD700',50,20);
 
-  -- 22. Pearl Drop Statement Earrings ───────────────────────────
+  -- 22. Pearl Drop Statement Earrings
   INSERT INTO products (name,slug,description,category,base_price,compare_price,material,care_instructions,status,is_featured)
   VALUES ('Pearl Drop Statement Earrings','pearl-drop-statement-earrings',
     'Elegant drop earrings featuring freshwater pearl accents suspended from a gold-plated hook. The perfect accent piece to elevate both casual and formal looks.',
@@ -418,7 +418,7 @@ BEGIN
 
   PERFORM _seed_sku(v_pid,'PDE-WPL-OS','One Size','White Pearl','#F5F5F0',45,18);
 
-  -- 23. Woven Leather Belt ──────────────────────────────────────
+  -- 23. Woven Leather Belt
   INSERT INTO products (name,slug,description,category,base_price,compare_price,material,care_instructions,status,is_featured)
   VALUES ('Woven Leather Belt','woven-leather-belt',
     'A hand-woven genuine leather belt with a gold-tone pin buckle. Works equally well cinched over a blazer, threaded through trouser loops, or draped over a dress.',
@@ -430,7 +430,7 @@ BEGIN
   PERFORM _seed_sku(v_pid,'WLB-BLK-L','L (85-95cm)','Black','#1A1A1A',18,7);
   PERFORM _seed_sku(v_pid,'WLB-BRN-M','M (75-85cm)','Brown','#8B4513',20,8);
 
-  -- 24. Silk Square Scarf ───────────────────────────────────────
+  -- 24. Silk Square Scarf
   INSERT INTO products (name,slug,description,category,base_price,compare_price,material,care_instructions,status,is_featured)
   VALUES ('Silk Square Scarf','silk-square-scarf',
     'A 90×90cm silk-feel square scarf with a hand-rolled hem. Style it as a headscarf, neck tie, bag accessory, or belt. Available in four exclusive prints.',
@@ -443,7 +443,7 @@ BEGIN
   PERFORM _seed_sku(v_pid,'SSF-ANI-OS','One Size','Animal Print','#C3B091',20,8);
   PERFORM _seed_sku(v_pid,'SSF-GEO-OS','One Size','Geometric Print','#808000',18,7);
 
-  -- 25. Quilted Crossbody Bag ───────────────────────────────────
+  -- 25. Quilted Crossbody Bag
   INSERT INTO products (name,slug,description,category,base_price,compare_price,material,care_instructions,status,is_featured)
   VALUES ('Quilted Crossbody Bag','quilted-crossbody-bag',
     'A chic quilted crossbody bag with a chain strap and magnetic snap closure. Compact enough for essentials, stylish enough for any occasion.',
@@ -460,7 +460,7 @@ END $$;
 DROP FUNCTION _seed_sku;
 
 
--- ── CUSTOMERS (40 real Kenyan names) ─────────────────────────────────────────
+-- CUSTOMERS (40 real Kenyan names)
 
 INSERT INTO customers (phone, name, email) VALUES
   ('254700111001','Amina Okonkwo','amina.okonkwo@gmail.com'),
@@ -506,7 +506,7 @@ INSERT INTO customers (phone, name, email) VALUES
 ON CONFLICT (phone) DO NOTHING;
 
 
--- ── HELPER: ORDER FACTORY (must be a real function) ───────────────────────────
+-- HELPER: ORDER FACTORY (must be a real function)
 CREATE OR REPLACE FUNCTION _seed_make_order(
   p_ref           text,
   p_phone         text,
@@ -547,7 +547,7 @@ BEGIN
 END;
 $$;
 
--- ── ORDERS (85 orders spread over 90 days) ───────────────────────────────────
+-- ORDERS (85 orders spread over 90 days)
 DO $$
 DECLARE
   v_oid uuid;
@@ -555,7 +555,7 @@ DECLARE
 BEGIN
   v_lid := (SELECT id FROM locations WHERE name = 'CBD Store');
 
-  -- ── Online orders (delivered) ──────────────────────────────────────────
+  -- Online orders (delivered)
 
   v_oid := _seed_make_order('ESC-001','254700111001','delivered','mpesa_stk',4500,250,0,'door','Kilimani, Nairobi',85,NULL);
   INSERT INTO order_items (order_id,sku_id,quantity,unit_price,subtotal) VALUES
@@ -631,7 +631,7 @@ BEGIN
   INSERT INTO order_items (order_id,sku_id,quantity,unit_price,subtotal) VALUES
     (v_oid,(SELECT id FROM skus WHERE sku_code='BLZ-Cam-S'),1,5500,5500);
 
-  -- ── Online orders (shipped) ────────────────────────────────────────────
+  -- Online orders (shipped)
 
   v_oid := _seed_make_order('ESC-016','254700111016','shipped','mpesa_stk',5250,250,0,'door','Ngong Road, Nairobi',35,NULL);
   INSERT INTO order_items (order_id,sku_id,quantity,unit_price,subtotal) VALUES
@@ -658,7 +658,7 @@ BEGIN
     (v_oid,(SELECT id FROM skus WHERE sku_code='OSB-Whi-M'),1,1500,1500),
     (v_oid,(SELECT id FROM skus WHERE sku_code='PDE-WPL-OS'),1,650,650);
 
-  -- ── Online orders (processing / recent) ───────────────────────────────
+  -- Online orders (processing / recent)
 
   v_oid := _seed_make_order('ESC-021','254700111021','processing','mpesa_stk',9500,250,0,'door','Riverside Drive, Nairobi',14,NULL);
   INSERT INTO order_items (order_id,sku_id,quantity,unit_price,subtotal) VALUES
@@ -700,7 +700,7 @@ BEGIN
     (v_oid,(SELECT id FROM skus WHERE sku_code='SSF-ABS-OS'),1,950,950),
     (v_oid,(SELECT id FROM skus WHERE sku_code='PDE-WPL-OS'),1,650,650);
 
-  -- ── POS Cash Sales (CBD Store) ────────────────────────────────────────
+  -- POS Cash Sales (CBD Store)
 
   v_oid := _seed_make_order('POS-ESC-001','254700111027','paid','cash',5700,0,0,'pickup',NULL,88,v_lid);
   INSERT INTO order_items (order_id,sku_id,quantity,unit_price,subtotal) VALUES
@@ -817,7 +817,7 @@ BEGIN
   INSERT INTO order_items (order_id,sku_id,quantity,unit_price,subtotal) VALUES
     (v_oid,(SELECT id FROM skus WHERE sku_code='BMJ-Bla-S'),1,6500,6500);
 
-  -- ── Cancelled / payment_failed orders ─────────────────────────────────
+  -- Cancelled / payment_failed orders
 
   v_oid := _seed_make_order('ESC-X001','254700111025','cancelled','mpesa_stk',4500,250,0,'door','Ruaka, Nairobi',50,NULL);
   INSERT INTO order_items (order_id,sku_id,quantity,unit_price,subtotal) VALUES
@@ -831,7 +831,7 @@ BEGIN
   INSERT INTO order_items (order_id,sku_id,quantity,unit_price,subtotal) VALUES
     (v_oid,(SELECT id FROM skus WHERE sku_code='BLZ-Cam-L'),1,5500,5500);
 
-  -- ── Children / accessories focused orders ─────────────────────────────
+  -- Children / accessories focused orders
 
   v_oid := _seed_make_order('ESC-029','254700111036','delivered','mpesa_stk',5400,250,0,'door','Athi River, Nairobi',60,NULL);
   INSERT INTO order_items (order_id,sku_id,quantity,unit_price,subtotal) VALUES
@@ -869,7 +869,7 @@ END $$;
 DROP FUNCTION _seed_make_order;
 
 
--- ── MPESA TRANSACTIONS (for all paid online orders) ────────────────────────
+-- MPESA TRANSACTIONS (for all paid online orders)
 
 DO $$
 DECLARE
@@ -905,7 +905,7 @@ BEGIN
 END $$;
 
 
--- ── PROMOTIONS ────────────────────────────────────────────────────────────────
+-- PROMOTIONS
 
 INSERT INTO promotions (name, code, type, value, min_spend, max_uses, active, expires_at) VALUES
   ('Opening Week Discount',         'WELCOME10', 'percentage',   10,  2000, 100,  true, now() + interval '60 days'),

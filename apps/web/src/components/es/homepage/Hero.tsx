@@ -39,7 +39,7 @@ export function Hero({ productCount }: HeroProps = {}) {
         }
       `}</style>
 
-      {/* ── Split layout ─────────────────────────────────── */}
+      {/* Split layout */}
       <div className="grid grid-cols-1 md:grid-cols-2 min-h-[88vh]">
 
         {/* Image panel */}
@@ -116,7 +116,7 @@ export function Hero({ productCount }: HeroProps = {}) {
         </div>
       </div>
 
-      {/* ── Category strip ───────────────────────────────── */}
+      {/* Category strip */}
       <div className="grid grid-cols-2 md:grid-cols-4 border-t border-b border-es-hair bg-white">
         {CATS.map((cat, i) => (
           <Link

@@ -29,7 +29,7 @@ export function ProductCard({ product, priority = false }: Props) {
       className="group flex flex-col gap-3"
       aria-label={`View ${product.name}`}
     >
-      {/* ── Image frame ── */}
+      {/* Image frame */}
       <div className="relative aspect-product w-full overflow-hidden bg-es-bone">
 
         {primaryImage ? (
@@ -82,7 +82,7 @@ export function ProductCard({ product, priority = false }: Props) {
           </div>
         )}
 
-        {/* Quick-add — slides up on hover */}
+        {/* Quick-add - slides up on hover */}
         {!isSoldOut && (
           <div className="
             absolute bottom-0 inset-x-0
@@ -97,7 +97,7 @@ export function ProductCard({ product, priority = false }: Props) {
         )}
       </div>
 
-      {/* ── Product info ── */}
+      {/* Product info */}
       <div className="space-y-0.5 px-0.5">
         {product.category && (
           <p className="text-[10px] font-semibold tracking-label uppercase text-es-faint">

@@ -1,11 +1,11 @@
--- ─────────────────────────────────────────────────────────────────────────────
+--
 -- Migration 008: Promotions engine
 --
 -- promotions table: rules (percentage, fixed, free_shipping) with optional
 -- promo codes, minimum spend, and usage caps.
 -- Both the online checkout route and the POS API run carts through
 -- applyDiscounts() before finalising totals.
--- ─────────────────────────────────────────────────────────────────────────────
+--
 
 create table promotions (
   id          uuid primary key default uuid_generate_v4(),

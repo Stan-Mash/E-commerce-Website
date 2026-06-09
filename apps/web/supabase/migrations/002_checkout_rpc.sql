@@ -1,9 +1,7 @@
--- ============================================================
 -- checkout_and_reserve_stock RPC
 -- Called by the checkout API instead of doing SELECT + INSERT
 -- separately. Runs entirely inside one transaction with row-level
 -- locks so two concurrent checkouts can never oversell the same SKU.
--- ============================================================
 
 create or replace function checkout_and_reserve_stock(
   p_order_ref        text,
@@ -28,7 +26,7 @@ declare
   v_price     numeric;
   v_stock     integer;
 begin
-  -- ── 1. Lock all SKU rows FOR UPDATE (blocks concurrent checkouts) ──
+  -- 1. Lock all SKU rows FOR UPDATE (blocks concurrent checkouts)
   for v_item in select * from jsonb_array_elements(p_items)
   loop
     v_sku_id   := (v_item->>'sku_id')::uuid;
@@ -52,7 +50,7 @@ begin
     end if;
   end loop;
 
-  -- ── 2. Create the order ──────────────────────────────────────────────
+  -- 2. Create the order
   insert into orders (
     order_ref, phone, status,
     subtotal, delivery_fee, total,
@@ -64,7 +62,7 @@ begin
   )
   returning id into v_order_id;
 
-  -- ── 3. Insert order items & decrement stock atomically ───────────────
+  -- 3. Insert order items & decrement stock atomically
   for v_item in select * from jsonb_array_elements(p_items)
   loop
     v_sku_id   := (v_item->>'sku_id')::uuid;

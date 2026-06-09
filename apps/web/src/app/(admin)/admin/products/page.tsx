@@ -100,7 +100,7 @@ export default function AdminProductsPage() {
         setProducts(json.products ?? []);
       }
     } catch {
-      // ignore — show empty
+      // ignore - show empty
     } finally {
       setLoading(false);
     }

@@ -152,7 +152,7 @@ export async function GET(request: NextRequest) {
     productRevMap[pid]!.units_sold += item.quantity;
     productRevMap[pid]!.revenue += Number(item.subtotal);
 
-    // Category breakdown — prefer DB category name, fall back to keyword detection
+    // Category breakdown - prefer DB category name, fall back to keyword detection
     const catName = product.categories?.name ?? detectCategory(product.name);
     if (!categoryMap[catName]) categoryMap[catName] = { revenue: 0, orders: 0 };
     categoryMap[catName]!.revenue += Number(item.subtotal);

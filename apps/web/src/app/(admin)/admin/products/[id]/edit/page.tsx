@@ -161,7 +161,7 @@ export default function EditProductPage({ params }: Props) {
     setSaved(false);
   }, []);
 
-  // ── Image upload ─────────────────────────────────────────────────────────────
+  // Image upload
   async function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -340,7 +340,7 @@ export default function EditProductPage({ params }: Props) {
       <form onSubmit={(e) => void handleSave(e)}>
         <div style={{ display: "flex", flexDirection: "column", gap: 28 }}>
 
-          {/* ── Product Image ── */}
+          {/* Product Image */}
           <div>
             <label style={LABEL_STYLE}>Product Image</label>
             <div style={{ display: "flex", gap: 20, alignItems: "flex-start", flexWrap: "wrap" }}>

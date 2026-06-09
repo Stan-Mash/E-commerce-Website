@@ -15,8 +15,8 @@ alter table products
   check (status in ('active', 'draft', 'archived', 'coming_soon'));
 
 -- 2. Ensure public read access includes coming_soon (RLS).
---    The original public policy typically reads `status = 'active'`; replace it
---    with one that also exposes coming_soon items to anonymous visitors.
+-- The original public policy typically reads `status = 'active'`; replace it
+-- with one that also exposes coming_soon items to anonymous visitors.
 do $$
 begin
   if exists (
@@ -32,7 +32,7 @@ create policy "public_read_visible_products"
   using (status in ('active', 'coming_soon'));
 
 -- 3. Update the join-table read policies (added in migration 004) so a
---    coming-soon product's SKUs / images / videos are also publicly readable.
+-- coming-soon product's SKUs / images / videos are also publicly readable.
 drop policy if exists "public_read_skus" on skus;
 create policy "public_read_skus" on skus
   for select
@@ -71,7 +71,7 @@ alter table products
   add column if not exists available_from date;
 
 -- 5. Extend orders.delivery_type to support CBD vs outside-CBD delivery.
---    Keeps legacy 'door' valid so historical orders still satisfy the check.
+-- Keeps legacy 'door' valid so historical orders still satisfy the check.
 alter table orders
   drop constraint if exists orders_delivery_type_check;
 

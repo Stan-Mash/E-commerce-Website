@@ -9,7 +9,7 @@ import React, {
   useState,
 } from 'react';
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+// Types
 
 export type ToastType = 'success' | 'error' | 'warning' | 'info';
 
@@ -25,7 +25,7 @@ export interface ToastContextValue {
   toast: (message: string, type?: ToastType) => void;
 }
 
-// ─── Constants ────────────────────────────────────────────────────────────────
+// Constants
 
 const MAX_TOASTS = 5;
 const AUTO_DISMISS_MS = 4000;
@@ -52,7 +52,7 @@ const TYPE_ICONS: Record<ToastType, string> = {
   info:    'ℹ',
 };
 
-// ─── CSS Keyframes ────────────────────────────────────────────────────────────
+// CSS Keyframes
 
 const ANIMATION_STYLES = `
 @keyframes toast-slide-in {
@@ -82,11 +82,11 @@ const ANIMATION_STYLES = `
 }
 `;
 
-// ─── Context ──────────────────────────────────────────────────────────────────
+// Context
 
 const ToastContext = createContext<ToastContextValue | null>(null);
 
-// ─── Individual Toast ─────────────────────────────────────────────────────────
+// Individual Toast
 
 interface ToastItemProps {
   item: ToastItem;
@@ -180,7 +180,7 @@ function ToastCard({ item, onDismiss }: ToastItemProps) {
   );
 }
 
-// ─── Provider ─────────────────────────────────────────────────────────────────
+// Provider
 
 export function ToastProvider({ children }: { children: React.ReactNode }) {
   const [toasts, setToasts] = useState<ToastItem[]>([]);
@@ -281,7 +281,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-// ─── Hook ─────────────────────────────────────────────────────────────────────
+// Hook
 
 export function useToast(): ToastContextValue {
   const ctx = useContext(ToastContext);

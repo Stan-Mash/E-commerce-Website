@@ -3,12 +3,8 @@ import { createPublicSupabaseClient } from "@/lib/supabase/server";
 
 export const revalidate = 0; // always fresh
 
-/**
- * Public product search.
- * Queries the real catalogue (Postgres full-text `search_vector` with an
- * ilike fallback) instead of any hardcoded list. Only returns purchasable
- * products (status = 'active'); coming-soon / draft / archived are excluded.
- */
+// Public product search: Postgres full-text (search_vector) with an ilike
+// fallback. Returns only status='active' products.
 export async function GET(req: NextRequest) {
   const q = (req.nextUrl.searchParams.get("q") ?? "").trim();
   if (q.length < 2) {

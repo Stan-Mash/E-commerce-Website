@@ -24,7 +24,7 @@ export function isFlutterwaveConfigured(): boolean {
 }
 
 interface CreatePaymentLinkArgs {
-  txRef: string;          // our order_ref — used to reconcile in the webhook
+  txRef: string;          // our order_ref, used to reconcile in the webhook
   amount: number;         // KES, whole number
   customerPhone: string;  // 2547XXXXXXXX
   customerEmail?: string | undefined;

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { parseSTKCallback, type STKCallbackBody } from "@/lib/mpesa/daraja";
 import { createAdminSupabaseClient } from "@/lib/supabase/server";
 
-/** Constant-time string comparison — prevents timing side-channel on secret. */
+// Constant-time string comparison to avoid a timing side-channel on the secret.
 function timingSafeEqual(a: string, b: string): boolean {
   if (a.length !== b.length) return false;
   let mismatch = 0;
@@ -13,15 +13,11 @@ function timingSafeEqual(a: string, b: string): boolean {
 }
 
 export async function POST(req: NextRequest) {
-  // ── Secret token verification ────────────────────────────────────────
-  // The CallbackURL registered with Safaricom includes a secret query param:
-  //   https://yourdomain.com/api/webhooks/mpesa?secret=MPESA_WEBHOOK_SECRET
-  // IP headers (x-forwarded-for) are trivially spoofable and NOT used here.
-  // This secret is the only gate — any request missing it is rejected.
+  // Verify the ?secret= query param registered on the Daraja CallbackURL.
+  // Daraja can't send custom headers, so the secret is the only auth gate.
+  // Never log `secret`.
   const secret = req.nextUrl.searchParams.get("secret");
   const expected = process.env.MPESA_WEBHOOK_SECRET ?? "";
-  // Use timing-safe comparison to prevent secret enumeration via response timing.
-  // Do NOT log `secret` — it would appear in Vercel/Railway logs.
   if (!secret || !expected || !timingSafeEqual(secret, expected)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
@@ -44,15 +40,13 @@ export async function POST(req: NextRequest) {
     .single();
 
   if (existing && existing.status !== "pending") {
-    // Already processed — return 200 so Safaricom stops retrying
+    // Already processed; return 200 so Safaricom stops retrying.
     return NextResponse.json({ ResultCode: 0, ResultDesc: "Accepted" });
   }
 
   if (parsed.success && parsed.mpesaReceiptNumber) {
-    // 1. Mark mpesa_transaction as paid.
-    // onConflict targets the unique index on checkout_request_id so Safaricom
-    // retries are safe — they update the row instead of crashing with a
-    // duplicate-key violation.
+    // Mark the transaction paid. onConflict on checkout_request_id makes
+    // Safaricom retries idempotent (update instead of duplicate-key error).
     await supabase
       .from("mpesa_transactions")
       .upsert(
@@ -69,7 +63,7 @@ export async function POST(req: NextRequest) {
         { onConflict: "checkout_request_id" }
       );
 
-    // 2. Update order status
+    // Update order status
     const { data: txn } = await supabase
       .from("mpesa_transactions")
       .select("order_id")
@@ -82,7 +76,7 @@ export async function POST(req: NextRequest) {
         .update({ status: "paid", paid_at: new Date().toISOString() })
         .eq("id", txn.order_id);
 
-      // 3. Enqueue notification job — Vercel Cron picks it up within a minute
+      // Enqueue notification job; Vercel Cron picks it up within a minute.
       await supabase.from("notification_jobs").insert({
         order_id: txn.order_id,
         job_type: "order_confirmation",
@@ -90,10 +84,8 @@ export async function POST(req: NextRequest) {
       });
     }
   } else {
-    // Payment failed or cancelled.
-    // FIX — inventory black hole: restore reserved stock and log to inventory_log
-    // so the units aren't silently lost. This mirrors what the checkout RPC
-    // deducted when the order was first created.
+    // Payment failed or cancelled: restore the stock the checkout RPC reserved
+    // and log it so the units aren't lost.
     await supabase
       .from("mpesa_transactions")
       .upsert(

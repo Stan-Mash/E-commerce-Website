@@ -146,7 +146,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ orderId: order.order_id, orderRef, paymentLink: link, total });
   } catch {
-    // Couldn't reach Flutterwave — restore stock and mark failed.
+    // Couldn't reach Flutterwave - restore stock and mark failed.
     await supabase.from("orders").update({ status: "payment_failed" }).eq("id", order.order_id);
     for (const item of rpcItems) {
       await supabase.rpc("increment_sku_stock", { p_sku_id: item.sku_id, p_delta: item.quantity });

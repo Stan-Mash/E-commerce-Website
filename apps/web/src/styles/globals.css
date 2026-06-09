@@ -17,7 +17,7 @@
     --es-champagne-lt:   #f0ece8;
     --es-champagne-dk:   #8c7262;
 
-    /* Compatibility aliases — plum references resolve to ink while component migration continues */
+    /* Compatibility aliases - plum references resolve to ink while component migration continues */
     --es-plum:           var(--es-ink);
     --es-plum-dk:        var(--es-char);
     --es-plum-lt:        var(--es-champagne-lt);
@@ -50,7 +50,7 @@
 }
 
 @layer components {
-  /* ── Button system ───────────────────────────────────────── */
+  /* Button system */
   .es-btn-plum {
     @apply inline-flex items-center justify-center gap-2
            bg-es-ink text-white
@@ -99,7 +99,7 @@
            disabled:opacity-50;
   }
 
-  /* ── Typography helpers ──────────────────────────────────── */
+  /* Typography helpers */
   .es-eyebrow {
     @apply text-[11px] font-semibold tracking-label uppercase text-es-faint;
     font-family: var(--font-inter), system-ui, sans-serif;
@@ -110,7 +110,7 @@
     font-family: var(--font-inter), system-ui, sans-serif;
   }
 
-  /* ── Card / skeleton ─────────────────────────────────────── */
+  /* Card / skeleton */
   .es-card {
     @apply overflow-hidden;
   }
@@ -125,7 +125,7 @@
            animate-shimmer;
   }
 
-  /* ── Nav link ───────────────────────────────────────────── */
+  /* Nav link */
   .es-nav-link {
     font-family: var(--font-inter);
     @apply text-[13px] font-medium text-[#111]

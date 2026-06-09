@@ -1,18 +1,18 @@
--- ─────────────────────────────────────────────────────────────────────────────
+--
 -- Migration 006: Multi-location inventory
 --
 -- Replaces the single skus.stock_quantity integer with per-location tracking.
 -- skus.stock_quantity is kept as a cached aggregate (sum of all locations),
--- updated automatically by a trigger.  All existing code that reads
+-- updated automatically by a trigger. All existing code that reads
 -- stock_quantity continues to work with no changes.
 --
 -- New tables: locations, inventory_levels
--- New RPCs  : pos_checkout, increment_location_stock
--- Updated RPC: checkout_and_reserve_stock (online) — now locks inventory_levels
--- Updated RPC: increment_sku_stock — now updates inventory_levels
--- ─────────────────────────────────────────────────────────────────────────────
+-- New RPCs : pos_checkout, increment_location_stock
+-- Updated RPC: checkout_and_reserve_stock (online) - now locks inventory_levels
+-- Updated RPC: increment_sku_stock - now updates inventory_levels
+--
 
--- ── 1. Locations ──────────────────────────────────────────────────────────────
+-- 1. Locations
 
 create table locations (
   id         uuid primary key default uuid_generate_v4(),
@@ -37,7 +37,7 @@ create policy "service_role_all_locations" on locations
 create policy "public_read_active_locations" on locations
   for select using (is_active = true);
 
--- ── 2. Inventory levels ───────────────────────────────────────────────────────
+-- 2. Inventory levels
 
 create table inventory_levels (
   id           uuid primary key default uuid_generate_v4(),
@@ -58,7 +58,7 @@ alter table inventory_levels enable row level security;
 create policy "service_role_all_inventory_levels" on inventory_levels
   using (auth.role() = 'service_role');
 
--- ── 3. Migrate existing stock → Main Warehouse ────────────────────────────────
+-- 3. Migrate existing stock → Main Warehouse
 
 insert into inventory_levels (sku_id, location_id, quantity)
 select s.id, l.id, s.stock_quantity
@@ -73,7 +73,7 @@ from   skus s
 cross  join locations l
 where  l.name = 'CBD Store';
 
--- ── 4. Trigger: keep skus.stock_quantity as aggregate of all locations ─────────
+-- 4. Trigger: keep skus.stock_quantity as aggregate of all locations
 
 create or replace function sync_sku_stock_quantity()
 returns trigger
@@ -95,7 +95,7 @@ create trigger inventory_levels_sync_sku_stock
 after insert or update or delete on inventory_levels
 for each row execute function sync_sku_stock_quantity();
 
--- ── 5. increment_location_stock — location-aware stock restore ─────────────────
+-- 5. increment_location_stock - location-aware stock restore
 
 create or replace function increment_location_stock(
   p_sku_id      uuid,
@@ -115,7 +115,7 @@ begin
 end;
 $$;
 
--- ── 6. Update increment_sku_stock to also fix inventory_levels ────────────────
+-- 6. Update increment_sku_stock to also fix inventory_levels
 -- Online payment-failure restoration always targets Main Warehouse.
 
 create or replace function increment_sku_stock(
@@ -143,7 +143,7 @@ begin
 end;
 $$;
 
--- ── 7. Update checkout_and_reserve_stock to lock inventory_levels ─────────────
+-- 7. Update checkout_and_reserve_stock to lock inventory_levels
 -- Online checkout always reserves from Main Warehouse.
 
 create or replace function checkout_and_reserve_stock(
@@ -172,7 +172,7 @@ declare
 begin
   select id into v_warehouse_id from locations where name = 'Main Warehouse';
 
-  -- ── 1. Lock inventory_levels rows FOR UPDATE (prevents oversell) ──
+  -- 1. Lock inventory_levels rows FOR UPDATE (prevents oversell)
   for v_item in select * from jsonb_array_elements(p_items)
   loop
     v_sku_id   := (v_item->>'sku_id')::uuid;
@@ -196,7 +196,7 @@ begin
     end if;
   end loop;
 
-  -- ── 2. Create order ──────────────────────────────────────────────
+  -- 2. Create order
   insert into orders (
     order_ref, phone, status,
     subtotal, delivery_fee, total,
@@ -208,7 +208,7 @@ begin
   )
   returning id into v_order_id;
 
-  -- ── 3. Insert items, deduct inventory_levels, log ─────────────────
+  -- 3. Insert items, deduct inventory_levels, log
   for v_item in select * from jsonb_array_elements(p_items)
   loop
     v_sku_id   := (v_item->>'sku_id')::uuid;
@@ -231,7 +231,7 @@ begin
 end;
 $$;
 
--- ── 8. pos_checkout RPC — location-aware, atomic ──────────────────────────────
+-- 8. pos_checkout RPC - location-aware, atomic
 
 create or replace function pos_checkout(
   p_order_ref       text,
@@ -290,7 +290,7 @@ begin
   end loop;
 
   -- 3. Create order
-  --    Cash/STK = immediately paid; C2B = pending_payment until webhook fires
+  -- Cash/STK = immediately paid; C2B = pending_payment until webhook fires
   insert into orders (
     order_ref, phone, customer_id,
     cashier_name, status, payment_method,

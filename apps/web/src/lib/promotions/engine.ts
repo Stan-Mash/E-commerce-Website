@@ -1,14 +1,7 @@
-/**
- * Promotions engine — shared between the online checkout API and the POS.
- *
- * applyDiscounts() is a pure function: it takes a cart + available promotions
- * and returns the final totals. No database calls happen here — the caller
- * is responsible for fetching active promotions and for calling
- * redeem_promotion() in Postgres once the order is confirmed.
- *
- * Priority rule: only ONE promotion is applied per order (the one that gives
- * the largest discount). This avoids stacking abuse.
- */
+// Pure promotions engine shared by the checkout API and POS. applyDiscounts()
+// takes a cart plus available promotions and returns totals; the caller fetches
+// active promotions and calls redeem_promotion() once the order is confirmed.
+// Only the single largest-discount promotion is applied per order (no stacking).
 
 export interface Promotion {
   id: string;
@@ -43,7 +36,7 @@ export interface DiscountResult {
  *
  * @param items       Cart line items (unit_price already Math.round()-ed)
  * @param deliveryFee Delivery fee in KES (0 for pickup / POS)
- * @param promotions  Active promotions fetched from DB (pre-filtered by active=true)
+ * @param promotions Active promotions fetched from DB (pre-filtered by active=true)
  * @param promoCode   Optional promo code entered by the customer
  */
 export function applyDiscounts(

@@ -1,13 +1,11 @@
--- ============================================================
--- Nairobi Fashion — Initial Schema
--- Run: supabase db push  (or paste in Supabase SQL editor)
--- ============================================================
+-- Nairobi Fashion - Initial Schema
+-- Run: supabase db push (or paste in Supabase SQL editor)
 
--- ── Extensions ──────────────────────────────────────────────
+-- Extensions
 create extension if not exists "uuid-ossp";
 create extension if not exists "pg_trgm"; -- fuzzy search on product names
 
--- ── Enums ───────────────────────────────────────────────────
+-- Enums
 create type order_status as enum (
   'pending_payment',
   'paid',
@@ -33,7 +31,7 @@ create type return_resolution as enum (
   'exchange'
 );
 
--- ── Products ─────────────────────────────────────────────────
+-- Products
 create table products (
   id               uuid primary key default uuid_generate_v4(),
   name             text not null,
@@ -59,7 +57,7 @@ create index products_category_idx on products(category);
 create index products_featured_idx on products(is_featured) where is_featured = true;
 create index products_search_idx on products using gin(search_vector);
 
--- ── SKUs ─────────────────────────────────────────────────────
+-- SKUs
 create table skus (
   id               uuid primary key default uuid_generate_v4(),
   product_id       uuid not null references products(id) on delete cascade,
@@ -74,7 +72,7 @@ create table skus (
 
 create index skus_product_id_idx on skus(product_id);
 
--- ── Product Images ───────────────────────────────────────────
+-- Product Images
 create table product_images (
   id                    uuid primary key default uuid_generate_v4(),
   product_id            uuid not null references products(id) on delete cascade,
@@ -89,7 +87,7 @@ create table product_images (
 
 create index product_images_product_id_idx on product_images(product_id);
 
--- ── Product Videos ───────────────────────────────────────────
+-- Product Videos
 create table product_videos (
   id                    uuid primary key default uuid_generate_v4(),
   product_id            uuid not null references products(id) on delete cascade,
@@ -104,7 +102,7 @@ create table product_videos (
 
 create index product_videos_product_id_idx on product_videos(product_id);
 
--- ── Customers ────────────────────────────────────────────────
+-- Customers
 create table customers (
   id          uuid primary key default uuid_generate_v4(),
   phone       text not null unique,               -- 254XXXXXXXXX normalised
@@ -118,7 +116,7 @@ create table customers (
 
 create index customers_phone_idx on customers(phone);
 
--- ── Orders ───────────────────────────────────────────────────
+-- Orders
 create table orders (
   id               uuid primary key default uuid_generate_v4(),
   order_ref        text not null unique,
@@ -141,7 +139,7 @@ create index orders_phone_idx on orders(phone);
 create index orders_created_at_idx on orders(created_at desc);
 create index orders_order_ref_idx on orders(order_ref);
 
--- ── Order Items ──────────────────────────────────────────────
+-- Order Items
 create table order_items (
   id          uuid primary key default uuid_generate_v4(),
   order_id    uuid not null references orders(id) on delete cascade,
@@ -154,7 +152,7 @@ create table order_items (
 
 create index order_items_order_id_idx on order_items(order_id);
 
--- ── M-Pesa Transactions ──────────────────────────────────────
+-- M-Pesa Transactions
 create table mpesa_transactions (
   id                    uuid primary key default uuid_generate_v4(),
   order_id              uuid references orders(id),
@@ -174,7 +172,7 @@ create table mpesa_transactions (
 create index mpesa_transactions_order_id_idx on mpesa_transactions(order_id);
 create index mpesa_transactions_checkout_request_idx on mpesa_transactions(checkout_request_id);
 
--- ── Notification Jobs ────────────────────────────────────────
+-- Notification Jobs
 create table notification_jobs (
   id          uuid primary key default uuid_generate_v4(),
   order_id    uuid not null references orders(id),
@@ -188,7 +186,7 @@ create table notification_jobs (
 
 create index notification_jobs_status_idx on notification_jobs(status) where status in ('queued','failed');
 
--- ── Returns ──────────────────────────────────────────────────
+-- Returns
 create table returns (
   id          uuid primary key default uuid_generate_v4(),
   order_id    uuid not null references orders(id),
@@ -204,7 +202,7 @@ create table returns (
 create index returns_order_id_idx on returns(order_id);
 create index returns_status_idx on returns(status);
 
--- ── Inventory Audit Log ──────────────────────────────────────
+-- Inventory Audit Log
 create table inventory_log (
   id          uuid primary key default uuid_generate_v4(),
   sku_id      uuid not null references skus(id),
@@ -216,7 +214,7 @@ create table inventory_log (
 
 create index inventory_log_sku_id_idx on inventory_log(sku_id);
 
--- ── Updated_at triggers ──────────────────────────────────────
+-- Updated_at triggers
 create or replace function set_updated_at()
 returns trigger language plpgsql as $$
 begin
@@ -240,7 +238,7 @@ create trigger returns_updated_at before update on returns
 create trigger customers_updated_at before update on customers
   for each row execute function set_updated_at();
 
--- ── Row Level Security ───────────────────────────────────────
+-- Row Level Security
 
 -- Products: public read of active products only
 alter table products enable row level security;

@@ -1,12 +1,12 @@
--- ─────────────────────────────────────────────────────────────────────────────
+--
 -- Migration 007: POS infrastructure
 --
 -- Adds columns to orders for payment method, cashier attribution, discount
--- tracking, and location.  Creates shifts (cash float) and c2b_payments
+-- tracking, and location. Creates shifts (cash float) and c2b_payments
 -- (Safaricom C2B callback matching) tables.
--- ─────────────────────────────────────────────────────────────────────────────
+--
 
--- ── orders: new columns ───────────────────────────────────────────────────────
+-- orders: new columns
 
 alter table orders
   add column if not exists payment_method text
@@ -29,7 +29,7 @@ alter table orders
 create index if not exists orders_payment_method_idx on orders(payment_method);
 create index if not exists orders_location_id_idx    on orders(location_id);
 
--- ── shifts ────────────────────────────────────────────────────────────────────
+-- shifts
 
 create table shifts (
   id             uuid primary key default uuid_generate_v4(),
@@ -52,7 +52,7 @@ alter table shifts enable row level security;
 create policy "service_role_all_shifts" on shifts
   using (auth.role() = 'service_role');
 
--- ── c2b_payments ──────────────────────────────────────────────────────────────
+-- c2b_payments
 -- Holds pending POS orders waiting for Safaricom C2B confirmation.
 -- BillRefNumber in the Safaricom payload maps to order_ref.
 
@@ -80,7 +80,7 @@ create policy "service_role_all_c2b_payments" on c2b_payments
 create trigger c2b_payments_updated_at before update on c2b_payments
   for each row execute function set_updated_at();
 
--- ── Enable Supabase Realtime on orders (for C2B live screen) ─────────────────
+-- Enable Supabase Realtime on orders (for C2B live screen)
 -- The POS page subscribes to order status changes so the cashier sees
 -- "Payment Received" the instant Safaricom's webhook fires.
 alter publication supabase_realtime add table orders;

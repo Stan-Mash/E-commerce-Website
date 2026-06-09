@@ -134,7 +134,7 @@ export function SizeGuide({ activeSize }: Props) {
       </div>
 
       <style>{`
-        /* ── Backdrop ── */
+        /* Backdrop */
         .sg-backdrop {
           position: fixed;
           inset: 0;
@@ -148,7 +148,7 @@ export function SizeGuide({ activeSize }: Props) {
           to   { opacity: 1; }
         }
 
-        /* ── Panel shared ── */
+        /* Panel shared */
         .sg-panel {
           position: fixed;
           z-index: 1001;
@@ -158,7 +158,7 @@ export function SizeGuide({ activeSize }: Props) {
                       opacity 0.3s ease;
         }
 
-        /* ── Mobile: bottom sheet ── */
+        /* Mobile: bottom sheet */
         @media (max-width: 767px) {
           .sg-panel {
             left: 0; right: 0; bottom: 0;
@@ -175,7 +175,7 @@ export function SizeGuide({ activeSize }: Props) {
           }
         }
 
-        /* ── Desktop: centred modal ── */
+        /* Desktop: centred modal */
         @media (min-width: 768px) {
           .sg-panel {
             top: 50%; left: 50%;
@@ -222,7 +222,7 @@ export function SizeGuide({ activeSize }: Props) {
         }
         .sg-close:hover { color: #171717; }
 
-        /* ── Tabs ── */
+        /* Tabs */
         .sg-tabs {
           display: flex;
           gap: 0;
@@ -256,7 +256,7 @@ export function SizeGuide({ activeSize }: Props) {
           letter-spacing: 0.04em;
         }
 
-        /* ── Table ── */
+        /* Table */
         .sg-table-wrap {
           overflow-x: auto;
           border-radius: 8px;

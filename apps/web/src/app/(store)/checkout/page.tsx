@@ -180,7 +180,7 @@ export default function CheckoutPage() {
     <div style={{ minHeight: "100vh", background: "var(--es-paper)", fontFamily: "var(--font-inter)" }}>
       <div style={{ maxWidth: 1100, margin: "0 auto", padding: "56px 24px 80px" }}>
         <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 48 }} className="checkout-grid">
-          {/* ── Left: Form ── */}
+          {/* Left: Form */}
           <div style={{ minWidth: 0 }}>
             <p style={{ fontSize: 11, letterSpacing: "0.45em", textTransform: "uppercase", color: "var(--es-gold)", marginBottom: 16 }}>
               Secure Checkout
@@ -260,7 +260,7 @@ export default function CheckoutPage() {
             )}
           </div>
 
-          {/* ── Right: Summary ── */}
+          {/* Right: Summary */}
           <aside>
             <div style={{ background: "var(--es-white)", padding: "32px 28px", position: "sticky", top: 24 }}>
               <p style={{ fontSize: 11, letterSpacing: "0.45em", textTransform: "uppercase", color: "var(--es-ink)", marginBottom: 24 }}>Order Summary</p>

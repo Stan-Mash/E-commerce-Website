@@ -2,9 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { safeEqual } from "@/lib/adminAuth";
 
 /**
- * Owner login — issues owner_session cookie.
+ * Owner login - issues owner_session cookie.
  * Uses OWNER_PASSWORD env var (never exposed to staff).
- * The cookie value is OWNER_SESSION_TOKEN env var — a separate secret
+ * The cookie value is OWNER_SESSION_TOKEN env var - a separate secret
  * so the password itself never travels in a cookie.
  */
 export async function POST(request: NextRequest) {

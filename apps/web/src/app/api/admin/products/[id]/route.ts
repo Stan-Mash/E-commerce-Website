@@ -109,7 +109,7 @@ export async function PUT(
         { onConflict: "product_id,sort_order" }
       );
     } else {
-      // Image was removed — delete the admin-managed primary image
+      // Image was removed - delete the admin-managed primary image
       await supabase
         .from("product_images")
         .delete()
@@ -172,7 +172,7 @@ export async function PUT(
   return NextResponse.json({ product });
 }
 
-// Products are NEVER hard-deleted — doing so would cascade to SKUs and break
+// Products are NEVER hard-deleted - doing so would cascade to SKUs and break
 // order_items foreign keys, corrupting historical financial records.
 // Instead we archive: the product is hidden from the storefront (RLS policy
 // only exposes status='active') while all historical order data remains intact.
@@ -190,7 +190,7 @@ export async function DELETE(
 
   const supabase = getAdminClient();
 
-  // Soft-delete: set status to 'archived' — never a hard DELETE
+  // Soft-delete: set status to 'archived' - never a hard DELETE
   const { error } = await supabase
     .from("products")
     .update({ status: "archived" })

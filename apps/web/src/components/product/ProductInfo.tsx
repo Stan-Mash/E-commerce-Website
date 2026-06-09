@@ -36,7 +36,7 @@ export function ProductInfo({ product }: Props) {
 
   const isComingSoon = product.status === "coming_soon";
   // If a SKU is selected, check its stock. If nothing is selected yet, fall back
-  // to whether ANY SKU across the product has stock — so a product where every
+  // to whether ANY SKU across the product has stock - so a product where every
   // size is zero-stock shows "OUT OF STOCK" instead of appearing clickable.
   const anySkuInStock = product.skus
     ? product.skus.length === 0 || product.skus.some((s) => s.stock_quantity > 0)

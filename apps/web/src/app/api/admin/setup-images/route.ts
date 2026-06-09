@@ -1,13 +1,6 @@
-/**
- * POST /api/admin/setup-images
- *
- * One-time setup endpoint. Call once after deploying the image-upload feature:
- *   1. Creates the `product-images` Supabase Storage bucket (public, 10 MB limit)
- *   2. Runs the `ALTER TABLE products ADD COLUMN image_url TEXT` migration via
- *      Supabase's pg-meta REST endpoint (available on all hosted projects).
- *
- * Idempotent — safe to call multiple times.
- */
+// POST /api/admin/setup-images
+// One-time, idempotent setup: creates the public `product-images` Storage
+// bucket (10 MB limit) and adds products.image_url via pg-meta.
 
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
@@ -38,7 +31,7 @@ export async function POST(request: NextRequest) {
 
   const results: Record<string, string> = {};
 
-  // ── 1. Create Storage bucket ──────────────────────────────────────────────
+  // 1. Create Storage bucket
   try {
     const { data: existing } = await supabase.storage.listBuckets();
     const bucketExists = existing?.some((b) => b.name === BUCKET);
@@ -57,7 +50,7 @@ export async function POST(request: NextRequest) {
     results.bucket = `exception: ${String(e)}`;
   }
 
-  // ── 2. Run ALTER TABLE via pg-meta REST endpoint ──────────────────────────
+  // 2. Run ALTER TABLE via pg-meta REST endpoint
   // Supabase hosts pg-meta at {project_url}/pg-meta/v0/query for all projects.
   // The service role JWT is accepted as the Bearer token.
   try {
@@ -73,7 +66,7 @@ export async function POST(request: NextRequest) {
     if (pgMetaRes.ok) {
       results.migration = "applied via pg-meta";
     } else {
-      // pg-meta not available (self-hosted or restricted) — try via RPC function
+      // pg-meta not available (self-hosted or restricted) - try via RPC function
       const rpcRes = await supabase.rpc("exec_ddl" as never, { sql: MIGRATION_SQL } as never);
       if (!(rpcRes as { error?: { message: string } }).error) {
         results.migration = "applied via rpc";
@@ -99,7 +92,7 @@ export async function POST(request: NextRequest) {
   });
 }
 
-// GET — for easy browser testing
+// GET - for easy browser testing
 export async function GET(request: NextRequest) {
   return POST(request);
 }

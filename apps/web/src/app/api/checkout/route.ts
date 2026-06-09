@@ -5,22 +5,17 @@ import { createAdminSupabaseClient } from "@/lib/supabase/server";
 import { normaliseKenyanPhone, generateOrderRef } from "@/lib/utils";
 import { deliveryFeeFor, requiresAddress, normaliseDeliveryType } from "@/lib/delivery";
 
-/**
- * Rate limiting via Upstash Redis.
- * - Development without Redis: logs a warning and allows the request.
- * - Production without Redis: returns false (block) to prevent silent bypass.
- * - Production with Redis misconfigured: returns false (fail closed).
- */
+// Rate limit via Upstash Redis. Allows requests in dev when Redis is absent;
+// fails closed in production so a missing Redis can't silently bypass the limit.
 async function checkRateLimit(ip: string): Promise<{ allowed: boolean; unavailable?: boolean }> {
   const isDev = process.env.NODE_ENV !== "production";
   const hasRedis = !!(process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN);
 
   if (!hasRedis) {
     if (isDev) {
-      console.warn("[checkout] Rate limiting disabled — UPSTASH_REDIS_REST_URL/TOKEN not set (dev only).");
+      console.warn("[checkout] Rate limiting disabled - UPSTASH env vars not set (dev only).");
       return { allowed: true };
     }
-    // Production without Redis: service unavailable to prevent silent bypass.
     console.error("[checkout] Rate limiting required in production but UPSTASH env vars are missing.");
     return { allowed: false, unavailable: true };
   }
@@ -140,13 +135,8 @@ async function _handlePost(req: NextRequest) {
     return NextResponse.json({ error: "One or more items not found" }, { status: 404 });
   }
 
-  // Calculate total.
-  // Math.round() is applied to every money value before it touches the database
-  // or Daraja. Safaricom's STK Push API requires a strict integer — any decimal
-  // (e.g. from a future percentage-based discount like 15% off KES 8,500 =
-  // KES 7,225.50) would be silently truncated or rejected by the API.
-  // Rounding here keeps financial records in Supabase perfectly aligned with
-  // the amount Safaricom actually charges the customer.
+  // Money is rounded to whole KES: Daraja requires integer amounts, and this
+  // keeps the DB ledger aligned with what Safaricom charges.
   let subtotal = 0;
   for (const item of items) {
     const sku = skus.find((s) => s.id === item.skuId)!;
@@ -154,19 +144,14 @@ async function _handlePost(req: NextRequest) {
     subtotal += price * item.quantity;
   }
   subtotal = Math.round(subtotal);
-  // Free within Nairobi CBD and for pickup; flat fee outside CBD.
-  const deliveryFee = deliveryFeeFor(deliveryType);  // always a whole number
+  const deliveryFee = deliveryFeeFor(deliveryType);
   const total = Math.round(subtotal + deliveryFee);
 
-  // Build RPC payload — stock check, order creation, and stock decrement
-  // happen atomically inside a single Postgres transaction with row locks.
-  // This prevents overselling when two customers buy the last item simultaneously.
+  // RPC does stock check, order creation, and decrement atomically (row locks).
   const orderRef = generateOrderRef();
   const rpcItems = items.map((item) => {
     const sku = skus.find((s) => s.id === item.skuId)!;
     const price = (sku.product as { base_price: number } | null)?.base_price ?? 0;
-    // Round unit_price so order_items.subtotal (unit_price × quantity) is also
-    // a whole number — keeps the DB ledger consistent with the Daraja charge.
     return { sku_id: item.skuId, quantity: item.quantity, unit_price: Math.round(price) };
   });
 
@@ -183,7 +168,6 @@ async function _handlePost(req: NextRequest) {
   });
 
   if (rpcErr) {
-    // Postgres error codes set in the RPC
     if (rpcErr.message.includes("Insufficient stock")) {
       return NextResponse.json({ error: "One or more items is out of stock" }, { status: 409 });
     }
@@ -206,12 +190,8 @@ async function _handlePost(req: NextRequest) {
       description: "EliteStyle Order",
     });
   } catch (err) {
-    // Daraja timed out, went down, or rejected the payload.
-    // The webhook will NEVER fire in this case — Safaricom never accepted the
-    // request — so we must restore stock here immediately.
-    // (The webhook catch block handles the case where the customer cancels on
-    // their phone; this catch block handles the case where we never reached
-    // Safaricom at all.)
+    // Safaricom never accepted the request, so the webhook won't fire.
+    // Restore the stock the RPC reserved.
     await supabase
       .from("orders")
       .update({ status: "payment_failed" })

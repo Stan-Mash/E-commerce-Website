@@ -5,7 +5,7 @@ import Link from "next/link";
 import { formatKES } from "@/lib/utils";
 
 // ---------------------------------------------------------------------------
-// Types — mirror the API /api/search response
+// Types - mirror the API /api/search response
 // ---------------------------------------------------------------------------
 interface ProductResult {
   id: string;

@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
     .eq("namespace", "store");
 
   if (error) {
-    // Table doesn't exist or other error — return defaults
+    // Table doesn't exist or other error - return defaults
     return NextResponse.json(DEFAULTS);
   }
 

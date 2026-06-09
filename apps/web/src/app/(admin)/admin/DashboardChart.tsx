@@ -34,7 +34,7 @@ export default function DashboardChart({ data, maxRevenue }: DashboardChartProps
 
   const chartHeight = svgHeight - paddingTop - paddingBottom;
 
-  // We need a stable width reference — use a viewBox so it scales
+  // We need a stable width reference - use a viewBox so it scales
   const svgWidth = 400;
   const chartWidth = svgWidth - paddingLeft - paddingRight;
 

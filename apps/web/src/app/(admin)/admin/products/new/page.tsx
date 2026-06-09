@@ -112,7 +112,7 @@ export default function NewProductPage() {
     setForm((prev) => ({ ...prev, is_featured: !prev.is_featured }));
   }, []);
 
-  // ── Image upload ─────────────────────────────────────────────────────────────
+  // Image upload
   async function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -312,7 +312,7 @@ export default function NewProductPage() {
 
       <form onSubmit={(e) => void handleSubmit(e)} noValidate style={{ maxWidth: 760 }}>
 
-        {/* ── Product Image ── */}
+        {/* Product Image */}
         <div style={{ marginBottom: 36 }}>
           <label style={LABEL_STYLE}>Product Image</label>
           <div

@@ -1,13 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminSupabaseClient } from "@/lib/supabase/server";
-
-function checkOwner(req: NextRequest) {
-  const s = req.cookies.get("owner_session");
-  return s?.value === process.env.OWNER_SESSION_TOKEN;
-}
+import { isAuthenticatedOwnerRequest } from "@/lib/adminAuth";
 
 export async function GET(request: NextRequest) {
-  if (!checkOwner(request)) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  if (!isAuthenticatedOwnerRequest(request)) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const sb = createAdminSupabaseClient();
   const url = new URL(request.url);
@@ -29,7 +25,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  if (!checkOwner(request)) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  if (!isAuthenticatedOwnerRequest(request)) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const body = await request.json() as {
     category_id:    string;

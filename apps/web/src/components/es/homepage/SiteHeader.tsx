@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { ShoppingBag, Search, User, Menu, X } from "lucide-react";
 import { useCart } from "@/components/checkout/CartProvider";
@@ -16,7 +16,9 @@ const NAV = [
 
 export function SiteHeader() {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const { itemCount, openCart } = useCart();
+  useEffect(() => { setMounted(true); }, []);
 
   return (
     <header className="bg-white border-b border-es-hair sticky top-0 z-50">
@@ -62,11 +64,12 @@ export function SiteHeader() {
 
           <button
             onClick={openCart}
+            suppressHydrationWarning
             aria-label={`Bag — ${itemCount} item${itemCount !== 1 ? "s" : ""}`}
             className="relative flex items-center justify-center w-10 h-10 bg-transparent border-0 cursor-pointer text-es-char hover:text-es-ink hover:bg-es-paper transition-colors duration-150"
           >
             <ShoppingBag size={18} strokeWidth={1.75} />
-            {itemCount > 0 && (
+            {mounted && itemCount > 0 && (
               <span className="absolute top-1 right-1 bg-es-ink text-white rounded-full w-4 h-4 text-[9px] font-bold font-sans flex items-center justify-center leading-none">
                 {itemCount > 9 ? "9+" : itemCount}
               </span>
@@ -101,7 +104,7 @@ export function SiteHeader() {
             className="relative flex items-center justify-center w-10 h-10 bg-transparent border-0 cursor-pointer text-es-char"
           >
             <ShoppingBag size={18} strokeWidth={1.75} />
-            {itemCount > 0 && (
+            {mounted && itemCount > 0 && (
               <span className="absolute top-1 right-1 bg-es-ink text-white rounded-full w-4 h-4 text-[9px] font-bold font-sans flex items-center justify-center leading-none">
                 {itemCount > 9 ? "9+" : itemCount}
               </span>

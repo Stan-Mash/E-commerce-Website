@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Log submission to console (temporary — replace with email integration)
+    // Log submission to console (temporary - replace with email integration)
     console.log("[contact-form] New submission:", {
       name,
       email,

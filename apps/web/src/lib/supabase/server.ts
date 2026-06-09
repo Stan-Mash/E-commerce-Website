@@ -17,7 +17,7 @@ export function createServerSupabaseClient() {
           try {
             cookieStore.set({ name, value, ...options });
           } catch {
-            // Server component — can't set cookies, handled by middleware
+            // Server component; can't set cookies, handled by middleware
           }
         },
         remove(name: string, options: Record<string, unknown>) {
@@ -32,11 +32,8 @@ export function createServerSupabaseClient() {
   );
 }
 
-/**
- * Cookie-less client for fetching PUBLIC data (product pages, category pages).
- * Does NOT call cookies() — keeps Next.js in static/ISR rendering mode so
- * revalidate = 60 is honoured. Uses anon key + RLS for access control.
- */
+// Cookie-less client for PUBLIC data. Avoids cookies() so Next.js stays in
+// static/ISR mode (revalidate honoured). Uses anon key + RLS.
 export function createPublicSupabaseClient() {
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -45,11 +42,10 @@ export function createPublicSupabaseClient() {
   );
 }
 
-/** Service-role client for admin operations only — never expose to client */
+// Service-role client for admin operations only; never expose to the client.
 export function createAdminSupabaseClient() {
-  // Not typed with Database generic — checkout route uses complex join selects
-  // that the manually-authored Database type can't infer. Re-run
-  // `supabase gen types typescript` once the project is linked to fix this.
+  // Untyped: checkout's complex join selects don't infer from the hand-written
+  // Database type. Re-run `supabase gen types typescript` once linked.
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!,

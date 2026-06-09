@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ADMIN_SESSION_TOKEN } from "@/lib/adminAuth";
 
-// No insecure fallback — if ADMIN_PASSWORD is not configured the admin is
+// No insecure fallback - if ADMIN_PASSWORD is not configured the admin is
 // locked entirely (fail closed). Set ADMIN_PASSWORD in the environment.
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
 
@@ -27,13 +27,13 @@ const SESSION_COOKIE = [
 ].join("; ");
 
 /**
- * JSON endpoint — used by the old fetch-based login (kept for compatibility).
+ * JSON endpoint - used by the old fetch-based login (kept for compatibility).
  * Prefer the form-POST flow below which is more reliable with Service Workers.
  */
 export async function POST(req: NextRequest) {
   const contentType = req.headers.get("content-type") ?? "";
 
-  // ── Form submission (native <form> POST) ─────────────────────────────────
+  // Form submission (native <form> POST)
   // Browser handles the Set-Cookie natively before following the redirect,
   // which is more reliable than relying on the Fetch API.
   if (
@@ -55,7 +55,7 @@ export async function POST(req: NextRequest) {
     return response;
   }
 
-  // ── JSON endpoint (fetch-based login) ────────────────────────────────────
+  // JSON endpoint (fetch-based login)
   const { password } = await req.json() as { password: string };
 
   if (!ADMIN_PASSWORD || !safeEqual(password ?? "", ADMIN_PASSWORD)) {

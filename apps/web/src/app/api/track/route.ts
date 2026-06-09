@@ -22,7 +22,7 @@ export async function GET(req: NextRequest) {
   }
 
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
-    // Supabase not configured — return a mock for local dev
+    // Supabase not configured - return a mock for local dev
     return NextResponse.json({ error: "Order not found" }, { status: 404 });
   }
 
@@ -46,7 +46,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Order not found" }, { status: 404 });
   }
 
-  // Normalise items — the orders table may store them as JSON or an array
+  // Normalise items - the orders table may store them as JSON or an array
   let items: { name: string; quantity: number; price: number }[] = [];
   if (Array.isArray(data.items)) {
     items = data.items;

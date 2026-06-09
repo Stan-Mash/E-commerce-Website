@@ -1,5 +1,5 @@
 /**
- * ElitePlate — editorial photo placeholder.
+ * ElitePlate - editorial photo placeholder.
  * Clean gradient panels with no silhouettes.
  * Replace with <Image> or <video> when real assets arrive.
  */
@@ -25,7 +25,7 @@ const TONES: Record<ToneKey, { bg: string; mid: string; accent: string; text: "l
   ink:   { bg: "#4a4a4a", mid: "#2a2a2a", accent: "#0a0a0a",  text: "light" },
 };
 
-/** Decorative inset block per department — like a fabric swatch or folded cloth */
+/** Decorative inset block per department - like a fabric swatch or folded cloth */
 const SHAPES: Record<FigureKind, React.ReactNode> = {
   woman: (
     <svg viewBox="0 0 200 280" style={{ position: "absolute", bottom: "8%", left: "50%", transform: "translateX(-50%)", width: "52%", opacity: 0.22 }} aria-hidden>

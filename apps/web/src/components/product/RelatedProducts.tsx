@@ -39,82 +39,6 @@ const CATEGORY_LABELS: Record<string, string> = {
   accessories: "Accessories",
 };
 
-// Seed fallback — mirrors the product detail page seed data, trimmed to fields we need
-const SEED_RELATED: RelatedProductRow[] = [
-  {
-    id: "1",
-    name: "Kikoy Wrap Dress",
-    slug: "kikoy-wrap-dress",
-    base_price: 8500,
-    compare_price: 11000,
-    category: "Woman",
-    product_images: [],
-    skus: [
-      { size: "S", stock_quantity: 4 },
-      { size: "M", stock_quantity: 6 },
-    ],
-  },
-  {
-    id: "2",
-    name: "Bead Collar Shirt",
-    slug: "maasai-bead-collar-shirt",
-    base_price: 6200,
-    compare_price: null,
-    category: "Man",
-    product_images: [],
-    skus: [
-      { size: "M", stock_quantity: 5 },
-      { size: "L", stock_quantity: 4 },
-    ],
-  },
-  {
-    id: "3",
-    name: "Ankara Print Jumpsuit",
-    slug: "ankara-print-kids-jumpsuit",
-    base_price: 4800,
-    compare_price: null,
-    category: "Children",
-    product_images: [],
-    skus: [{ size: "4Y", stock_quantity: 6 }],
-  },
-  {
-    id: "4",
-    name: "Nairobi Linen Co-ord",
-    slug: "nairobi-linen-co-ord",
-    base_price: 12400,
-    compare_price: null,
-    category: "Woman",
-    product_images: [],
-    skus: [
-      { size: "S", stock_quantity: 3 },
-      { size: "M", stock_quantity: 4 },
-    ],
-  },
-  {
-    id: "5",
-    name: "Wax Print Relaxed Shirt",
-    slug: "kitenge-baraza-shirt",
-    base_price: 5800,
-    compare_price: null,
-    category: "Man",
-    product_images: [],
-    skus: [
-      { size: "M", stock_quantity: 5 },
-      { size: "L", stock_quantity: 4 },
-    ],
-  },
-  {
-    id: "6",
-    name: "Check Print Romper",
-    slug: "shuka-check-romper",
-    base_price: 3200,
-    compare_price: null,
-    category: "Children",
-    product_images: [],
-    skus: [{ size: "2Y", stock_quantity: 6 }],
-  },
-];
-
 // ---------------------------------------------------------------------------
 // Data fetch
 // ---------------------------------------------------------------------------
@@ -160,12 +84,7 @@ async function getRelated(
     }
   }
 
-  // Seed fallback: filter by category (case-insensitive), exclude current
-  return SEED_RELATED.filter(
-    (p) =>
-      p.id !== currentProductId &&
-      p.category.toLowerCase() === category.toLowerCase()
-  ).slice(0, 4);
+  return [];
 }
 
 // ---------------------------------------------------------------------------

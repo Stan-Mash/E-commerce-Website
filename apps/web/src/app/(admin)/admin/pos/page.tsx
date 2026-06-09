@@ -1,33 +1,21 @@
 "use client";
 
-/**
- * Elite Style Co — POS Terminal v2
- *
- * Fixes:
- *  1. shift_id sent on every sale (critical — was returning 400)
- *  2. All var(--font-bodoni) removed
- *  3. Category filter tabs
- *  4. Stock level badges on size buttons
- *  5. Product images on cards
- *  6. Cash change calculator (amount tendered → change due)
- *  7. Keyboard shortcuts: F1=Cash, F2=STK, F3=C2B, Enter=Complete
- *  8. Hold/park transactions
- *  9. Item-level discounts
- * 10. WhatsApp digital receipt link
- * 11. Receipt: payment method, location, KRA PIN, change given, return policy
- */
+// Elite Style Co - POS terminal.
+// Supports cash / M-Pesa STK / C2B, held carts, item discounts, stock badges,
+// a thermal receipt, and a WhatsApp receipt link.
+// Keyboard: F1=Cash, F2=STK, F3=C2B, Enter=Complete.
 
 import React, { useState, useEffect, useCallback, useRef, memo } from "react";
 import { createClient } from "@supabase/supabase-js";
 
-// ── Auth helper ───────────────────────────────────────────────────────────────
+// Auth helper
 // Wraps fetch to always send the admin_session HttpOnly cookie.
-// credentials:"include" is sufficient — the token no longer comes from localStorage.
+// credentials:"include" is sufficient - the token no longer comes from localStorage.
 function adminFetch(url: string, init: RequestInit = {}): Promise<Response> {
   return fetch(url, { ...init, credentials: "include" });
 }
 
-// ── Types ─────────────────────────────────────────────────────────────────────
+// Types
 
 interface SKU {
   id:             string;
@@ -77,7 +65,7 @@ interface HeldCart {
   phone: string;
 }
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
+// Helpers
 
 const FONT = "'Inter','Urbanist',sans-serif";
 
@@ -117,7 +105,7 @@ function whatsappLink(params: {
   return `https://wa.me/${norm}?text=${encodeURIComponent(lines)}`;
 }
 
-// ── ESC/POS thermal receipt ───────────────────────────────────────────────────
+// ESC/POS thermal receipt
 
 async function printReceipt(params: {
   orderRef:      string;
@@ -222,10 +210,8 @@ async function printReceipt(params: {
   await port.close();
 }
 
-// ── Shift Modal — defined at module level so React never remounts it ──────────
-// IMPORTANT: must NOT be defined inside POSPage. An inline component definition
-// creates a new function reference on every parent render, forcing React to
-// unmount/remount the component (and all its DOM nodes) on every keystroke.
+// Defined at module level (not inside POSPage) so React keeps it mounted;
+// an inline definition would remount it on every keystroke.
 
 interface ShiftModalProps {
   shiftAction:  "open" | "close";
@@ -238,7 +224,7 @@ interface ShiftModalProps {
 }
 
 const ShiftModalComponent = memo(function ShiftModalComponent({ shiftAction, cashierName, shift, errorMsg, onOpen, onClose, onCancel }: ShiftModalProps) {
-  // Controlled local state — typing updates local state only, completely isolated
+  // Controlled local state - typing updates local state only, completely isolated
   // from POSPage re-renders. This is the correct pattern for modal inputs.
   const [nameVal,    setNameVal]    = useState(cashierName);
   const [floatVal,   setFloatVal]   = useState("");
@@ -337,7 +323,7 @@ const ShiftModalComponent = memo(function ShiftModalComponent({ shiftAction, cas
   );
 });
 
-// ── Main component ────────────────────────────────────────────────────────────
+// Main component
 
 export default function POSPage() {
   const [products,        setProducts]       = useState<Product[]>([]);
@@ -359,7 +345,7 @@ export default function POSPage() {
   // Shift
   const [shift,           setShift]          = useState<Shift | null>(null);
   const [showShiftModal,  setShowShiftModal]  = useState(false);
-  // openingFloat / closingFloat are read directly from refs at submit — no state needed
+  // openingFloat / closingFloat are read directly from refs at submit - no state needed
   const [shiftAction,     setShiftAction]    = useState<"open" | "close">("open");
 
   // Hold/park
@@ -383,7 +369,7 @@ export default function POSPage() {
   const showShiftModalRef = useRef(false);
   useEffect(() => { showShiftModalRef.current = showShiftModal; }, [showShiftModal]);
 
-  // ── Load locations ──────────────────────────────────────────────────────────
+  // Load locations
   useEffect(() => {
     adminFetch("/api/admin/locations")
       .then(r => r.json())
@@ -395,7 +381,7 @@ export default function POSPage() {
       .catch(() => {});
   }, []);
 
-  // ── Load active shift ───────────────────────────────────────────────────────
+  // Load active shift
   const loadShift = useCallback(async (locId: string) => {
     if (!locId) return;
     const r = await adminFetch(`/api/admin/pos/shifts?location_id=${locId}`);
@@ -408,7 +394,7 @@ export default function POSPage() {
     if (locationId) void loadShift(locationId);
   }, [locationId, loadShift]);
 
-  // ── Load products ───────────────────────────────────────────────────────────
+  // Load products
   const loadProducts = useCallback(async () => {
     setLoading(true);
     try {
@@ -424,11 +410,11 @@ export default function POSPage() {
 
   useEffect(() => { void loadProducts(); }, [loadProducts]);
 
-  // ── Keyboard shortcuts ──────────────────────────────────────────────────────
+  // Keyboard shortcuts
   const completeSaleRef = useRef<() => Promise<void>>();
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
-      if (showShiftModalRef.current) return;               // modal open — never intercept
+      if (showShiftModalRef.current) return;               // modal open, never intercept
       const tag = (e.target as HTMLElement)?.tagName;
       if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
       if (e.key === "F1") { e.preventDefault(); setPaymentMethod("cash"); }
@@ -441,11 +427,11 @@ export default function POSPage() {
     return () => window.removeEventListener("keydown", onKey);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ── Barcode scanner ─────────────────────────────────────────────────────────
+  // Barcode scanner
   useEffect(() => {
     let buf = "", last = 0;
     function onKeyDown(e: KeyboardEvent) {
-      if (showShiftModalRef.current) return;               // modal open — never intercept
+      if (showShiftModalRef.current) return;               // modal open, never intercept
       const tag = (e.target as HTMLElement)?.tagName;
       if (tag === "INPUT" || tag === "TEXTAREA") return;
       const now = Date.now();
@@ -468,7 +454,7 @@ export default function POSPage() {
     searchRef.current?.focus();
   }
 
-  // ── Supabase Realtime for C2B ───────────────────────────────────────────────
+  // Supabase Realtime for C2B
   useEffect(() => {
     if (!c2bOrderId) return;
     const sb = createClient(
@@ -483,7 +469,7 @@ export default function POSPage() {
     return () => { void sb.removeChannel(ch); };
   }, [c2bOrderId]);
 
-  // ── Cart helpers ────────────────────────────────────────────────────────────
+  // Cart helpers
   const categories = ["All", ...Array.from(new Set(products.map(p => p.category))).sort()];
 
   const filtered = products.filter(p => {
@@ -541,7 +527,7 @@ export default function POSPage() {
     setShowHeld(false);
   }
 
-  // ── Totals ──────────────────────────────────────────────────────────────────
+  // Totals
   const subtotal      = cart.reduce((s, c) => s + c.unit_price * c.quantity, 0);
   const itemDiscounts = cart.reduce((s, c) => s + c.item_discount, 0);
   const displayTotal  = Math.round(subtotal - itemDiscounts);
@@ -549,7 +535,7 @@ export default function POSPage() {
   const changeDue     = paymentMethod === "cash" && tenderedAmt > displayTotal
     ? tenderedAmt - displayTotal : 0;
 
-  // ── Shift management ────────────────────────────────────────────────────────
+  // Shift management
   async function openShift(cashierNameVal: string, openingFloatVal: number) {
     const r = await adminFetch("/api/admin/pos/shifts", {
       method: "POST", headers: { "Content-Type": "application/json" },
@@ -578,7 +564,7 @@ export default function POSPage() {
     } else setErrorMsg(j.error ?? "Failed to close shift");
   }
 
-  // ── Complete sale ───────────────────────────────────────────────────────────
+  // Complete sale
   async function completeSale() {
     if (cart.length === 0 || !locationId || !shift) return;
     if (paymentMethod === "mpesa_stk" && !phone.trim()) {
@@ -646,7 +632,7 @@ export default function POSPage() {
 
   const locationName = locations.find(l => l.id === locationId)?.name ?? "Store";
 
-  // ── C2B waiting screen ──────────────────────────────────────────────────────
+  // C2B waiting screen
   if (c2bOrderId && !c2bPaid) {
     return (
       <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "70vh" }}>
@@ -712,9 +698,9 @@ export default function POSPage() {
     );
   }
 
-  // ShiftModal is now a module-level component (ShiftModalComponent) — see above POSPage.
+  // ShiftModal is now a module-level component (ShiftModalComponent) - see above POSPage.
 
-  // ── Held carts drawer ───────────────────────────────────────────────────────
+  // Held carts drawer
   const HeldDrawer = () => (
     <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)", display: "flex", justifyContent: "flex-end", zIndex: 150 }} onClick={() => setShowHeld(false)}>
       <div style={{ width: 360, background: "#fff", height: "100%", overflowY: "auto", padding: 28, boxShadow: "-8px 0 40px rgba(0,0,0,0.12)" }} onClick={e => e.stopPropagation()}>
@@ -741,12 +727,12 @@ export default function POSPage() {
     </div>
   );
 
-  // ── Shift modal callbacks (stable references so ShiftModalComponent doesn't remount)
+  // Shift modal callbacks (stable references so ShiftModalComponent doesn't remount)
   const handleOpenShift  = useCallback((name: string, float: number) => { void openShift(name, float); }, [locationId]); // eslint-disable-line react-hooks/exhaustive-deps
   const handleCloseShift = useCallback((float: number) => { void closeShift(float); }, [shift]);                         // eslint-disable-line react-hooks/exhaustive-deps
   const handleCancelShift = useCallback(() => setShowShiftModal(false), []);
 
-  // ── Main render ─────────────────────────────────────────────────────────────
+  // Main render
   return (
     <div>
       {showShiftModal && (
@@ -813,7 +799,7 @@ export default function POSPage() {
 
       <div style={{ display: "flex", gap: 20, alignItems: "start" }}>
 
-        {/* ── Product browser ── */}
+        {/* Product browser */}
         <div style={{ flex: 1, minWidth: 0 }}>
           <input
             ref={searchRef}
@@ -894,7 +880,7 @@ export default function POSPage() {
           )}
         </div>
 
-        {/* ── Cart panel ── */}
+        {/* Cart panel */}
         <div style={{ width: 370, flexShrink: 0, background: "#fff", borderRadius: 10, padding: 22, border: "1px solid #e8e8e8", position: "sticky", top: 20 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
             <p style={{ fontFamily: FONT, fontSize: 10, letterSpacing: "0.3em", textTransform: "uppercase", color: "#888", margin: 0 }}>
@@ -1085,7 +1071,7 @@ export default function POSPage() {
   );
 }
 
-// ── Shared style constants ────────────────────────────────────────────────────
+// Shared style constants
 
 const labelStyle: React.CSSProperties = {
   fontFamily: FONT, fontSize: 9, letterSpacing: "0.25em", textTransform: "uppercase",

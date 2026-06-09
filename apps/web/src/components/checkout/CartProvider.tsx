@@ -81,15 +81,24 @@ function loadCartFromStorage(): CartState {
 }
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
-  const [state, dispatch] = useReducer(cartReducer, { items: [] }, loadCartFromStorage);
+  const [state, dispatch] = useReducer(cartReducer, { items: [] });
   const [isCartOpen, setIsCartOpen] = useState(false);
+
+  // Hydrate from localStorage after mount (avoids SSR/client mismatch)
+  useEffect(() => {
+    const stored = loadCartFromStorage();
+    if (stored.items.length > 0) {
+      stored.items.forEach((item) => dispatch({ type: "ADD", item }));
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Persist cart to localStorage whenever items change
   useEffect(() => {
     try {
       localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(state));
     } catch {
-      // localStorage unavailable (private browsing quota) — silently ignore
+      // localStorage unavailable (private browsing quota) - silently ignore
     }
   }, [state]);
 

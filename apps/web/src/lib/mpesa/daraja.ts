@@ -17,7 +17,7 @@ async function getAccessToken(): Promise<string> {
       const cached = await redis.get<string>(TOKEN_CACHE_KEY);
       if (cached) return cached;
     } catch {
-      // Redis unavailable — fall through to fresh token
+      // Redis unavailable; fall through to fresh token
     }
   }
 
@@ -87,8 +87,7 @@ export async function initiateSTKPush(params: STKPushParams): Promise<STKPushRes
     PartyA: params.phone,
     PartyB: process.env.MPESA_SHORTCODE,
     PhoneNumber: params.phone,
-    // Append secret token so the webhook can verify the callback is genuine.
-    // Anyone can spoof IP headers; they cannot guess this secret.
+    // Secret query param lets the webhook verify the callback is genuine.
     CallBackURL: `${process.env.MPESA_CALLBACK_URL}?secret=${process.env.MPESA_WEBHOOK_SECRET}`,
     AccountReference: params.orderId.slice(0, 12),
     TransactionDesc: params.description.slice(0, 20),

@@ -1,14 +1,6 @@
-/**
- * POST /api/admin/products/upload-image
- *
- * Accepts: multipart/form-data with a `file` field (image/*)
- * Returns: { url: string }  — public Supabase Storage URL
- *
- * Constraints:
- *   • Authenticated admin only
- *   • Images only (jpeg, png, webp, gif, avif)
- *   • Max 10 MB
- */
+// POST /api/admin/products/upload-image
+// Admin-only. Accepts multipart/form-data `file` (image/*, max 10 MB),
+// returns { url } pointing at the public Supabase Storage object.
 
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
@@ -97,7 +89,7 @@ export async function POST(request: NextRequest) {
     });
 
   if (error) {
-    // Bucket might not exist yet — try to create it and retry once
+    // Bucket might not exist yet - try to create it and retry once
     if (error.message?.includes("Bucket not found") || error.message?.includes("bucket")) {
       await supabase.storage.createBucket(BUCKET, {
         public: true,

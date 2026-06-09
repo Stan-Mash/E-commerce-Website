@@ -1,10 +1,5 @@
-/**
- * Central support/contact configuration.
- * Values are read from environment variables so they can be changed without
- * code deployments. Set these in your .env / Vercel project settings.
- *
- * Required for a real storefront — leave the defaults only for local dev/demo.
- */
+// Support/contact config from env vars (set in .env / Vercel).
+// Defaults are placeholders for local dev/demo only.
 
 export const SUPPORT_PHONE =
   process.env.NEXT_PUBLIC_SUPPORT_PHONE ?? "+254 700 000 000";

@@ -1,9 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminSupabaseClient } from "@/lib/supabase/server";
-
-function checkOwner(req: NextRequest) {
-  return req.cookies.get("owner_session")?.value === process.env.OWNER_SESSION_TOKEN;
-}
+import { isAuthenticatedOwnerRequest } from "@/lib/adminAuth";
 
 function nextMonth(ym: string): string {
   const parts = ym.split("-").map(Number);
@@ -12,18 +9,9 @@ function nextMonth(ym: string): string {
   return m === 12 ? `${y + 1}-01-01` : `${y}-${String(m + 1).padStart(2, "0")}-01`;
 }
 
-/**
- * GET /api/admin/finance/reports?month=YYYY-MM
- *
- * Returns a full monthly P&L breakdown:
- *   Revenue (from paid orders)
- *   – Expenses (by category)
- *   – Loan repayments (that month)
- *   – Tax provisions
- *   = Net position
- */
+// GET /api/admin/finance/reports?month=YYYY-MM -> monthly P&L breakdown.
 export async function GET(request: NextRequest) {
-  if (!checkOwner(request)) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  if (!isAuthenticatedOwnerRequest(request)) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const url   = new URL(request.url);
   const month = url.searchParams.get("month") ?? new Date().toISOString().slice(0, 7);

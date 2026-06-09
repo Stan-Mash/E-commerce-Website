@@ -3,14 +3,8 @@ import { createAdminSupabaseClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
-/**
- * Public order-status lookup used by the checkout page to confirm a payment
- * actually went through (M-Pesa callback marks the order 'paid') instead of
- * optimistically assuming success after a fixed delay.
- *
- * Looked up by order_ref, which the client already holds; no PII is returned
- * beyond the status and total the customer just attempted to pay.
- */
+// Public order-status lookup (by order_ref) so checkout can confirm the M-Pesa
+// callback marked the order paid. Returns only status + total, no PII.
 export async function GET(req: NextRequest) {
   const ref = (req.nextUrl.searchParams.get("ref") ?? "").trim();
   if (!ref) {

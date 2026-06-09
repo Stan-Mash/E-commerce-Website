@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 
 const FONT = "'Inter','Urbanist',sans-serif";
 
-// Inner component that uses useSearchParams — must be inside <Suspense>
+// Inner component that uses useSearchParams - must be inside <Suspense>
 function LoginForm() {
   const [password, setPassword] = useState("");
   const [error,    setError]    = useState("");

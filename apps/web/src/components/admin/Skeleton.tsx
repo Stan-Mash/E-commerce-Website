@@ -3,7 +3,7 @@
 import React, { useEffect } from "react";
 
 // ---------------------------------------------------------------------------
-// Keyframe injection — runs once per document lifetime
+// Keyframe injection - runs once per document lifetime
 // ---------------------------------------------------------------------------
 
 const STYLE_ID = "__skeleton_shimmer_keyframes__";

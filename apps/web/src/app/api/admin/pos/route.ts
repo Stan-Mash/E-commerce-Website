@@ -19,7 +19,7 @@ interface PosBody {
   phone:          string;
   payment_method: "cash" | "mpesa_stk" | "mpesa_c2b";
   location_id:    string;
-  shift_id:       string;   // required — no sale without an open shift
+  shift_id:       string;   // required: no sale without an open shift
   cashier_name:   string;
   items:          PosItem[];
   promo_code?:    string;
@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
 
   const supabase = createAdminSupabaseClient();
 
-  // ── Shift guard: verify shift exists, is open, and belongs to this location ─
+  // Shift guard: verify shift exists, is open, and belongs to this location
   const { data: shift, error: shiftErr } = await supabase
     .from("shifts")
     .select("id, status, location_id, cashier_name")
@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "shift_id does not belong to the specified location_id" }, { status: 422 });
   }
 
-  // Normalise phone (allow empty — walk-in with no phone)
+  // Normalise phone (allow empty - walk-in with no phone)
   let normalisedPhone = "";
   if (phone && phone.trim()) {
     try {
@@ -97,7 +97,7 @@ export async function POST(request: NextRequest) {
 
   const orderRef = `POS-${generateOrderRef()}`;
 
-  // Call pos_checkout RPC — atomic stock check + order creation
+  // Call pos_checkout RPC - atomic stock check + order creation
   const rpcItems = cartItems.map((c) => ({
     sku_id:     c.sku_id,
     quantity:   c.quantity,
@@ -144,7 +144,7 @@ export async function POST(request: NextRequest) {
       .eq("id", order.order_id);
   }
 
-  // ── Payment-specific handling ──────────────────────────────────────────────
+  // Payment-specific handling
 
   if (payment_method === "cash") {
     // Cash: order already marked paid by RPC. Nothing else to do.
@@ -173,7 +173,7 @@ export async function POST(request: NextRequest) {
         description: "Elite Style Co — In-Store",
       });
     } catch (err) {
-      // STK failed — restore stock (webhook won't fire)
+      // STK failed - restore stock (webhook won't fire)
       await supabase.from("orders").update({ status: "payment_failed" }).eq("id", order.order_id);
       for (const item of cartItems) {
         await supabase.rpc("increment_location_stock", {
@@ -227,7 +227,7 @@ export async function POST(request: NextRequest) {
       order_ref:      orderRef,
       total,
       payment_method: "mpesa_c2b",
-      // Cashier shows this ref to the customer — they enter it as Account Ref
+      // Cashier shows this ref to the customer - they enter it as Account Ref
       instruction: `Ask customer to pay KES ${total.toLocaleString()} to our Till and enter reference: ${orderRef}`,
     }, { status: 201 });
   }

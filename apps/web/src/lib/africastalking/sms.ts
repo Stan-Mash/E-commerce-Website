@@ -3,9 +3,9 @@
  * Docs: https://developers.africastalking.com/docs/sms/sending
  *
  * Required env vars:
- *   AFRICASTALKING_API_KEY      — from your AT dashboard
- *   AFRICASTALKING_USERNAME     — your AT account username (use "sandbox" for testing)
- *   AFRICASTALKING_SENDER_ID    — optional short-code / sender name (e.g. "EliteStyle")
+ *   AFRICASTALKING_API_KEY       from your AT dashboard
+ *   AFRICASTALKING_USERNAME      your AT account username (use "sandbox" for testing)
+ *   AFRICASTALKING_SENDER_ID     optional short-code / sender name (e.g. "EliteStyle")
  */
 
 const AT_BASE_URL = "https://api.africastalking.com/version1";
@@ -85,8 +85,7 @@ export async function sendSMS(to: string, text: string): Promise<SMSResult> {
   }
 }
 
-// ── SMS templates ─────────────────────────────────────────────────────────────
-
+// SMS templates
 export function orderConfirmationSMS(orderRef: string, total: number): string {
   const kes = new Intl.NumberFormat("en-KE", {
     style: "currency",

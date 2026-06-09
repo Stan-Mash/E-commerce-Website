@@ -33,7 +33,7 @@ export default function AdminLayout({
           fontFamily: "var(--font-inter)",
         }}
       >
-        {/* ── Sidebar ── */}
+        {/* Sidebar */}
         <nav
           style={{
             width: 240,
@@ -103,7 +103,7 @@ export default function AdminLayout({
         {/* Clears stale esc_admin_token from localStorage (legacy cleanup) */}
         <AdminSessionSync />
 
-        {/* ── Main Content ── */}
+        {/* Main Content */}
         <main
           style={{
             flex: 1,

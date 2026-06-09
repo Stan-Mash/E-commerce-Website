@@ -1,22 +1,9 @@
-/**
- * Meta WhatsApp Cloud API client
- * Docs: https://developers.facebook.com/docs/whatsapp/cloud-api
- *
- * Free tier: 1,000 service conversations / month — enough for a growing store.
- *
- * Required env vars:
- *   WHATSAPP_ACCESS_TOKEN     — permanent token from Meta System User
- *   WHATSAPP_PHONE_NUMBER_ID  — Phone Number ID from Meta App Dashboard
- *
- * IMPORTANT — Template messages:
- *   WhatsApp requires pre-approved message templates for business-initiated
- *   conversations. Create your templates in Meta Business Suite → WhatsApp →
- *   Message Templates. The template names used below must match exactly.
- *
- *   For sandbox testing (before templates are approved), use the
- *   sendTextMessage() function instead — it works in the 24-hour window
- *   after a customer first messages your number.
- */
+// Meta WhatsApp Cloud API client.
+// Docs: https://developers.facebook.com/docs/whatsapp/cloud-api
+// Env: WHATSAPP_ACCESS_TOKEN, WHATSAPP_PHONE_NUMBER_ID.
+// Business-initiated messages need pre-approved templates (names below must
+// match Meta Business Suite exactly). Within the 24h customer window,
+// sendTextMessage() can be used instead.
 
 const GRAPH_URL = "https://graph.facebook.com/v19.0";
 
@@ -26,8 +13,7 @@ export interface WhatsAppResult {
   error?: string | undefined;
 }
 
-// ── Core send function ────────────────────────────────────────────────────────
-
+// Core send function
 async function sendWhatsApp(payload: Record<string, unknown>): Promise<WhatsAppResult> {
   const token = process.env.WHATSAPP_ACCESS_TOKEN;
   const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
@@ -67,8 +53,7 @@ async function sendWhatsApp(payload: Record<string, unknown>): Promise<WhatsAppR
   }
 }
 
-// ── Template messages (production — requires Meta approval) ──────────────────
-
+// Template messages (production; requires Meta approval)
 /**
  * Order confirmation template.
  * Create in Meta Business Suite with name: "order_confirmation"
@@ -186,7 +171,7 @@ export async function sendOrderReadyForPickupWA(
 }
 
 /**
- * Free-form text message — works only within the 24-hour customer service window.
+ * Free-form text message; works only within the 24-hour customer service window.
  * Use for sandbox testing or when responding to a customer who messaged first.
  */
 export async function sendTextMessage(

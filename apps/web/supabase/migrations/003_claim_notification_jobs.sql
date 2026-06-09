@@ -1,8 +1,6 @@
--- ============================================================
 -- claim_notification_jobs RPC
 -- Atomically claims a batch of queued notification jobs.
 -- Uses SKIP LOCKED so concurrent cron runs never double-process.
--- ============================================================
 
 create or replace function claim_notification_jobs(batch_size integer default 10)
 returns setof notification_jobs

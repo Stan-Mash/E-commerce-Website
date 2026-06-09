@@ -1,10 +1,10 @@
 /**
- * Notification worker — runs as a Vercel Cron Job every minute.
+ * Notification worker - runs as a Vercel Cron Job every minute.
  *
  * State machine (strictly enforced):
- *   queued → processing  (claimed atomically via RPC with SKIP LOCKED)
- *   processing → done    (only after SMS API call succeeds)
- *   processing → failed  (only after SMS API call fails)
+ * queued → processing (claimed atomically via RPC with SKIP LOCKED)
+ * processing → done (only after SMS API call succeeds)
+ * processing → failed (only after SMS API call fails)
  *
  * Retries: jobs with status='failed' and attempts < 3 are re-queued
  * automatically by the claim_notification_jobs RPC.
@@ -29,13 +29,13 @@ import {
   sendOrderReadyForPickupWA,
 } from "@/lib/whatsapp/client";
 
-// WhatsApp is attempted first — higher open rates and free for 1k conversations/month.
+// WhatsApp is attempted first - higher open rates and free for 1k conversations/month.
 // If WhatsApp is not configured or fails, we fall back to SMS automatically.
 const WA_CONFIGURED =
   !!process.env.WHATSAPP_ACCESS_TOKEN &&
   !!process.env.WHATSAPP_PHONE_NUMBER_ID;
 
-// ── Auth ──────────────────────────────────────────────────────────────────────
+// Auth
 
 function isAuthorised(req: NextRequest): boolean {
   const auth = req.headers.get("authorization");
@@ -45,7 +45,7 @@ function isAuthorised(req: NextRequest): boolean {
   return auth === `Bearer ${secret}`;
 }
 
-// ── Types ─────────────────────────────────────────────────────────────────────
+// Types
 
 interface NotificationJob {
   id: string;
@@ -62,7 +62,7 @@ interface OrderRow {
   status: string;
 }
 
-// ── Handler ───────────────────────────────────────────────────────────────────
+// Handler
 
 export async function GET(req: NextRequest) {
   if (!isAuthorised(req)) {
@@ -75,7 +75,7 @@ export async function GET(req: NextRequest) {
 
   const supabase = createAdminSupabaseClient();
 
-  // ── 1. Atomically claim queued jobs (SKIP LOCKED prevents double-processing) ──
+  // 1. Atomically claim queued jobs (SKIP LOCKED prevents double-processing)
   const { data: jobs, error: claimErr } = await supabase
     .rpc("claim_notification_jobs", { batch_size: 10 });
 
@@ -90,7 +90,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ processed: 0, message: "No pending jobs" });
   }
 
-  // ── 2. Process each job ────────────────────────────────────────────────────
+  // 2. Process each job
   const results: Array<{ id: string; job_type: string; success: boolean; error?: string }> = [];
 
   for (const job of claimed) {
@@ -110,7 +110,7 @@ export async function GET(req: NextRequest) {
 
       const order = orderData as OrderRow;
 
-      // ── Dispatch: WhatsApp first, SMS fallback ────────────────────────────
+      // Dispatch: WhatsApp first, SMS fallback
       let sent = false;
       let dispatchError = "";
 
@@ -138,13 +138,13 @@ export async function GET(req: NextRequest) {
         if (waResult.success) {
           sent = true;
         } else {
-          // WhatsApp failed — log and fall through to SMS
+          // WhatsApp failed - log and fall through to SMS
           dispatchError = `WhatsApp: ${waResult.error ?? "failed"}`;
           console.warn(`[notifications-cron] WhatsApp failed for job ${job.id}, falling back to SMS. Error: ${waResult.error}`);
         }
       }
 
-      // ── SMS fallback ──────────────────────────────────────────────────────
+      // SMS fallback
       if (!sent) {
         let smsText: string;
         switch (job.job_type) {
@@ -174,7 +174,7 @@ export async function GET(req: NextRequest) {
         }
       }
 
-      // ── Mark done or failed — worker ONLY sets this ───────────────────────
+      // Mark done or failed - worker ONLY sets this
       if (sent) {
         await supabase
           .from("notification_jobs")
@@ -205,7 +205,7 @@ export async function GET(req: NextRequest) {
   });
 }
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
+// Helpers
 
 async function markFailed(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

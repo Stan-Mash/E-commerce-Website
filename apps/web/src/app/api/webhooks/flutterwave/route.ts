@@ -1,17 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminSupabaseClient } from "@/lib/supabase/server";
 import { verifyTransaction } from "@/lib/flutterwave/client";
+import { safeEqual } from "@/lib/adminAuth";
 
-/**
- * Flutterwave webhook. Flutterwave signs each call with a "verif-hash" header
- * equal to the secret hash you configure in the dashboard
- * (FLUTTERWAVE_WEBHOOK_HASH). We additionally re-verify the transaction
- * server-side before trusting the amount/status — never trust the payload alone.
- */
+// Flutterwave webhook. Auth via the "verif-hash" header (FLUTTERWAVE_WEBHOOK_HASH);
+// the transaction is also re-verified server-side before the amount is trusted.
 export async function POST(req: NextRequest) {
   const signature = req.headers.get("verif-hash");
   const expected = process.env.FLUTTERWAVE_WEBHOOK_HASH;
-  if (!expected || !signature || signature !== expected) {
+  if (!expected || !signature || !safeEqual(signature, expected)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
