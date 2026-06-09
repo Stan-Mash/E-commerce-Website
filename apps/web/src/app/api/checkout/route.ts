@@ -4,6 +4,7 @@ import { initiateSTKPush } from "@/lib/mpesa/daraja";
 import { createAdminSupabaseClient } from "@/lib/supabase/server";
 import { normaliseKenyanPhone, generateOrderRef } from "@/lib/utils";
 import { deliveryFeeFor, requiresAddress, normaliseDeliveryType } from "@/lib/delivery";
+import { applyDiscounts, type Promotion } from "@/lib/promotions/engine";
 
 // Rate limit via Upstash Redis. Allows requests in dev when Redis is absent;
 // fails closed in production so a missing Redis can't silently bypass the limit.
@@ -53,6 +54,7 @@ const CheckoutSchema = z
     deliveryType: z.enum(["pickup", "cbd", "outside_cbd", "door"]),
     deliveryAddress: z.string().min(10).max(300).optional(),
     notes: z.string().max(200).optional(),
+    promoCode: z.string().max(40).optional(),
   })
   .refine(
     (data) =>
@@ -103,7 +105,7 @@ async function _handlePost(req: NextRequest) {
     return NextResponse.json({ error: "Validation failed", details: parsed.error.flatten() }, { status: 422 });
   }
 
-  const { phone, items, deliveryAddress, notes } = parsed.data;
+  const { phone, items, deliveryAddress, notes, promoCode } = parsed.data;
   const deliveryType = normaliseDeliveryType(parsed.data.deliveryType);
 
   let normalisedPhone: string;
@@ -144,8 +146,7 @@ async function _handlePost(req: NextRequest) {
     subtotal += price * item.quantity;
   }
   subtotal = Math.round(subtotal);
-  const deliveryFee = deliveryFeeFor(deliveryType);
-  const total = Math.round(subtotal + deliveryFee);
+  const baseDeliveryFee = deliveryFeeFor(deliveryType);
 
   // RPC does stock check, order creation, and decrement atomically (row locks).
   const orderRef = generateOrderRef();
@@ -154,6 +155,18 @@ async function _handlePost(req: NextRequest) {
     const price = (sku.product as { base_price: number } | null)?.base_price ?? 0;
     return { sku_id: item.skuId, quantity: item.quantity, unit_price: Math.round(price) };
   });
+
+  // Apply the best valid promotion (auto or code-entered). The engine returns
+  // the discounted total; the unrecorded discount is simply reflected in `total`
+  // so the customer is charged the right amount even before the ledger columns exist.
+  const { data: promoRows } = await supabase
+    .from("promotions")
+    .select("*")
+    .eq("active", true);
+  const promotions = (promoRows ?? []) as Promotion[];
+  const discount = applyDiscounts(rpcItems, baseDeliveryFee, promotions, promoCode);
+  const deliveryFee = discount.deliveryFee;
+  const total = discount.total;
 
   const { data: rpcResult, error: rpcErr } = await supabase.rpc("checkout_and_reserve_stock", {
     p_order_ref:        orderRef,
@@ -228,11 +241,22 @@ async function _handlePost(req: NextRequest) {
     status: "pending",
   });
 
+  // Count the promotion usage (best-effort; uniqueness/caps enforced in the RPC).
+  if (discount.appliedPromotion) {
+    await supabase.rpc("redeem_promotion", { p_promotion_id: discount.appliedPromotion.id });
+  }
+
   return NextResponse.json({
     orderId: order.order_id,
     orderRef,
     checkoutRequestId: stkResult.CheckoutRequestID,
     customerMessage: stkResult.CustomerMessage,
     total,
+    subtotal: discount.subtotal,
+    deliveryFee,
+    discountAmount: discount.discountAmount,
+    appliedPromotion: discount.appliedPromotion
+      ? { code: discount.appliedPromotion.code, name: discount.appliedPromotion.name }
+      : null,
   });
 }

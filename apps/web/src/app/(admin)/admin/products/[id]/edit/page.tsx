@@ -81,9 +81,11 @@ export default function EditProductPage({ params }: Props) {
   });
   const [skus, setSkus] = useState<SkuForm[]>([]);
 
-  // Image gallery state
+  // Media gallery state
   const [images, setImages] = useState<string[]>([]);
+  const [videos, setVideos] = useState<string[]>([]);
   const [imageUploading, setImageUploading] = useState(false);
+  const [videoUploading, setVideoUploading] = useState(false);
 
   useEffect(() => {
     async function load() {
@@ -108,6 +110,7 @@ export default function EditProductPage({ params }: Props) {
             status: string;
             image_url: string | null;
             product_images: Array<{ url: string; sort_order: number; media_type: string | null }> | null;
+            product_videos: Array<{ cloudinary_url: string; sort_order: number }> | null;
             skus: Array<{
               id: string;
               sku_code: string;
@@ -137,6 +140,11 @@ export default function EditProductPage({ params }: Props) {
           .sort((a, b) => a.sort_order - b.sort_order)
           .map((i) => i.url);
         setImages(gallery.length > 0 ? gallery : p.image_url ? [p.image_url] : []);
+        setVideos(
+          (p.product_videos ?? [])
+            .sort((a, b) => a.sort_order - b.sort_order)
+            .map((v) => v.cloudinary_url)
+        );
         setSkus(
           (p.skus ?? []).map((s) => ({
             id:             s.id,
@@ -197,6 +205,7 @@ export default function EditProductPage({ params }: Props) {
         status:            form.status,
         image_url:         images[0] ?? null,
         images,
+        videos,
         skus: skus
           .filter((s) => s.sku_code.trim() && s.size.trim())
           .map((s) => ({
@@ -303,6 +312,17 @@ export default function EditProductPage({ params }: Props) {
               value={images}
               onChange={(next) => { setImages(next); setSaved(false); }}
               onUploadingChange={setImageUploading}
+            />
+          </div>
+
+          {/* Product Videos */}
+          <div>
+            <label style={LABEL_STYLE}>Product Videos</label>
+            <MultiImageUploader
+              kind="video"
+              value={videos}
+              onChange={(next) => { setVideos(next); setSaved(false); }}
+              onUploadingChange={setVideoUploading}
             />
           </div>
 
@@ -464,11 +484,11 @@ export default function EditProductPage({ params }: Props) {
           <div style={{ display: "flex", alignItems: "center", gap: 16, paddingTop: 8, borderTop: "1px solid var(--es-bone)" }}>
             <button
               type="submit"
-              disabled={saving || imageUploading}
+              disabled={saving || imageUploading || videoUploading}
               className="es-btn-plum"
-              style={{ opacity: saving || imageUploading ? 0.7 : 1, cursor: saving || imageUploading ? "not-allowed" : "pointer" }}
+              style={{ opacity: saving || imageUploading || videoUploading ? 0.7 : 1, cursor: saving || imageUploading || videoUploading ? "not-allowed" : "pointer" }}
             >
-              {saving ? "Saving…" : imageUploading ? "Waiting for image…" : "Save Changes"}
+              {saving ? "Saving…" : (imageUploading || videoUploading) ? "Waiting for upload…" : "Save Changes"}
             </button>
 
             {saved && (

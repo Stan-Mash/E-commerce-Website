@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { ShoppingBag, Search, User, Menu, X } from "lucide-react";
+import { ShoppingBag, Search, User, Heart, Menu, X } from "lucide-react";
 import { useCart } from "@/components/checkout/CartProvider";
 
 const NAV = [
@@ -49,8 +49,9 @@ export function SiteHeader() {
         {/* Actions */}
         <div className="flex items-center gap-1">
           {[
-            { href: "/search",  icon: <Search size={18} strokeWidth={1.75} />,  label: "Search" },
-            { href: "/account", icon: <User   size={18} strokeWidth={1.75} />,  label: "Account" },
+            { href: "/search",   icon: <Search size={18} strokeWidth={1.75} />,  label: "Search" },
+            { href: "/wishlist", icon: <Heart  size={18} strokeWidth={1.75} />,  label: "Wishlist" },
+            { href: "/account",  icon: <User   size={18} strokeWidth={1.75} />,  label: "Account" },
           ].map((a) => (
             <Link
               key={a.href}

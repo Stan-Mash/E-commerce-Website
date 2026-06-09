@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { isAuthenticatedAdminRequest } from "@/lib/adminAuth";
-import { syncProductImages, resolveImageList } from "@/lib/productImages";
+import { syncProductImages, resolveImageList, syncProductVideos, resolveVideoList } from "@/lib/productImages";
 
 function getAdminClient() {
   return createClient(
@@ -30,7 +30,7 @@ export async function GET(
   const supabase = getAdminClient();
   const { data, error } = await supabase
     .from("products")
-    .select("*, skus(*), product_images(id, url, alt, sort_order, media_type)")
+    .select("*, skus(*), product_images(id, url, alt, sort_order, media_type), product_videos(id, cloudinary_url, sort_order)")
     .eq("id", params.id)
     .single();
 
@@ -102,6 +102,10 @@ export async function PUT(
   // Replace the product's gallery with the submitted images.
   if (imageList !== undefined) {
     await syncProductImages(supabase, params.id, imageList, name ?? null);
+  }
+  const videoList = resolveVideoList(body);
+  if (videoList !== undefined) {
+    await syncProductVideos(supabase, params.id, videoList);
   }
 
   // Reconcile SKUs in place. A blind delete-all + insert-all breaks when a SKU

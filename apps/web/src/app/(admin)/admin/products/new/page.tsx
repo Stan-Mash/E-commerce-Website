@@ -88,9 +88,11 @@ export default function NewProductPage() {
   const [submitting, setSubmitting] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
 
-  // Image gallery state
+  // Media gallery state
   const [images, setImages] = useState<string[]>([]);
+  const [videos, setVideos] = useState<string[]>([]);
   const [imageUploading, setImageUploading] = useState(false);
+  const [videoUploading, setVideoUploading] = useState(false);
 
   const handleNameChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const name = e.target.value;
@@ -156,6 +158,7 @@ export default function NewProductPage() {
         status: form.status,
         image_url: images[0] ?? null,
         images,
+        videos,
         skus: skus
           .filter((s) => s.sku_code.trim() && s.size.trim())
           .map((s) => ({
@@ -271,6 +274,17 @@ export default function NewProductPage() {
             value={images}
             onChange={setImages}
             onUploadingChange={setImageUploading}
+          />
+        </div>
+
+        {/* Product Videos */}
+        <div style={{ marginBottom: 36 }}>
+          <label style={LABEL_STYLE}>Product Videos</label>
+          <MultiImageUploader
+            kind="video"
+            value={videos}
+            onChange={setVideos}
+            onUploadingChange={setVideoUploading}
           />
         </div>
 
@@ -601,11 +615,11 @@ export default function NewProductPage() {
         <div style={{ display: "flex", gap: 16, alignItems: "center", flexWrap: "wrap" }}>
           <button
             type="submit"
-            disabled={submitting || imageUploading}
+            disabled={submitting || imageUploading || videoUploading}
             className="es-btn-plum"
-            style={{ opacity: submitting || imageUploading ? 0.7 : 1, cursor: submitting || imageUploading ? "not-allowed" : "pointer" }}
+            style={{ opacity: submitting || imageUploading || videoUploading ? 0.7 : 1, cursor: submitting || imageUploading || videoUploading ? "not-allowed" : "pointer" }}
           >
-            {submitting ? "Saving…" : imageUploading ? "Waiting for image…" : "Save Product"}
+            {submitting ? "Saving…" : (imageUploading || videoUploading) ? "Waiting for upload…" : "Save Product"}
           </button>
           <Link
             href="/admin/products"

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { SUPPORT_PHONE, SUPPORT_WHATSAPP_LINK } from "@/lib/supportConfig";
+import ReturnRequestForm from "@/components/store/ReturnRequestForm";
 
 export const metadata: Metadata = {
   title: "Returns & Exchanges",
@@ -207,6 +208,25 @@ export default function ReturnsPage() {
               </div>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* Start a return */}
+      <section style={{ background: "#f7f7f7" }}>
+        <div className="mx-auto w-full max-w-[720px] px-6 py-16 sm:px-16 sm:py-24">
+          <p className="mb-4 text-center text-[11px] tracking-[.48em] uppercase text-es-gold">
+            Online
+          </p>
+          <h2
+            className="mb-4 text-center text-3xl sm:text-5xl font-bold leading-tight text-es-ink"
+            style={{ fontFamily: "var(--font-bodoni)" }}
+          >
+            Start your return
+          </h2>
+          <p className="mb-10 text-center text-[14px] leading-relaxed text-es-mute">
+            Prefer not to message us? Submit your request here and our team will follow up with the next steps.
+          </p>
+          <ReturnRequestForm />
         </div>
       </section>
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/components/checkout/CartProvider";
 
@@ -36,11 +36,59 @@ export default function CheckoutPage() {
   const [waiting, setWaiting] = useState(false);
   const [statusMsg, setStatusMsg] = useState("");
   const [apiError, setApiError] = useState("");
+  const [promoCode, setPromoCode] = useState("");
+  const [promoChecking, setPromoChecking] = useState(false);
+  const [promoMsg, setPromoMsg] = useState("");
+  const [promo, setPromo] = useState<{ discountAmount: number; deliveryFee: number; total: number; code: string | null; name: string } | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const deliveryFee = delivery === "outside_cbd" ? OUTSIDE_CBD_FEE : 0;
-  const total = subtotal + deliveryFee;
+  const baseDeliveryFee = delivery === "outside_cbd" ? OUTSIDE_CBD_FEE : 0;
+  const deliveryFee = promo ? promo.deliveryFee : baseDeliveryFee;
+  const discountAmount = promo?.discountAmount ?? 0;
+  const total = promo ? promo.total : subtotal + baseDeliveryFee;
   const needsAddress = delivery === "cbd" || delivery === "outside_cbd";
+
+  // A promotion's value can depend on the delivery method (free shipping), so
+  // any change to delivery invalidates a previously applied code.
+  useEffect(() => {
+    setPromo(null);
+    setPromoMsg("");
+  }, [delivery]);
+
+  async function applyPromo() {
+    if (!promoCode.trim() || items.length === 0) return;
+    setPromoChecking(true);
+    setPromoMsg("");
+    try {
+      const res = await fetch("/api/promotions/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          items: items.map((i) => ({ skuId: i.skuId, quantity: i.quantity })),
+          deliveryType: delivery,
+          code: promoCode.trim(),
+        }),
+      });
+      const data = await res.json();
+      if (res.ok && data.appliedPromotion && data.discountAmount > 0) {
+        setPromo({
+          discountAmount: data.discountAmount,
+          deliveryFee: data.deliveryFee,
+          total: data.total,
+          code: data.appliedPromotion.code,
+          name: data.appliedPromotion.name,
+        });
+        setPromoMsg(`✓ ${data.appliedPromotion.name} applied`);
+      } else {
+        setPromo(null);
+        setPromoMsg("That code isn't valid for this order.");
+      }
+    } catch {
+      setPromoMsg("Couldn't check the code. Please try again.");
+    } finally {
+      setPromoChecking(false);
+    }
+  }
 
   function validate(): boolean {
     let ok = true;
@@ -101,6 +149,7 @@ export default function CheckoutPage() {
       items: items.map((i) => ({ skuId: i.skuId, quantity: i.quantity })),
       deliveryType: delivery,
       deliveryAddress: needsAddress ? address.trim() : undefined,
+      promoCode: promo?.code ?? (promoCode.trim() || undefined),
     };
 
     try {
@@ -285,6 +334,32 @@ export default function CheckoutPage() {
               )}
               <Row label="Subtotal" value={formatKES(subtotal)} />
               <Row label={delivery === "outside_cbd" ? "Delivery (outside CBD)" : "Delivery"} value={deliveryFee === 0 ? "FREE" : formatKES(deliveryFee)} />
+              {discountAmount > 0 && (
+                <Row label={`Discount${promo?.code ? ` (${promo.code})` : ""}`} value={`− ${formatKES(discountAmount)}`} />
+              )}
+
+              {/* Promo code */}
+              <div style={{ display: "flex", gap: 8, marginTop: 16 }}>
+                <input
+                  value={promoCode}
+                  onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
+                  placeholder="PROMO CODE"
+                  style={{ flex: 1, padding: "10px 12px", border: "1px solid var(--es-bone)", background: "var(--es-white)", fontSize: 12, letterSpacing: "0.1em", textTransform: "uppercase" }}
+                />
+                <button
+                  type="button"
+                  onClick={() => void applyPromo()}
+                  disabled={promoChecking || !promoCode.trim()}
+                  className="es-btn-outline-ink"
+                  style={{ padding: "0 16px", fontSize: 11, letterSpacing: "0.2em", textTransform: "uppercase", cursor: promoChecking || !promoCode.trim() ? "not-allowed" : "pointer", opacity: promoChecking || !promoCode.trim() ? 0.6 : 1 }}
+                >
+                  {promoChecking ? "…" : "Apply"}
+                </button>
+              </div>
+              {promoMsg && (
+                <p style={{ fontSize: 12, marginTop: 6, color: promo ? "#2e7d32" : "#c0392b" }}>{promoMsg}</p>
+              )}
+
               <div style={{ height: 1, background: "var(--es-bone)", margin: "16px 0" }} />
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 28 }}>
                 <span style={{ fontSize: 13, textTransform: "uppercase", letterSpacing: "0.1em" }}>Total</span>

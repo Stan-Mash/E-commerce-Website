@@ -7,9 +7,28 @@ interface Props {
   onChange: (urls: string[]) => void;
   onUploadingChange?: (uploading: boolean) => void;
   disabled?: boolean;
+  kind?: "image" | "video";
 }
 
-export default function MultiImageUploader({ value, onChange, onUploadingChange, disabled }: Props) {
+const CONFIG = {
+  image: {
+    endpoint: "/api/admin/products/upload-image",
+    accept: "image/jpeg,image/png,image/webp,image/gif,image/avif",
+    hint: "JPEG, PNG, WebP or GIF · Max 10 MB each · select several at once.",
+    addLabel: "+ Add images",
+    inputId: "multi-image-input",
+  },
+  video: {
+    endpoint: "/api/admin/products/upload-video",
+    accept: "video/mp4,video/webm,video/quicktime,video/ogg",
+    hint: "MP4, WebM or MOV · Max 100 MB each. The first video plays first on the product page.",
+    addLabel: "+ Add videos",
+    inputId: "multi-video-input",
+  },
+} as const;
+
+export default function MultiImageUploader({ value, onChange, onUploadingChange, disabled, kind = "image" }: Props) {
+  const cfg = CONFIG[kind];
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -26,7 +45,7 @@ export default function MultiImageUploader({ value, onChange, onUploadingChange,
       for (const file of files) {
         const fd = new FormData();
         fd.append("file", file);
-        const res = await fetch("/api/admin/products/upload-image", {
+        const res = await fetch(cfg.endpoint, {
           method: "POST",
           credentials: "include",
           body: fd,
@@ -67,9 +86,13 @@ export default function MultiImageUploader({ value, onChange, onUploadingChange,
       <div style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
         {value.map((url, i) => (
           <div key={`${url}-${i}`} style={TILE}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={url} alt={`Product image ${i + 1}`} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-            {i === 0 && <span style={BADGE}>Primary</span>}
+            {kind === "video" ? (
+              <video src={url} muted playsInline preload="metadata" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+            ) : (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={url} alt={`Product image ${i + 1}`} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+            )}
+            {i === 0 && <span style={BADGE}>{kind === "video" ? "First" : "Primary"}</span>}
             <button type="button" onClick={() => removeAt(i)} aria-label={`Remove image ${i + 1}`} style={REMOVE_BTN}>×</button>
             <div style={{ position: "absolute", bottom: 4, left: 4, right: 4, display: "flex", justifyContent: "space-between" }}>
               <button type="button" onClick={() => move(i, -1)} disabled={i === 0} aria-label="Move earlier" style={arrow(i === 0)}>‹</button>
@@ -78,14 +101,14 @@ export default function MultiImageUploader({ value, onChange, onUploadingChange,
           </div>
         ))}
 
-        <label htmlFor="multi-image-input" style={{ ...TILE, ...ADD_TILE, cursor: busy ? "not-allowed" : "pointer" }}>
-          {uploading ? "Uploading…" : "+ Add images"}
+        <label htmlFor={cfg.inputId} style={{ ...TILE, ...ADD_TILE, cursor: busy ? "not-allowed" : "pointer" }}>
+          {uploading ? "Uploading…" : cfg.addLabel}
         </label>
         <input
           ref={inputRef}
-          id="multi-image-input"
+          id={cfg.inputId}
           type="file"
-          accept="image/jpeg,image/png,image/webp,image/gif,image/avif"
+          accept={cfg.accept}
           multiple
           disabled={busy}
           onChange={(e) => void handleFiles(e)}
@@ -94,7 +117,7 @@ export default function MultiImageUploader({ value, onChange, onUploadingChange,
       </div>
 
       <p style={{ marginTop: 8, fontFamily: "var(--font-inter)", fontSize: 11, color: "var(--es-mute)", lineHeight: 1.6 }}>
-        JPEG, PNG, WebP or GIF · Max 10 MB each · select several at once. The first image is the primary (shown on cards); reorder with ‹ ›.
+        {cfg.hint} Reorder with ‹ ›.
       </p>
       {error && (
         <p style={{ marginTop: 6, fontFamily: "var(--font-inter)", fontSize: 12, color: "#c0392b" }}>{error}</p>

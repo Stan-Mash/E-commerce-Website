@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { isAuthenticatedAdminRequest } from "@/lib/adminAuth";
-import { syncProductImages, resolveImageList } from "@/lib/productImages";
+import { syncProductImages, resolveImageList, syncProductVideos, resolveVideoList } from "@/lib/productImages";
 
 function getAdminClient() {
   return createClient(
@@ -94,6 +94,10 @@ export async function POST(request: NextRequest) {
   // Populate the product's gallery.
   if (imageList.length > 0) {
     await syncProductImages(supabase, product.id, imageList, name ?? null);
+  }
+  const videoList = resolveVideoList(body);
+  if (videoList && videoList.length > 0) {
+    await syncProductVideos(supabase, product.id, videoList);
   }
 
   // Insert SKUs + inventory_levels rows (so stock is tracked per location)
