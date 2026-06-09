@@ -118,53 +118,92 @@ export async function PUT(
     }
   }
 
-  // Replace SKUs if provided
+  // Reconcile SKUs in place. A blind delete-all + insert-all breaks when a SKU
+  // is referenced by order_items / inventory_log (no cascade): the delete fails
+  // and the re-insert collides on the unique sku_code. Instead: update existing
+  // SKUs (matched by id, then sku_code), insert new ones, and delete only those
+  // removed from the form that aren't FK-protected.
   if (Array.isArray(skuList)) {
-    // Delete existing SKUs
-    await supabase.from("skus").delete().eq("product_id", params.id);
+    type SkuInput = {
+      id?: string;
+      sku_code: string;
+      size: string;
+      color?: string;
+      color_hex?: string;
+      stock_quantity?: number;
+    };
 
-    if (skuList.length > 0) {
-      const skuRows = skuList.map((sku: {
-        sku_code: string;
-        size: string;
-        color?: string;
-        color_hex?: string;
-        stock_quantity?: number;
-      }) => ({
+    const { data: existingSkus, error: existingErr } = await supabase
+      .from("skus")
+      .select("id, sku_code")
+      .eq("product_id", params.id);
+    if (existingErr) {
+      return NextResponse.json({ error: existingErr.message }, { status: 500 });
+    }
+
+    const idSet = new Set((existingSkus ?? []).map((s) => s.id));
+    const codeToId = new Map((existingSkus ?? []).map((s) => [s.sku_code, s.id]));
+    const keptIds = new Set<string>();
+
+    for (const sku of skuList as SkuInput[]) {
+      const row = {
         product_id: params.id,
         sku_code: sku.sku_code,
         size: sku.size,
         color: sku.color ?? null,
         color_hex: sku.color_hex ?? null,
         stock_quantity: Number(sku.stock_quantity ?? 0),
-      }));
+      };
 
-      const { data: insertedSkus, error: skuError } = await supabase
-        .from("skus")
-        .insert(skuRows)
-        .select("id, stock_quantity");
-      if (skuError) {
-        return NextResponse.json({ error: skuError.message }, { status: 500 });
-      }
+      const matchId =
+        (sku.id && idSet.has(sku.id) ? sku.id : undefined) ??
+        codeToId.get(sku.sku_code);
 
-      // Re-create inventory_levels for Main Warehouse after SKU replacement
-      if (insertedSkus && insertedSkus.length > 0) {
-        const { data: warehouse } = await supabase
-          .from("locations")
+      if (matchId) {
+        keptIds.add(matchId);
+        const { error } = await supabase.from("skus").update(row).eq("id", matchId);
+        if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+      } else {
+        const { data: inserted, error } = await supabase
+          .from("skus")
+          .insert(row)
           .select("id")
-          .eq("name", "Main Warehouse")
           .single();
+        if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+        if (inserted) keptIds.add(inserted.id);
+      }
+    }
 
-        if (warehouse) {
-          const levelRows = insertedSkus.map((s) => ({
+    // Delete SKUs the admin removed. Tolerate FK errors: a SKU referenced by an
+    // order or inventory log must stay so historical records aren't corrupted.
+    for (const s of existingSkus ?? []) {
+      if (keptIds.has(s.id)) continue;
+      const { error } = await supabase.from("skus").delete().eq("id", s.id);
+      if (error) {
+        console.warn(`[products PUT] kept SKU ${s.id} (referenced by history): ${error.message}`);
+      }
+    }
+
+    // Sync Main Warehouse inventory_levels with the current SKU set.
+    const { data: currentSkus } = await supabase
+      .from("skus")
+      .select("id, stock_quantity")
+      .eq("product_id", params.id);
+    if (currentSkus && currentSkus.length > 0) {
+      const { data: warehouse } = await supabase
+        .from("locations")
+        .select("id")
+        .eq("name", "Main Warehouse")
+        .single();
+      if (warehouse) {
+        await supabase.from("inventory_levels").upsert(
+          currentSkus.map((s) => ({
             sku_id: s.id,
             location_id: warehouse.id,
             quantity: s.stock_quantity,
-          }));
-          await supabase.from("inventory_levels").upsert(levelRows, {
-            onConflict: "sku_id,location_id",
-          });
-        }
+          })),
+          { onConflict: "sku_id,location_id" }
+        );
       }
     }
   }

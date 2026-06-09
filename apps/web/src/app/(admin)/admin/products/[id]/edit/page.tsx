@@ -245,6 +245,7 @@ export default function EditProductPage({ params }: Props) {
         skus: skus
           .filter((s) => s.sku_code.trim() && s.size.trim())
           .map((s) => ({
+            id:             s.id,
             sku_code:       s.sku_code,
             size:           s.size,
             color:          s.color || null,
