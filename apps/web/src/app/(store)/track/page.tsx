@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { SUPPORT_WHATSAPP_LINK } from "@/lib/supportConfig";
 
 type OrderStatus = "paid" | "processing" | "shipped" | "delivered";
@@ -131,6 +131,12 @@ export default function TrackOrderPage() {
   const [order, setOrder] = useState<OrderData | null>(null);
   const [notFound, setNotFound] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Prefill the reference when arriving from an account/email link (?ref=ESC-XXXX).
+  useEffect(() => {
+    const fromUrl = new URLSearchParams(window.location.search).get("ref");
+    if (fromUrl) setRef(fromUrl.toUpperCase());
+  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
