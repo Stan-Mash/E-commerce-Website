@@ -28,6 +28,12 @@ import {
   sendOrderShippedWA,
   sendOrderReadyForPickupWA,
 } from "@/lib/whatsapp/client";
+import {
+  sendEmail,
+  isEmailConfigured,
+  orderConfirmationEmail,
+  orderShippedEmail,
+} from "@/lib/email/client";
 
 // WhatsApp is attempted first - higher open rates and free for 1k conversations/month.
 // If WhatsApp is not configured or fails, we fall back to SMS automatically.
@@ -60,6 +66,10 @@ interface OrderRow {
   phone: string;
   total: number;
   status: string;
+  email: string | null;
+  courier: string | null;
+  tracking_number: string | null;
+  tracking_url: string | null;
 }
 
 // Handler
@@ -96,9 +106,11 @@ export async function GET(req: NextRequest) {
   for (const job of claimed) {
     try {
       // Fetch the order this job belongs to
+      // select * so optional migration-014 columns (email, tracking_*) resolve
+      // even before the migration is applied.
       const { data: orderData, error: orderErr } = await supabase
         .from("orders")
-        .select("order_ref, phone, total, status")
+        .select("*")
         .eq("id", job.order_id)
         .single();
 
@@ -171,6 +183,18 @@ export async function GET(req: NextRequest) {
           sent = true;
         } else {
           dispatchError += ` | SMS: ${smsResult.error ?? "failed"}`;
+        }
+      }
+
+      // Email as an additional best-effort channel (does not affect job status).
+      if (isEmailConfigured() && order.email && (job.job_type === "order_confirmation" || job.job_type === "order_shipped")) {
+        try {
+          const tmpl = job.job_type === "order_confirmation"
+            ? orderConfirmationEmail(order.order_ref, order.total)
+            : orderShippedEmail(order.order_ref, order.courier ?? null, order.tracking_number ?? null, order.tracking_url ?? null);
+          await sendEmail({ to: order.email, subject: tmpl.subject, html: tmpl.html });
+        } catch (e) {
+          console.warn(`[notifications-cron] email send failed for job ${job.id}:`, (e as Error).message);
         }
       }
 

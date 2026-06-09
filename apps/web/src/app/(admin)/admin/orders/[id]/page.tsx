@@ -15,6 +15,9 @@ interface OrderDetail {
   notes: string | null;
   paid_at: string | null;
   created_at: string;
+  tracking_number?: string | null;
+  courier?: string | null;
+  tracking_url?: string | null;
   customers: {
     id: string;
     phone: string;
@@ -84,6 +87,16 @@ interface Props {
   params: { id: string };
 }
 
+const TRACK_INPUT: React.CSSProperties = {
+  width: "100%",
+  padding: "9px 12px",
+  border: "1px solid var(--es-bone)",
+  borderRadius: 4,
+  fontSize: 13,
+  color: "var(--es-ink)",
+  background: "var(--es-paper)",
+};
+
 export default function OrderDetailPage({ params }: Props) {
   const [order, setOrder] = useState<OrderDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -91,6 +104,10 @@ export default function OrderDetailPage({ params }: Props) {
   const [newStatus, setNewStatus] = useState("");
   const [saving, setSaving] = useState(false);
   const [saveMsg, setSaveMsg] = useState<{ text: string; ok: boolean } | null>(null);
+  const [trackingNumber, setTrackingNumber] = useState("");
+  const [courier, setCourier] = useState("");
+  const [trackingUrl, setTrackingUrl] = useState("");
+  const [savingTracking, setSavingTracking] = useState(false);
 
   useEffect(() => {
     async function load() {
@@ -104,6 +121,9 @@ export default function OrderDetailPage({ params }: Props) {
         const json = await res.json() as { order: OrderDetail };
         setOrder(json.order);
         setNewStatus(json.order.status);
+        setTrackingNumber(json.order.tracking_number ?? "");
+        setCourier(json.order.courier ?? "");
+        setTrackingUrl(json.order.tracking_url ?? "");
       } catch {
         setNotFound(true);
       } finally {
@@ -134,6 +154,31 @@ export default function OrderDetailPage({ params }: Props) {
       setSaveMsg({ text: "Failed to update status.", ok: false });
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function handleTrackingSave() {
+    if (!order) return;
+    setSavingTracking(true);
+    setSaveMsg(null);
+    try {
+      const res = await fetch(`/api/admin/orders/${params.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tracking_number: trackingNumber, courier, tracking_url: trackingUrl }),
+      });
+      if (res.ok) {
+        setOrder((prev) => prev ? { ...prev, tracking_number: trackingNumber, courier, tracking_url: trackingUrl } : prev);
+        setSaveMsg({ text: "Tracking saved.", ok: true });
+        setTimeout(() => setSaveMsg(null), 3000);
+      } else {
+        const d = await res.json().catch(() => ({}));
+        setSaveMsg({ text: d.error ?? "Failed to save tracking.", ok: false });
+      }
+    } catch {
+      setSaveMsg({ text: "Failed to save tracking.", ok: false });
+    } finally {
+      setSavingTracking(false);
     }
   }
 
@@ -316,6 +361,26 @@ export default function OrderDetailPage({ params }: Props) {
             </p>
           </div>
         )}
+
+        {/* Shipment tracking */}
+        <div className="no-print" style={{ border: "1px solid var(--es-bone)", borderRadius: 8, padding: 20, marginBottom: 32, background: "var(--es-white)" }}>
+          <p style={{ fontSize: 11, letterSpacing: "0.3em", textTransform: "uppercase", color: "var(--es-mute)", marginBottom: 14 }}>
+            Shipment tracking
+          </p>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 12, marginBottom: 14 }}>
+            <input value={courier} onChange={(e) => setCourier(e.target.value)} placeholder="Courier (e.g. G4S, Fargo)" style={TRACK_INPUT} />
+            <input value={trackingNumber} onChange={(e) => setTrackingNumber(e.target.value)} placeholder="Tracking / waybill number" style={TRACK_INPUT} />
+            <input value={trackingUrl} onChange={(e) => setTrackingUrl(e.target.value)} placeholder="Tracking URL (optional)" style={TRACK_INPUT} />
+          </div>
+          <button
+            onClick={() => void handleTrackingSave()}
+            disabled={savingTracking}
+            className="es-btn-plum"
+            style={{ opacity: savingTracking ? 0.5 : 1, cursor: savingTracking ? "not-allowed" : "pointer" }}
+          >
+            {savingTracking ? "Saving…" : "Save Tracking"}
+          </button>
+        </div>
 
         <p
           style={{

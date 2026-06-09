@@ -18,6 +18,9 @@ type OrderData = {
   estimated_delivery: string | null;
   items: OrderItem[];
   phone: string;
+  trackingNumber?: string | null;
+  courier?: string | null;
+  trackingUrl?: string | null;
 };
 
 const STEPS: { key: OrderStatus; label: string }[] = [
@@ -311,6 +314,21 @@ export default function TrackOrderPage() {
               <div className="mb-12">
                 <StatusStepper status={order.status} />
               </div>
+
+              {/* Shipment tracking */}
+              {order.trackingNumber && (
+                <div className="mb-8 p-5" style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.08)" }}>
+                  <p className="text-[11px] tracking-[.1em] uppercase text-es-mute font-semibold mb-2">Shipment tracking</p>
+                  <p className="text-[14px] text-es-ink">
+                    {order.courier ? `${order.courier} · ` : ""}<span className="font-semibold">{order.trackingNumber}</span>
+                  </p>
+                  {order.trackingUrl && (
+                    <a href={order.trackingUrl} target="_blank" rel="noopener noreferrer" className="inline-block mt-2 text-[12px] tracking-[.1em] uppercase text-es-gold underline">
+                      Track parcel →
+                    </a>
+                  )}
+                </div>
+              )}
 
               {/* Estimated delivery */}
               {order.estimated_delivery && (

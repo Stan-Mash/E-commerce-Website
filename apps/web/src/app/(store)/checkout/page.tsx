@@ -27,6 +27,7 @@ export default function CheckoutPage() {
   const { items, subtotal, clearCart } = useCart();
 
   const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
   const [delivery, setDelivery] = useState<DeliveryType>("cbd");
   const [address, setAddress] = useState("");
   const [method, setMethod] = useState<PayMethod>("mpesa");
@@ -150,6 +151,7 @@ export default function CheckoutPage() {
       deliveryType: delivery,
       deliveryAddress: needsAddress ? address.trim() : undefined,
       promoCode: promo?.code ?? (promoCode.trim() || undefined),
+      email: email.trim() || undefined,
     };
 
     try {
@@ -297,6 +299,19 @@ export default function CheckoutPage() {
                 {phoneError && <p style={ERR}>{phoneError}</p>}
               </div>
             )}
+
+            {/* Email (optional — for an emailed receipt) */}
+            <div style={{ marginBottom: 36 }}>
+              <p style={LABEL}>Email <span style={{ textTransform: "none", letterSpacing: 0, color: "var(--es-faint)" }}>(optional, for a receipt)</span></p>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@example.com"
+                disabled={waiting}
+                style={{ display: "block", width: "100%", fontSize: 18, fontFamily: "var(--font-inter)", padding: "14px 0", border: "none", borderBottom: "1px solid var(--es-ink)", background: "transparent", color: "var(--es-ink)", outline: "none" }}
+              />
+            </div>
 
             {apiError && <div role="alert" style={{ fontSize: 13, color: "#c0392b", background: "#fdf2f2", border: "1px solid #f5c6c6", padding: "12px 16px", marginBottom: 24 }}>{apiError}</div>}
 

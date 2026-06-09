@@ -13,9 +13,10 @@ export async function GET(req: NextRequest) {
 
   try {
     const supabase = createAdminSupabaseClient();
+    // tracking_* come from migration 014; select * so older DBs still resolve.
     const { data, error } = await supabase
       .from("orders")
-      .select("order_ref, status, total")
+      .select("*")
       .eq("order_ref", ref)
       .single();
 
@@ -37,6 +38,9 @@ export async function GET(req: NextRequest) {
       status: data.status,
       state,
       total: data.total,
+      trackingNumber: data.tracking_number ?? null,
+      courier: data.courier ?? null,
+      trackingUrl: data.tracking_url ?? null,
     });
   } catch {
     return NextResponse.json({ error: "Lookup failed" }, { status: 500 });

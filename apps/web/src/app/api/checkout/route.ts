@@ -55,6 +55,7 @@ const CheckoutSchema = z
     deliveryAddress: z.string().min(10).max(300).optional(),
     notes: z.string().max(200).optional(),
     promoCode: z.string().max(40).optional(),
+    email: z.string().email().max(120).optional(),
   })
   .refine(
     (data) =>
@@ -105,7 +106,7 @@ async function _handlePost(req: NextRequest) {
     return NextResponse.json({ error: "Validation failed", details: parsed.error.flatten() }, { status: 422 });
   }
 
-  const { phone, items, deliveryAddress, notes, promoCode } = parsed.data;
+  const { phone, items, deliveryAddress, notes, promoCode, email } = parsed.data;
   const deliveryType = normaliseDeliveryType(parsed.data.deliveryType);
 
   let normalisedPhone: string;
@@ -192,6 +193,21 @@ async function _handlePost(req: NextRequest) {
   }
 
   const order = rpcResult as { order_id: string; order_ref: string };
+
+  // Record email + discount ledger (columns from migration 014). Best-effort:
+  // a missing column on an un-migrated DB must not fail the checkout.
+  if (email || discount.discountAmount > 0) {
+    const ledger: Record<string, unknown> = {};
+    if (email) ledger.email = email;
+    if (discount.discountAmount > 0) {
+      ledger.discount_amount = discount.discountAmount;
+      if (discount.appliedPromotion) ledger.promotion_id = discount.appliedPromotion.id;
+    }
+    const { error: ledgerErr } = await supabase.from("orders").update(ledger).eq("id", order.order_id);
+    if (ledgerErr && !/column .* does not exist|could not find/i.test(ledgerErr.message)) {
+      console.warn("[checkout] order ledger update warning:", ledgerErr.message);
+    }
+  }
 
   // Initiate M-Pesa STK Push
   let stkResult;
