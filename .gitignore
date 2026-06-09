@@ -26,6 +26,9 @@ coverage/
 *.log
 npm-debug.log*
 
+# Editor / tooling configs
+.claude/
+
 # Vercel
 .vercel
 
