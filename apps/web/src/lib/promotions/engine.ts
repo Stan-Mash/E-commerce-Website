@@ -84,8 +84,11 @@ export function applyDiscounts(
     }
   }
 
-  const discountAmount = bestDiscount;
   const finalDelivery  = bestPromotion?.type === "free_shipping" ? 0 : deliveryFee;
+  // For free shipping the saving is the waived delivery (finalDelivery=0); we
+  // must NOT also subtract it from the subtotal, which double-counted the
+  // discount and undercharged the customer by the delivery fee.
+  const discountAmount = bestPromotion?.type === "free_shipping" ? 0 : bestDiscount;
   const total          = Math.max(0, subtotal + finalDelivery - discountAmount);
 
   return {

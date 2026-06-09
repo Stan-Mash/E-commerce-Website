@@ -65,30 +65,36 @@ export async function POST(request: NextRequest) {
 
   const supabase = getAdminClient();
 
-  // Get current stock
-  const { data: sku, error: fetchError } = await supabase
-    .from("skus")
-    .select("stock_quantity")
-    .eq("id", sku_id)
-    .single();
+  // Adjust via the RPC so inventory_levels is updated and the trigger keeps
+  // skus.stock_quantity in sync. This is the single source of truth that
+  // checkout and POS reserve against — updating skus directly (as before)
+  // let the two drift apart. Fall back to a direct update only if the
+  // multi-location infra isn't present.
+  const { error: rpcError } = await supabase.rpc("increment_sku_stock", {
+    p_sku_id: sku_id,
+    p_delta: Number(delta),
+  });
 
-  if (fetchError || !sku) {
-    return NextResponse.json({ error: "SKU not found" }, { status: 404 });
+  if (rpcError) {
+    const { data: sku, error: fetchError } = await supabase
+      .from("skus")
+      .select("stock_quantity")
+      .eq("id", sku_id)
+      .single();
+    if (fetchError || !sku) {
+      return NextResponse.json({ error: "SKU not found" }, { status: 404 });
+    }
+    const newQty = Math.max(0, sku.stock_quantity + Number(delta));
+    const { error: updateError } = await supabase
+      .from("skus")
+      .update({ stock_quantity: newQty })
+      .eq("id", sku_id);
+    if (updateError) {
+      return NextResponse.json({ error: updateError.message }, { status: 500 });
+    }
   }
 
-  const newQty = Math.max(0, sku.stock_quantity + Number(delta));
-
-  // Update stock
-  const { error: updateError } = await supabase
-    .from("skus")
-    .update({ stock_quantity: newQty })
-    .eq("id", sku_id);
-
-  if (updateError) {
-    return NextResponse.json({ error: updateError.message }, { status: 500 });
-  }
-
-  // Log the change
+  // Audit log
   await supabase.from("inventory_log").insert({
     sku_id,
     delta: Number(delta),
@@ -96,5 +102,11 @@ export async function POST(request: NextRequest) {
     reference: null,
   });
 
-  return NextResponse.json({ ok: true, new_quantity: newQty });
+  const { data: after } = await supabase
+    .from("skus")
+    .select("stock_quantity")
+    .eq("id", sku_id)
+    .single();
+
+  return NextResponse.json({ ok: true, new_quantity: after?.stock_quantity ?? null });
 }
