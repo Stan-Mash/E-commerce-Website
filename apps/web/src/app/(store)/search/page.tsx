@@ -25,11 +25,27 @@ const CATEGORY_LABELS: Record<string, string> = {
   accessories: "Accessories",
 };
 
+// Downscale a photo to maxDim px and return raw base64 JPEG — keeps uploads
+// small on mobile data.
+async function compressToBase64(file: File, maxDim = 512): Promise<string> {
+  const bitmap = await createImageBitmap(file);
+  const scale = Math.min(1, maxDim / Math.max(bitmap.width, bitmap.height));
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+  canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+  canvas.getContext("2d")!.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+  const dataUrl = canvas.toDataURL("image/jpeg", 0.8);
+  return dataUrl.replace(/^data:image\/\w+;base64,/, "");
+}
+
 export default function SearchPage() {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<ProductResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
+  const [photoMode, setPhotoMode] = useState(false);
+  const [photoError, setPhotoError] = useState("");
+  const photoInputRef = useRef<HTMLInputElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const abortRef = useRef<AbortController | null>(null);
 
@@ -41,6 +57,8 @@ export default function SearchPage() {
       setLoading(false);
       return;
     }
+    setPhotoMode(false);
+    setPhotoError("");
     // Cancel any in-flight request
     abortRef.current?.abort();
     const controller = new AbortController();
@@ -71,6 +89,38 @@ export default function SearchPage() {
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
   }, [query, runSearch]);
+
+  async function handlePhoto(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setPhotoError("");
+    setQuery("");
+    setLoading(true);
+    try {
+      const imageBase64 = await compressToBase64(file);
+      const res = await fetch("/api/search/visual", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ imageBase64 }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setPhotoError(data.error ?? "Visual search failed. Please try again.");
+        setResults([]);
+        setSearched(false);
+        setPhotoMode(false);
+      } else {
+        setResults(Array.isArray(data.results) ? data.results : []);
+        setSearched(true);
+        setPhotoMode(true);
+      }
+    } catch {
+      setPhotoError("Could not read that photo. Try another.");
+    } finally {
+      setLoading(false);
+      if (photoInputRef.current) photoInputRef.current.value = "";
+    }
+  }
 
   const trimmed = query.trim();
 
@@ -129,11 +179,45 @@ export default function SearchPage() {
             />
           )}
         </div>
+
+        {/* Search by photo */}
+        <input
+          ref={photoInputRef}
+          type="file"
+          accept="image/*"
+          capture="environment"
+          onChange={(e) => void handlePhoto(e)}
+          style={{ display: "none" }}
+          id="visual-search-input"
+        />
+        <label
+          htmlFor="visual-search-input"
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 8,
+            marginTop: 14,
+            fontSize: 11,
+            letterSpacing: "0.25em",
+            textTransform: "uppercase",
+            color: "var(--es-plum)",
+            cursor: "pointer",
+          }}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75">
+            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+            <circle cx="12" cy="13" r="4" />
+          </svg>
+          Search by photo
+        </label>
+        {photoError && (
+          <p style={{ marginTop: 8, fontSize: 13, color: "#c0392b" }}>{photoError}</p>
+        )}
         <style>{`@keyframes es-spin { to { transform: translateY(-50%) rotate(360deg); } }`}</style>
       </div>
 
       {/* Results */}
-      {trimmed.length >= 2 && searched && (
+      {(trimmed.length >= 2 || photoMode) && searched && (
         <div className="mx-auto w-full max-w-[1200px] px-6 sm:px-16 pb-20">
           {results.length === 0 ? (
             <p
@@ -144,12 +228,12 @@ export default function SearchPage() {
                 color: "#717171",
               }}
             >
-              No pieces found for &lsquo;{trimmed}&rsquo;
+              {photoMode ? "No similar pieces found for that photo" : <>No pieces found for &lsquo;{trimmed}&rsquo;</>}
             </p>
           ) : (
             <>
               <p className="mb-8 text-[11px] tracking-[.28em] uppercase text-es-mute">
-                {results.length} {results.length === 1 ? "result" : "results"} for &lsquo;{trimmed}&rsquo;
+                {results.length} {results.length === 1 ? "result" : "results"} {photoMode ? "similar to your photo" : <>for &lsquo;{trimmed}&rsquo;</>}
               </p>
               <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-10">
                 {results.map((product) => {

@@ -36,6 +36,7 @@ import {
   orderShippedEmail,
   cartReminderEmail,
 } from "@/lib/email/client";
+import { sweepImageEmbeddings } from "@/lib/visualSearch";
 
 // WhatsApp is attempted first - higher open rates and free for 1k conversations/month.
 // If WhatsApp is not configured or fails, we fall back to SMS automatically.
@@ -89,6 +90,14 @@ export async function GET(req: NextRequest) {
 
   // 0. Enqueue abandoned-cart reminders for orders left unpaid.
   await enqueueCartReminders(supabase);
+
+  // 0b. Embed any new product images for visual search (no-op without JINA_API_KEY).
+  try {
+    const sweep = await sweepImageEmbeddings(supabase, 20);
+    if (sweep.embedded > 0) console.log(`[notifications-cron] embedded ${sweep.embedded} images, ${sweep.remaining} pending`);
+  } catch (e) {
+    console.warn("[notifications-cron] embedding sweep failed:", (e as Error).message);
+  }
 
   // 1. Atomically claim queued jobs (SKIP LOCKED prevents double-processing)
   const { data: jobs, error: claimErr } = await supabase

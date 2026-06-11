@@ -56,6 +56,7 @@ const CheckoutSchema = z
     notes: z.string().max(200).optional(),
     promoCode: z.string().max(40).optional(),
     email: z.string().email().max(120).optional(),
+    pickupPointId: z.string().uuid().optional(),
   })
   .refine(
     (data) =>
@@ -106,7 +107,8 @@ async function _handlePost(req: NextRequest) {
     return NextResponse.json({ error: "Validation failed", details: parsed.error.flatten() }, { status: 422 });
   }
 
-  const { phone, items, deliveryAddress, notes, promoCode, email } = parsed.data;
+  const { phone, items, notes, promoCode, email, pickupPointId } = parsed.data;
+  let deliveryAddress = parsed.data.deliveryAddress;
   const deliveryType = normaliseDeliveryType(parsed.data.deliveryType);
 
   let normalisedPhone: string;
@@ -147,7 +149,24 @@ async function _handlePost(req: NextRequest) {
     subtotal += price * item.quantity;
   }
   subtotal = Math.round(subtotal);
-  const baseDeliveryFee = deliveryFeeFor(deliveryType);
+  let baseDeliveryFee = deliveryFeeFor(deliveryType);
+
+  // Pickup-point collection: the point's handling fee replaces the delivery
+  // fee, and the point becomes the collection address.
+  let pickupPoint: { id: string; name: string; area: string; fee: number } | null = null;
+  if (deliveryType === "pickup" && pickupPointId) {
+    const { data: pp } = await supabase
+      .from("pickup_points")
+      .select("id, name, area, fee, active")
+      .eq("id", pickupPointId)
+      .single();
+    if (!pp || !pp.active) {
+      return NextResponse.json({ error: "That pickup point is no longer available. Please choose another." }, { status: 422 });
+    }
+    pickupPoint = pp;
+    baseDeliveryFee = Math.round(pp.fee);
+    deliveryAddress = `Pickup point: ${pp.name}, ${pp.area}`;
+  }
 
   // RPC does stock check, order creation, and decrement atomically (row locks).
   const orderRef = generateOrderRef();
@@ -194,11 +213,13 @@ async function _handlePost(req: NextRequest) {
 
   const order = rpcResult as { order_id: string; order_ref: string };
 
-  // Record email + discount ledger (columns from migration 014). Best-effort:
-  // a missing column on an un-migrated DB must not fail the checkout.
-  if (email || discount.discountAmount > 0) {
+  // Record email + discount ledger + pickup point (columns from migrations
+  // 014/017). Best-effort: a missing column on an un-migrated DB must not
+  // fail the checkout.
+  if (email || discount.discountAmount > 0 || pickupPoint) {
     const ledger: Record<string, unknown> = {};
     if (email) ledger.email = email;
+    if (pickupPoint) ledger.pickup_point_id = pickupPoint.id;
     if (discount.discountAmount > 0) {
       ledger.discount_amount = discount.discountAmount;
       if (discount.appliedPromotion) ledger.promotion_id = discount.appliedPromotion.id;

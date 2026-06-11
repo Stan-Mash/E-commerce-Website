@@ -5,13 +5,14 @@ import { useRouter } from "next/navigation";
 import { useCart } from "@/components/checkout/CartProvider";
 
 type DeliveryType = "pickup" | "cbd" | "outside_cbd";
-type PayMethod = "mpesa" | "paybill" | "card";
+type PayMethod = "mpesa" | "paybill" | "card" | "bnpl";
 
 const OUTSIDE_CBD_FEE = Number(process.env.NEXT_PUBLIC_DELIVERY_FEE_OUTSIDE_CBD ?? 300) || 300;
 const PHONE_RE = /^(?:254|0)7\d{8}$/;
 const PAYBILL = process.env.NEXT_PUBLIC_MPESA_PAYBILL ?? "";
 const PAYBILL_NAME = process.env.NEXT_PUBLIC_MPESA_PAYBILL_NAME ?? "Elite Style Co.";
 const CARD_ENABLED = (process.env.NEXT_PUBLIC_FLUTTERWAVE_PUBLIC_KEY ?? "").startsWith("FLWPUBK");
+const BNPL_NAME = process.env.NEXT_PUBLIC_BNPL_NAME ?? "";
 
 function formatKES(amount: number) {
   return new Intl.NumberFormat("en-KE", {
@@ -41,20 +42,34 @@ export default function CheckoutPage() {
   const [promoChecking, setPromoChecking] = useState(false);
   const [promoMsg, setPromoMsg] = useState("");
   const [promo, setPromo] = useState<{ discountAmount: number; deliveryFee: number; total: number; code: string | null; name: string } | null>(null);
+  const [pickupPoints, setPickupPoints] = useState<{ id: string; name: string; area: string; address: string | null; fee: number }[]>([]);
+  const [pickupPointId, setPickupPointId] = useState("");
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const baseDeliveryFee = delivery === "outside_cbd" ? OUTSIDE_CBD_FEE : 0;
+  const selectedPoint = pickupPoints.find((p) => p.id === pickupPointId) ?? null;
+  const baseDeliveryFee =
+    delivery === "outside_cbd" ? OUTSIDE_CBD_FEE
+    : delivery === "pickup" && selectedPoint ? selectedPoint.fee
+    : 0;
   const deliveryFee = promo ? promo.deliveryFee : baseDeliveryFee;
   const discountAmount = promo?.discountAmount ?? 0;
   const total = promo ? promo.total : subtotal + baseDeliveryFee;
   const needsAddress = delivery === "cbd" || delivery === "outside_cbd";
 
-  // A promotion's value can depend on the delivery method (free shipping), so
-  // any change to delivery invalidates a previously applied code.
+  // Load pickup-point locations once (empty list = plain store pickup).
+  useEffect(() => {
+    fetch("/api/pickup-points")
+      .then((r) => r.json())
+      .then((d) => setPickupPoints(Array.isArray(d.points) ? d.points : []))
+      .catch(() => setPickupPoints([]));
+  }, []);
+
+  // A promotion's value can depend on the delivery method/fee, so any change
+  // to delivery or pickup point invalidates a previously applied code.
   useEffect(() => {
     setPromo(null);
     setPromoMsg("");
-  }, [delivery]);
+  }, [delivery, pickupPointId]);
 
   async function applyPromo() {
     if (!promoCode.trim() || items.length === 0) return;
@@ -152,6 +167,7 @@ export default function CheckoutPage() {
       deliveryAddress: needsAddress ? address.trim() : undefined,
       promoCode: promo?.code ?? (promoCode.trim() || undefined),
       email: email.trim() || undefined,
+      pickupPointId: delivery === "pickup" && pickupPointId ? pickupPointId : undefined,
     };
 
     try {
@@ -168,6 +184,22 @@ export default function CheckoutPage() {
           return;
         }
         // Redirect to Flutterwave hosted checkout.
+        window.location.href = data.paymentLink;
+        return;
+      }
+
+      if (method === "bnpl") {
+        const res = await fetch("/api/checkout/bnpl", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        const data = await res.json();
+        if (!res.ok || !data.paymentLink) {
+          setApiError(data.error ?? "Could not start the instalment payment.");
+          setSubmitting(false);
+          return;
+        }
         window.location.href = data.paymentLink;
         return;
       }
@@ -225,6 +257,7 @@ export default function CheckoutPage() {
     { value: "mpesa", label: "M-PESA", sub: "STK push to your phone", show: true },
     { value: "paybill", label: "PAYBILL", sub: PAYBILL ? `Paybill ${PAYBILL}` : "M-Pesa Paybill", show: !!PAYBILL },
     { value: "card", label: "CARD & MORE", sub: "Card, Airtel, bank", show: CARD_ENABLED },
+    { value: "bnpl", label: "INSTALMENTS", sub: `Pay over time with ${BNPL_NAME}`, show: !!BNPL_NAME },
   ];
 
   return (
@@ -260,6 +293,29 @@ export default function CheckoutPage() {
                 })}
               </div>
             </div>
+
+            {/* Pickup point (Pickup Mtaani-style agents) */}
+            {delivery === "pickup" && pickupPoints.length > 0 && (
+              <div style={{ marginBottom: 36 }}>
+                <p style={LABEL}>Collection Point</p>
+                <select
+                  value={pickupPointId}
+                  onChange={(e) => setPickupPointId(e.target.value)}
+                  disabled={waiting}
+                  style={{ width: "100%", fontSize: 15, fontFamily: "var(--font-inter)", padding: "12px", border: "1px solid var(--es-bone)", background: "var(--es-white)", color: "var(--es-ink)", outline: "none" }}
+                >
+                  <option value="">Store pickup — Westlands Flagship (free)</option>
+                  {pickupPoints.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.area} — {p.name}{p.fee > 0 ? ` (+${formatKES(p.fee)})` : " (free)"}
+                    </option>
+                  ))}
+                </select>
+                {selectedPoint?.address && (
+                  <p style={{ fontSize: 12, color: "var(--es-mute)", marginTop: 6 }}>{selectedPoint.address}</p>
+                )}
+              </div>
+            )}
 
             {/* Address */}
             {needsAddress && (
