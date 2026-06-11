@@ -109,13 +109,22 @@ export async function POST(req: NextRequest) {
       .eq("id", pending.order_id)
       .single();
 
-    if (orderItems && orderData?.location_id) {
+    if (orderItems) {
       for (const item of orderItems) {
-        await supabase.rpc("increment_location_stock", {
-          p_sku_id:      item.sku_id,
-          p_location_id: orderData.location_id,
-          p_delta:       item.quantity,
-        });
+        // POS orders restore to their location; web orders (no location_id)
+        // restore via the default-warehouse RPC so the stock isn't lost.
+        if (orderData?.location_id) {
+          await supabase.rpc("increment_location_stock", {
+            p_sku_id:      item.sku_id,
+            p_location_id: orderData.location_id,
+            p_delta:       item.quantity,
+          });
+        } else {
+          await supabase.rpc("increment_sku_stock", {
+            p_sku_id: item.sku_id,
+            p_delta:  item.quantity,
+          });
+        }
         await supabase.from("inventory_log").insert({
           sku_id:    item.sku_id,
           delta:     item.quantity,

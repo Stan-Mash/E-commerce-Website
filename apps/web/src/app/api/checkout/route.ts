@@ -57,6 +57,9 @@ const CheckoutSchema = z
     promoCode: z.string().max(40).optional(),
     email: z.string().email().max(120).optional(),
     pickupPointId: z.string().uuid().optional(),
+    // "stk" (default) pushes an M-Pesa prompt; "paybill" lets the customer pay
+    // the paybill manually — no STK is sent, and the C2B webhook confirms it.
+    paymentMethod: z.enum(["stk", "paybill"]).optional(),
   })
   .refine(
     (data) =>
@@ -228,6 +231,33 @@ async function _handlePost(req: NextRequest) {
     if (ledgerErr && !/column .* does not exist|could not find/i.test(ledgerErr.message)) {
       console.warn("[checkout] order ledger update warning:", ledgerErr.message);
     }
+  }
+
+  // Manual paybill: no STK push. Register the expected payment so the C2B
+  // webhook confirms the order when the customer pays with this reference.
+  // (Previously this path still fired an STK prompt and the payment could
+  // never be matched — web paybill orders sat unconfirmed forever.)
+  if (parsed.data.paymentMethod === "paybill") {
+    await supabase.from("c2b_payments").insert({
+      order_id:        order.order_id,
+      order_ref:       orderRef,
+      expected_amount: total,
+      status:          "pending",
+    });
+
+    if (discount.appliedPromotion) {
+      await supabase.rpc("redeem_promotion", { p_promotion_id: discount.appliedPromotion.id });
+    }
+
+    return NextResponse.json({
+      orderId: order.order_id,
+      orderRef,
+      total,
+      subtotal: discount.subtotal,
+      deliveryFee,
+      discountAmount: discount.discountAmount,
+      paymentMethod: "paybill",
+    });
   }
 
   // Initiate M-Pesa STK Push
