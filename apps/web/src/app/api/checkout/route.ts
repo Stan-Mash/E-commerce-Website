@@ -291,9 +291,14 @@ async function _handlePost(req: NextRequest) {
       });
     }
 
-    console.error("STK Push error:", err);
+    const darajaDetail = (err as { response?: { data?: unknown } })?.response?.data ?? (err as Error).message;
+    console.error("STK Push error:", JSON.stringify(darajaDetail));
     return NextResponse.json(
-      { error: "M-Pesa payment initiation failed. Please try again." },
+      {
+        error: "M-Pesa payment initiation failed. Please try again.",
+        // Expose Daraja's exact error in sandbox only, to aid setup debugging.
+        ...(process.env.MPESA_ENVIRONMENT !== "production" ? { detail: darajaDetail } : {}),
+      },
       { status: 502 }
     );
   }
