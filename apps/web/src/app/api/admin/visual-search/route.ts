@@ -24,7 +24,8 @@ export async function GET(request: NextRequest) {
     .from("product_images")
     .select("id", { count: "exact", head: true })
     .is("embedding", null)
-    .eq("media_type", "image");
+    .eq("media_type", "image")
+    .not("url", "ilike", "%.avif");
 
   return NextResponse.json({
     configured: isVisualSearchConfigured(),

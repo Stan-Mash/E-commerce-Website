@@ -16,6 +16,7 @@ export async function sweepImageEmbeddings(
     .select("id, url")
     .is("embedding", null)
     .eq("media_type", "image")
+    .not("url", "ilike", "%.avif")  // Jina CLIP doesn't support AVIF; skip silently
     .limit(batch);
 
   if (error) {
@@ -57,7 +58,8 @@ export async function sweepImageEmbeddings(
     .from("product_images")
     .select("id", { count: "exact", head: true })
     .is("embedding", null)
-    .eq("media_type", "image");
+    .eq("media_type", "image")
+    .not("url", "ilike", "%.avif");
 
   return {
     embedded,
