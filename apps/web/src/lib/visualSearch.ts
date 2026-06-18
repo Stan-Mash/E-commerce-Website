@@ -6,7 +6,7 @@ import { embedImages, isVisualSearchConfigured, toVectorLiteral } from "@/lib/em
 export async function sweepImageEmbeddings(
   supabase: SupabaseClient,
   batch = 20
-): Promise<{ embedded: number; remaining: number; skipped: number; reason?: string }> {
+): Promise<{ embedded: number; remaining: number; skipped: number; reason?: string; firstError?: string; firstUrl?: string }> {
   if (!isVisualSearchConfigured()) {
     return { embedded: 0, remaining: 0, skipped: 0, reason: "JINA_API_KEY not set" };
   }
