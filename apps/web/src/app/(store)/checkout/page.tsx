@@ -234,7 +234,10 @@ export default function CheckoutPage() {
       });
       const data = await res.json();
       if (!res.ok) {
-        setApiError(data.error ?? "Payment failed. Please try again.");
+        // Surface the first field-level validation message if present.
+        const fieldErrors = data.details?.fieldErrors ?? {};
+        const firstField = Object.values(fieldErrors).flat()[0] as string | undefined;
+        setApiError(firstField ?? data.error ?? "Payment failed. Please try again.");
         setSubmitting(false);
         return;
       }
