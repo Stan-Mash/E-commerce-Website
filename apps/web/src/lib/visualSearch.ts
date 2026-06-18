@@ -55,5 +55,11 @@ export async function sweepImageEmbeddings(
     .is("embedding", null)
     .eq("media_type", "image");
 
-  return { embedded, skipped, remaining: count ?? 0, firstError, firstUrl };
+  return {
+    embedded,
+    skipped,
+    remaining: count ?? 0,
+    ...(firstError !== undefined ? { firstError } : {}),
+    ...(firstUrl  !== undefined ? { firstUrl  } : {}),
+  };
 }
