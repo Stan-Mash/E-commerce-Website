@@ -291,7 +291,13 @@ async function _handlePost(req: NextRequest) {
       });
     }
 
-    const darajaDetail = (err as { response?: { data?: unknown } })?.response?.data ?? (err as Error).message;
+    const axiosErr = err as { response?: { status?: number; data?: unknown }; message?: string; code?: string };
+    const darajaDetail = {
+      responseStatus: axiosErr.response?.status,
+      responseData:   axiosErr.response?.data,
+      message:        axiosErr.message ?? String(err),
+      code:           axiosErr.code,
+    };
     console.error("STK Push error:", JSON.stringify(darajaDetail));
     return NextResponse.json(
       {
