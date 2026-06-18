@@ -5,7 +5,7 @@ const BASE_URL =
     ? "https://api.safaricom.co.ke"
     : "https://sandbox.safaricom.co.ke";
 
-const TOKEN_CACHE_KEY = "mpesa_access_token";
+const TOKEN_CACHE_KEY = "mpesa_access_token_v2";
 const TOKEN_TTL_SECONDS = 3400; // Daraja tokens expire after 3599s; refresh at 3400s to be safe
 
 async function getAccessToken(): Promise<string> {
