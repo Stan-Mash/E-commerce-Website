@@ -26,14 +26,18 @@ export async function sweepImageEmbeddings(
     return { embedded: 0, remaining: 0, skipped: 0 };
   }
 
+  const siteBase = (process.env.NEXT_PUBLIC_SITE_URL ?? "").replace(/\/$/, "");
+
   let embedded = 0;
   let skipped = 0;
   let firstError: string | undefined;
   let firstUrl: string | undefined;
   for (const img of pending) {
-    if (!firstUrl) firstUrl = img.url;
+    // Jina requires absolute URLs; relative paths are stored for local assets.
+    const imageUrl = img.url.startsWith("http") ? img.url : `${siteBase}${img.url}`;
+    if (!firstUrl) firstUrl = imageUrl;
     try {
-      const [vector] = await embedImages([img.url]);
+      const [vector] = await embedImages([imageUrl]);
       if (!vector) { skipped++; continue; }
       const { error: upErr } = await supabase
         .from("product_images")
