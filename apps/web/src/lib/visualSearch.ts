@@ -28,7 +28,10 @@ export async function sweepImageEmbeddings(
 
   let embedded = 0;
   let skipped = 0;
+  let firstError: string | undefined;
+  let firstUrl: string | undefined;
   for (const img of pending) {
+    if (!firstUrl) firstUrl = img.url;
     try {
       const [vector] = await embedImages([img.url]);
       if (!vector) { skipped++; continue; }
@@ -36,9 +39,12 @@ export async function sweepImageEmbeddings(
         .from("product_images")
         .update({ embedding: toVectorLiteral(vector) })
         .eq("id", img.id);
-      if (upErr) skipped++; else embedded++;
+      if (upErr) { skipped++; if (!firstError) firstError = upErr.message; }
+      else embedded++;
     } catch (e) {
-      console.warn(`[visual-search] embed failed for image ${img.id}:`, (e as Error).message);
+      const msg = (e as Error).message;
+      console.warn(`[visual-search] embed failed for image ${img.id}:`, msg);
+      if (!firstError) firstError = msg;
       skipped++;
     }
   }
@@ -49,5 +55,5 @@ export async function sweepImageEmbeddings(
     .is("embedding", null)
     .eq("media_type", "image");
 
-  return { embedded, skipped, remaining: count ?? 0 };
+  return { embedded, skipped, remaining: count ?? 0, firstError, firstUrl };
 }
