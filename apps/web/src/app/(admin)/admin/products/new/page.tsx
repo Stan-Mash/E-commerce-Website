@@ -77,7 +77,7 @@ const BLANK_SKU: SkuForm = {
   size: "",
   color: "",
   color_hex: "#000000",
-  stock_quantity: "0",
+  stock_quantity: "",
 };
 
 export default function NewProductPage() {

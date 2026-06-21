@@ -172,7 +172,7 @@ export default function EditProductPage({ params }: Props) {
   function addSku() {
     setSkus((prev) => [
       ...prev,
-      { sku_code: "", size: "", color: "", color_hex: "#000000", stock_quantity: "0" },
+      { sku_code: "", size: "", color: "", color_hex: "#000000", stock_quantity: "" },
     ]);
   }
 
