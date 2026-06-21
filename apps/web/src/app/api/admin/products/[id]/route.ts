@@ -210,6 +210,37 @@ export async function PUT(
   return NextResponse.json({ product });
 }
 
+// PATCH — partial update, used for bulk status changes from the products table.
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  if (!checkAuth(request)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
+    return NextResponse.json({ error: "Not configured" }, { status: 503 });
+  }
+
+  const body = await request.json() as { status?: string };
+  const VALID = ["active", "draft", "coming_soon", "archived"];
+  if (!body.status || !VALID.includes(body.status)) {
+    return NextResponse.json({ error: "Invalid status" }, { status: 400 });
+  }
+
+  const supabase = getAdminClient();
+  const { error } = await supabase
+    .from("products")
+    .update({ status: body.status })
+    .eq("id", params.id);
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  return NextResponse.json({ ok: true });
+}
+
 // Products are NEVER hard-deleted - doing so would cascade to SKUs and break
 // order_items foreign keys, corrupting historical financial records.
 // Instead we archive: the product is hidden from the storefront (RLS policy

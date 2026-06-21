@@ -321,6 +321,37 @@ export default function OrderDetailPage({ params }: Props) {
             >
               {saving ? "Saving…" : "Save Status"}
             </button>
+            {/* WhatsApp notification */}
+            {(() => {
+              const phone = (order.customers?.phone ?? order.phone ?? "").replace(/\D/g, "").replace(/^0/, "254");
+              const msg = encodeURIComponent(
+                `Hi${order.customers?.name ? ` ${order.customers.name}` : ""}! Your Elite Style Co. order *${order.order_ref}* is now *${order.status.replace(/_/g, " ")}*. Total: KES ${Number(order.total).toLocaleString("en-KE")}. Thank you for shopping with us! 🛍️`
+              );
+              return phone ? (
+                <a
+                  href={`https://wa.me/${phone}?text=${msg}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    fontFamily: "var(--font-inter)",
+                    fontSize: 12,
+                    letterSpacing: "0.15em",
+                    textTransform: "uppercase",
+                    padding: "9px 18px",
+                    border: "1px solid #25D366",
+                    borderRadius: 4,
+                    background: "#25D366",
+                    color: "#fff",
+                    cursor: "pointer",
+                    whiteSpace: "nowrap",
+                    textDecoration: "none",
+                    display: "inline-block",
+                  }}
+                >
+                  WhatsApp
+                </a>
+              ) : null;
+            })()}
             <button
               onClick={() => window.print()}
               style={{

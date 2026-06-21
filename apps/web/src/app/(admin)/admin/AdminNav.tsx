@@ -5,23 +5,23 @@ import { usePathname } from "next/navigation";
 
 const NAV_ITEMS = [
   { label: "Dashboard", href: "/admin" },
-  { label: "Products", href: "/admin/products" },
-  { label: "Promotions", href: "/admin/promotions" },
   { label: "Orders", href: "/admin/orders" },
-  { label: "Returns", href: "/admin/returns" },
-  { label: "Delivery", href: "/admin/delivery" },
-  { label: "POS", href: "/admin/pos" },
+  { label: "Products", href: "/admin/products" },
   { label: "Stock", href: "/admin/stock" },
+  { label: "Promotions", href: "/admin/promotions" },
+  { label: "Returns", href: "/admin/returns" },
   { label: "Customers", href: "/admin/customers" },
   { label: "Reviews", href: "/admin/reviews" },
+  { label: "Delivery", href: "/admin/delivery" },
+  { label: "POS", href: "/admin/pos" },
   { label: "Newsletter", href: "/admin/newsletter" },
-  { label: "Activity Log", href: "/admin/audit" },
   { label: "Reports", href: "/admin/reports" },
   { label: "Settings", href: "/admin/settings" },
 ] as const;
 
 const OWNER_NAV = [
   { label: "Finance", href: "/admin/finance" },
+  { label: "Activity Log", href: "/admin/audit" },
 ] as const;
 
 function isActive(pathname: string, href: string): boolean {

@@ -25,6 +25,7 @@ const DEFAULTS: Record<string, string> = {
   delivery_note: "",
   announcement_bar_text: "",
   announcement_bar_enabled: "false",
+  low_stock_threshold: "5",
 };
 
 export async function GET(request: NextRequest) {

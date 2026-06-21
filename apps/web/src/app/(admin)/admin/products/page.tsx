@@ -84,8 +84,14 @@ export default function AdminProductsPage() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "draft" | "archived">("all");
+  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "draft" | "archived" | "coming_soon">("all");
   const [page, setPage] = useState(1);
+
+  // Bulk select state
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [bulkStatus, setBulkStatus] = useState<string>("active");
+  const [bulkSaving, setBulkSaving] = useState(false);
+  const [bulkMsg, setBulkMsg] = useState<string | null>(null);
 
   const loadProducts = useCallback(async () => {
     setLoading(true);
@@ -128,6 +134,55 @@ export default function AdminProductsPage() {
     });
   }, [products, search, statusFilter]);
 
+  const pageIds = useMemo(
+    () => new Set(filtered.slice((Math.min(page, Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))) - 1) * PAGE_SIZE, Math.min(page, Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))) * PAGE_SIZE).map((p) => p.id)),
+    [filtered, page]
+  );
+  const allPageSelected = pageIds.size > 0 && [...pageIds].every((id) => selected.has(id));
+
+  function toggleSelect(id: string) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  }
+
+  function toggleSelectAll() {
+    if (allPageSelected) {
+      setSelected((prev) => { const next = new Set(prev); pageIds.forEach((id) => next.delete(id)); return next; });
+    } else {
+      setSelected((prev) => { const next = new Set(prev); pageIds.forEach((id) => next.add(id)); return next; });
+    }
+  }
+
+  async function applyBulkStatus() {
+    if (selected.size === 0) return;
+    setBulkSaving(true);
+    setBulkMsg(null);
+    try {
+      const ids = [...selected];
+      const results = await Promise.all(
+        ids.map((id) =>
+          fetch(`/api/admin/products/${id}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ status: bulkStatus }),
+          })
+        )
+      );
+      const ok = results.filter((r) => r.ok).length;
+      setProducts((prev) => prev.map((p) => selected.has(p.id) ? { ...p, status: bulkStatus as ProductRow["status"] } : p));
+      setSelected(new Set());
+      setBulkMsg(`Updated ${ok} product${ok !== 1 ? "s" : ""}.`);
+      setTimeout(() => setBulkMsg(null), 3000);
+    } catch {
+      setBulkMsg("Failed to update.");
+    } finally {
+      setBulkSaving(false);
+    }
+  }
+
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const safePage = Math.min(page, totalPages);
   const pageItems = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
@@ -157,8 +212,7 @@ export default function AdminProductsPage() {
 
   const productToDelete = products.find((p) => p.id === deleteId);
 
-  // Column headers: Image + original 6
-  const colHeaders = ["", "Name", "Category", "Price", "SKUs / Stock", "Status", ""];
+  const colHeaders = ["", "", "Name", "Category", "Price", "SKUs / Stock", "Status", ""];
 
   return (
     <div>
@@ -300,9 +354,44 @@ export default function AdminProductsPage() {
           <option value="all">All Status</option>
           <option value="active">Active</option>
           <option value="draft">Draft</option>
+          <option value="coming_soon">Coming Soon</option>
           <option value="archived">Archived</option>
         </select>
       </div>
+
+      {/* Bulk action bar */}
+      {selected.size > 0 && (
+        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16, padding: "12px 16px", background: "var(--es-ink)", borderRadius: 6, flexWrap: "wrap" }}>
+          <span style={{ fontFamily: "var(--font-inter)", fontSize: 13, color: "#fff", marginRight: 8 }}>
+            {selected.size} selected
+          </span>
+          <span style={{ fontFamily: "var(--font-inter)", fontSize: 12, color: "#aaa", textTransform: "uppercase", letterSpacing: "0.2em" }}>Change status to</span>
+          <select
+            value={bulkStatus}
+            onChange={(e) => setBulkStatus(e.target.value)}
+            style={{ padding: "6px 10px", borderRadius: 4, border: "1px solid #444", background: "#222", color: "#fff", fontFamily: "var(--font-inter)", fontSize: 13, cursor: "pointer" }}
+          >
+            <option value="active">Active</option>
+            <option value="draft">Draft</option>
+            <option value="coming_soon">Coming Soon</option>
+            <option value="archived">Archived</option>
+          </select>
+          <button
+            onClick={() => void applyBulkStatus()}
+            disabled={bulkSaving}
+            style={{ padding: "7px 20px", background: "var(--es-gold)", color: "#000", border: "none", borderRadius: 4, fontFamily: "var(--font-inter)", fontSize: 12, letterSpacing: "0.2em", textTransform: "uppercase", cursor: bulkSaving ? "not-allowed" : "pointer", opacity: bulkSaving ? 0.6 : 1 }}
+          >
+            {bulkSaving ? "Applying…" : "Apply"}
+          </button>
+          <button
+            onClick={() => setSelected(new Set())}
+            style={{ marginLeft: "auto", background: "none", border: "none", color: "#aaa", cursor: "pointer", fontSize: 13, fontFamily: "var(--font-inter)" }}
+          >
+            Clear
+          </button>
+          {bulkMsg && <span style={{ fontSize: 13, color: "#90ee90" }}>{bulkMsg}</span>}
+        </div>
+      )}
 
       {/* Table */}
       <div style={{ overflowX: "auto" }}>
@@ -315,11 +404,20 @@ export default function AdminProductsPage() {
         >
           <thead>
             <tr style={{ background: "var(--es-ink)" }}>
+              {/* Checkbox header */}
+              <th style={{ padding: "14px 8px 14px 16px", width: 36 }}>
+                <input
+                  type="checkbox"
+                  checked={allPageSelected}
+                  onChange={toggleSelectAll}
+                  style={{ cursor: "pointer", accentColor: "var(--es-gold)", width: 15, height: 15 }}
+                />
+              </th>
               {colHeaders.map((col, i) => (
                 <th
                   key={i}
                   style={{
-                    padding: i === 0 ? "14px 12px 14px 20px" : "14px 20px",
+                    padding: i === 0 ? "14px 12px 14px 8px" : "14px 20px",
                     textAlign: i === colHeaders.length - 1 ? "right" : "left",
                     fontFamily: "var(--font-inter)",
                     fontSize: 11,
@@ -328,7 +426,7 @@ export default function AdminProductsPage() {
                     color: "var(--es-white)",
                     fontWeight: 500,
                     whiteSpace: "nowrap",
-                    width: i === 0 ? 72 : undefined,
+                    width: i === 0 ? 60 : undefined,
                   }}
                 >
                   {col}
@@ -389,11 +487,20 @@ export default function AdminProductsPage() {
                   <tr
                     key={product.id}
                     style={{
-                      background: isEven ? "var(--es-white)" : "var(--es-paper)",
+                      background: selected.has(product.id) ? "rgba(201,169,97,0.08)" : isEven ? "var(--es-white)" : "var(--es-paper)",
                     }}
                   >
+                    {/* Checkbox */}
+                    <td style={{ padding: "12px 8px 12px 16px", width: 36 }}>
+                      <input
+                        type="checkbox"
+                        checked={selected.has(product.id)}
+                        onChange={() => toggleSelect(product.id)}
+                        style={{ cursor: "pointer", accentColor: "var(--es-gold)", width: 15, height: 15 }}
+                      />
+                    </td>
                     {/* Thumbnail */}
-                    <td style={{ padding: "12px 12px 12px 20px", width: 72 }}>
+                    <td style={{ padding: "12px 8px 12px 0", width: 60 }}>
                       <ProductThumbnail imageUrl={product.image_url} />
                     </td>
 

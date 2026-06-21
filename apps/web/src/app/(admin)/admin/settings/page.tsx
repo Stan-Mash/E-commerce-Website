@@ -76,6 +76,7 @@ interface Settings {
   delivery_note: string;
   announcement_bar_text: string;
   announcement_bar_enabled: string;
+  low_stock_threshold: string;
 }
 
 const DEFAULTS: Settings = {
@@ -89,9 +90,10 @@ const DEFAULTS: Settings = {
   delivery_note: "",
   announcement_bar_text: "",
   announcement_bar_enabled: "false",
+  low_stock_threshold: "5",
 };
 
-type SectionKey = "store" | "delivery" | "appearance";
+type SectionKey = "store" | "delivery" | "appearance" | "stock";
 
 export default function SettingsPage() {
   const [settings, setSettings] = useState<Settings>(DEFAULTS);
@@ -100,11 +102,13 @@ export default function SettingsPage() {
     store: false,
     delivery: false,
     appearance: false,
+    stock: false,
   });
   const [status, setStatus] = useState<Record<SectionKey, { ok: boolean; msg: string } | null>>({
     store: null,
     delivery: null,
     appearance: null,
+    stock: null,
   });
 
   const load = useCallback(async () => {
@@ -449,6 +453,37 @@ export default function SettingsPage() {
           </button>
         </div>
         <SectionStatus section="appearance" />
+      </div>
+
+      {/* Stock Section */}
+      <div style={CARD_STYLE}>
+        <h2 style={SECTION_TITLE_STYLE}>Stock Alerts</h2>
+
+        <div style={FIELD_STYLE}>
+          <label style={LABEL_STYLE}>Low Stock Threshold</label>
+          <input
+            style={{ ...INPUT_STYLE, maxWidth: 180 }}
+            type="number"
+            min="1"
+            value={settings.low_stock_threshold}
+            onChange={(e) => update("low_stock_threshold", e.target.value)}
+            placeholder="5"
+          />
+          <p style={{ fontFamily: "var(--font-inter)", fontSize: 11, color: "var(--es-mute)", margin: "6px 0 0" }}>
+            SKUs with stock at or below this number show as &ldquo;Low Stock&rdquo; in the admin and dashboard alerts.
+          </p>
+        </div>
+
+        <div style={{ display: "flex", alignItems: "center", gap: 16, marginTop: 8 }}>
+          <button
+            style={{ ...SAVE_BTN_STYLE, opacity: saving.stock ? 0.6 : 1 }}
+            disabled={saving.stock}
+            onClick={() => void save("stock", ["low_stock_threshold"])}
+          >
+            {saving.stock ? "Saving…" : "Save Stock Settings"}
+          </button>
+        </div>
+        <SectionStatus section="stock" />
       </div>
     </div>
   );
