@@ -13,8 +13,9 @@ export function ProductCard({ product, priority = false }: Props) {
   const primaryImage   = sorted[0];
   const secondaryImage = sorted[1];
 
-  const totalStock = product.skus?.reduce((sum, s) => sum + s.stock_quantity, 0) ?? 0;
-  const isSoldOut  = totalStock === 0;
+  const isComingSoon = product.status === "coming_soon";
+  const totalStock   = product.skus?.reduce((sum, s) => sum + s.stock_quantity, 0) ?? 0;
+  const isSoldOut    = !isComingSoon && totalStock === 0;
 
   const discount =
     product.compare_price && product.compare_price > product.base_price
@@ -73,6 +74,15 @@ export function ProductCard({ product, priority = false }: Props) {
           </span>
         )}
 
+        {/* Coming soon overlay */}
+        {isComingSoon && (
+          <div className="absolute inset-0 flex items-center justify-center bg-white/75 backdrop-blur-[2px]">
+            <span className="text-[11px] font-medium tracking-wider uppercase text-es-champagne-dk">
+              Coming Soon
+            </span>
+          </div>
+        )}
+
         {/* Sold out overlay */}
         {isSoldOut && (
           <div className="absolute inset-0 flex items-center justify-center bg-white/75 backdrop-blur-[2px]">
@@ -83,7 +93,7 @@ export function ProductCard({ product, priority = false }: Props) {
         )}
 
         {/* Quick-add - slides up on hover */}
-        {!isSoldOut && (
+        {!isSoldOut && !isComingSoon && (
           <div className="
             absolute bottom-0 inset-x-0
             bg-es-ink text-white
