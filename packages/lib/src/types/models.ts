@@ -32,6 +32,7 @@ export interface ProductListItem {
   name: string;
   slug: string;
   category: string;
+  status: string;
   base_price: number;
   compare_price: number | null;
   product_images?: Pick<ProductImage, "url" | "alt" | "sort_order">[];

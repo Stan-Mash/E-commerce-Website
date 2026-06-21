@@ -1,12 +1,23 @@
 "use client";
 
-import { useState } from "react";
-import { ShoppingBag, Heart, Share2 } from "lucide-react";
+import { useState, useEffect } from "react";
+import { ShoppingBag, Heart, Share2, Check, Link as LinkIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useCart } from "@/components/checkout/CartProvider";
 import { formatKES } from "@/lib/utils";
 import { SizeGuide } from "@/components/product/SizeGuide";
 import type { ProductDetail } from "@nairobi-fashion/lib";
+
+const LOW_STOCK_THRESHOLD = 5;
+
+function readWishlist(): string[] {
+  if (typeof window === "undefined") return [];
+  try { return JSON.parse(localStorage.getItem("es_wishlist") ?? "[]") as string[]; }
+  catch { return []; }
+}
+function writeWishlist(ids: string[]) {
+  localStorage.setItem("es_wishlist", JSON.stringify(ids));
+}
 
 interface Props {
   product: ProductDetail;
@@ -18,6 +29,33 @@ export function ProductInfo({ product }: Props) {
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
   const [addedMessage, setAddedMessage] = useState("");
+  const [wishlisted, setWishlisted] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    setWishlisted(readWishlist().includes(product.id));
+  }, [product.id]);
+
+  function toggleWishlist() {
+    const list = readWishlist();
+    const next = list.includes(product.id)
+      ? list.filter((id) => id !== product.id)
+      : [...list, product.id];
+    writeWishlist(next);
+    setWishlisted(next.includes(product.id));
+  }
+
+  function handleShare() {
+    const url = window.location.href;
+    if (navigator.share) {
+      void navigator.share({ title: product.name, url });
+    } else {
+      void navigator.clipboard?.writeText(url).then(() => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      });
+    }
+  }
 
   const uniqueSizes = [...new Set(product.skus?.map((s) => s.size) ?? [])];
   const uniqueColors = [
@@ -203,6 +241,13 @@ export function ProductInfo({ product }: Props) {
         </div>
       )}
 
+      {/* Low stock warning */}
+      {selectedSku && selectedSku.stock_quantity > 0 && selectedSku.stock_quantity <= LOW_STOCK_THRESHOLD && (
+        <p className="text-[11px] tracking-[.2em] uppercase" style={{ color: "#c0392b" }}>
+          Only {selectedSku.stock_quantity} left
+        </p>
+      )}
+
       {/* Add to bag */}
       <div className="flex gap-3">
         <button
@@ -221,22 +266,24 @@ export function ProductInfo({ product }: Props) {
             : "ADD TO BAG"}
         </button>
         <button
-          className="border border-es-bone p-3 hover:border-es-ink hover:text-es-ink transition-colors"
-          aria-label="Save to wishlist"
+          onClick={toggleWishlist}
+          className={cn(
+            "border p-3 transition-colors",
+            wishlisted
+              ? "border-es-plum text-es-plum bg-es-plum/5"
+              : "border-es-bone hover:border-es-ink hover:text-es-ink"
+          )}
+          aria-label={wishlisted ? "Remove from wishlist" : "Save to wishlist"}
         >
-          <Heart size={20} />
+          <Heart size={20} fill={wishlisted ? "currentColor" : "none"} />
         </button>
         <button
-          className="border border-es-bone p-3 hover:border-es-ink hover:text-es-ink transition-colors"
-          aria-label="Share product"
-          onClick={() =>
-            navigator.share?.({
-              title: product.name,
-              url: window.location.href,
-            })
-          }
+          onClick={handleShare}
+          className="border border-es-bone p-3 hover:border-es-ink hover:text-es-ink transition-colors relative"
+          aria-label={copied ? "Link copied!" : "Share product"}
+          title={copied ? "Link copied!" : "Share"}
         >
-          <Share2 size={20} />
+          {copied ? <Check size={20} /> : <Share2 size={20} />}
         </button>
       </div>
 

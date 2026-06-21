@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { X, Trash2 } from "lucide-react";
 import { useCart } from "@/components/checkout/CartProvider";
 
@@ -143,15 +144,18 @@ export function CartDrawer() {
                     borderBottom: "1px solid rgba(10,10,10,0.06)",
                   }}
                 >
-                  {/* Image placeholder */}
-                  <div
-                    style={{
-                      width: 64,
-                      height: 80,
-                      flexShrink: 0,
-                      background: "var(--es-bone, #ede8df)",
-                    }}
-                  />
+                  {/* Product image */}
+                  <div style={{ width: 64, height: 80, flexShrink: 0, background: "var(--es-bone, #ede8df)", position: "relative", overflow: "hidden" }}>
+                    {item.imageUrl ? (
+                      <Image
+                        src={item.imageUrl}
+                        alt={item.name}
+                        fill
+                        sizes="64px"
+                        style={{ objectFit: "cover", objectPosition: "top" }}
+                      />
+                    ) : null}
+                  </div>
 
                   {/* Details */}
                   <div style={{ flex: 1, minWidth: 0 }}>
