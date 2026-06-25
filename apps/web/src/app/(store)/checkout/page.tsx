@@ -157,6 +157,14 @@ export default function CheckoutPage() {
 
   async function handlePay() {
     if (!validate()) return;
+    // Guard: any item missing a valid SKU id means the product was added without
+    // proper inventory set up. Show a clear message rather than letting the API
+    // return a raw "Invalid uuid" Zod error.
+    const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (items.some((i) => !UUID_RE.test(i.skuId))) {
+      setApiError("One or more items in your bag couldn't be loaded. Please remove them and try again.");
+      return;
+    }
     setApiError("");
     setSubmitting(true);
     const raw = phone.replace(/\s/g, "");
@@ -234,10 +242,7 @@ export default function CheckoutPage() {
       });
       const data = await res.json();
       if (!res.ok) {
-        // Surface the first field-level validation message if present.
-        const fieldErrors = data.details?.fieldErrors ?? {};
-        const firstField = Object.values(fieldErrors).flat()[0] as string | undefined;
-        setApiError(firstField ?? data.error ?? "Payment failed. Please try again.");
+        setApiError(data.error ?? "Payment failed. Please try again.");
         setSubmitting(false);
         return;
       }
