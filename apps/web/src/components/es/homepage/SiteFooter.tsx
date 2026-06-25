@@ -35,10 +35,10 @@ const COLS: FooterCol[] = [
   {
     h: "CONNECT",
     items: [
-      { label: "Instagram", href: "https://instagram.com/elitestyleco" },
-      { label: "TikTok",    href: "https://tiktok.com/@elitestyleco" },
+      { label: "Instagram", href: "https://instagram.com/elit_estyleco" },
+      { label: "TikTok",    href: "https://tiktok.com/@elitestyleco0" },
       { label: "WhatsApp",  href: SUPPORT_WHATSAPP_LINK },
-      { label: "Facebook",  href: "https://facebook.com/elitestyleco" },
+      { label: "Facebook",  href: "https://facebook.com/EliteStyle" },
     ],
   },
 ];

@@ -20,7 +20,7 @@ const STEPS = [
   {
     num: "03",
     heading: "Drop off or we collect",
-    body: "Drop your parcel at our Westlands location, or arrange a collection for a small fee of KES 200 within Nairobi.",
+    body: "Drop your parcel at our CBD store (Shop 35, Stanbank House, Moi Avenue Street), or arrange a collection for a small fee of KES 200 within Nairobi.",
   },
   {
     num: "04",

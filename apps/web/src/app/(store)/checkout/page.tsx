@@ -256,7 +256,7 @@ export default function CheckoutPage() {
   }
 
   const DELIVERY_OPTS: { value: DeliveryType; label: string; detail: string; sub: string }[] = [
-    { value: "pickup", label: "PICKUP", detail: "Westlands Flagship", sub: "Ready in 2hrs" },
+    { value: "pickup", label: "PICKUP", detail: "Stanbank House, CBD", sub: "Ready in 2hrs" },
     { value: "cbd", label: "NAIROBI CBD", detail: "Within the CBD", sub: "Nairobi CBD" },
     { value: "outside_cbd", label: "OUTSIDE CBD", detail: "Rest of Kenya", sub: `From ${formatKES(OUTSIDE_CBD_FEE)}` },
   ];
@@ -312,7 +312,7 @@ export default function CheckoutPage() {
                   disabled={waiting}
                   style={{ width: "100%", fontSize: 15, fontFamily: "var(--font-inter)", padding: "12px", border: "1px solid var(--es-bone)", background: "var(--es-white)", color: "var(--es-ink)", outline: "none" }}
                 >
-                  <option value="">Store pickup — Westlands Flagship (free)</option>
+                  <option value="">Store pickup — Stanbank House, Moi Avenue (free)</option>
                   {pickupPoints.map((p) => (
                     <option key={p.id} value={p.id}>
                       {p.area} — {p.name}{p.fee > 0 ? ` (+${formatKES(p.fee)})` : " (free)"}
