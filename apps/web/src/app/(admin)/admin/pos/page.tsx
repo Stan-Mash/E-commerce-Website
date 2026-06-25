@@ -68,6 +68,7 @@ interface HeldCart {
 // Helpers
 
 const FONT = "'Inter','Urbanist',sans-serif";
+const TILL_NUMBER = process.env.NEXT_PUBLIC_MPESA_PAYBILL ?? "";
 
 function formatKES(n: number) {
   return new Intl.NumberFormat("en-KE", {
@@ -99,7 +100,7 @@ function whatsappLink(params: {
     ``,
     `Thank you for shopping with us!`,
     `www.elitestyleco.co.ke`,
-    `Returns within 7 days with receipt.`,
+    `Returns within 14 days with receipt.`,
   ].filter(Boolean).join("\n");
   const norm = params.phone.replace(/\D/g, "").replace(/^0/, "254");
   return `https://wa.me/${norm}?text=${encodeURIComponent(lines)}`;
@@ -198,7 +199,7 @@ async function printReceipt(params: {
     ln("Thank you for shopping with us!"),
     ln("www.elitestyleco.co.ke"),
     cmd(0x0a),
-    ln("Returns: 7 days with original receipt."),
+    ln("Returns: 14 days with original receipt."),
     ln("No returns on sale/clearance items."),
     cmd(0x0a), cmd(0x0a), cmd(0x0a),
     cmd(GS, 0x56, 0x00),                     // full cut
@@ -627,6 +628,25 @@ export default function POSPage() {
     }
   }
 
+  // Manual fallback: cashier has visually confirmed M-Pesa payment and marks paid
+  async function markC2bPaid() {
+    if (!c2bOrderId) return;
+    const confirmed = window.confirm(
+      "Only mark as paid after verifying the customer's M-Pesa payment on their phone.\n\nProceed?"
+    );
+    if (!confirmed) return;
+    const r = await adminFetch(`/api/admin/orders/${c2bOrderId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status: "paid" }),
+    });
+    if (r.ok) {
+      setC2bPaid(true);
+    } else {
+      alert("Could not mark order as paid. Please try again.");
+    }
+  }
+
   // Wire completeSale into ref so keyboard shortcut always calls the latest version
   completeSaleRef.current = completeSale;
 
@@ -636,32 +656,59 @@ export default function POSPage() {
   if (c2bOrderId && !c2bPaid) {
     return (
       <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "70vh" }}>
-        <div style={{ textAlign: "center", padding: 48, background: "#fff", border: "1px solid #e8e8e8", borderRadius: 12, maxWidth: 480, width: "100%" }}>
+        <div style={{ textAlign: "center", padding: 48, background: "#fff", border: "1px solid #e8e8e8", borderRadius: 12, maxWidth: 520, width: "100%" }}>
           <div style={{ width: 64, height: 64, margin: "0 auto 20px", borderRadius: "50%", background: "#fff8e1", display: "flex", alignItems: "center", justifyContent: "center" }}>
             <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#c9a961" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
           </div>
           <p style={{ fontFamily: FONT, fontSize: 11, letterSpacing: "0.3em", textTransform: "uppercase", color: "#c9a961", marginBottom: 10 }}>
             Awaiting M-Pesa Payment
           </p>
-          <p style={{ fontFamily: FONT, fontSize: 44, fontWeight: 900, color: "#111", margin: "0 0 6px" }}>
+          <p style={{ fontFamily: FONT, fontSize: 48, fontWeight: 900, color: "#111", margin: "0 0 6px", letterSpacing: "-0.03em" }}>
             {formatKES(c2bTotal)}
           </p>
-          <div style={{ background: "#f3e8ff", border: "2px solid #7c3aed", borderRadius: 8, padding: "14px 24px", margin: "20px 0" }}>
-            <p style={{ fontFamily: FONT, fontSize: 10, color: "#7c3aed", marginBottom: 4, letterSpacing: "0.15em", textTransform: "uppercase", fontWeight: 700 }}>
-              Customer Reference Number
-            </p>
-            <p style={{ fontFamily: FONT, fontSize: 28, fontWeight: 900, color: "#7c3aed", margin: 0 }}>
-              {c2bOrderRef}
-            </p>
+
+          {/* Till + Reference boxes */}
+          <div style={{ display: "grid", gridTemplateColumns: TILL_NUMBER ? "1fr 1fr" : "1fr", gap: 10, margin: "24px 0 20px" }}>
+            {TILL_NUMBER && (
+              <div style={{ background: "#e8f5e9", border: "2px solid #66bb6a", borderRadius: 8, padding: "14px 16px" }}>
+                <p style={{ fontFamily: FONT, fontSize: 9, color: "#2e7d32", marginBottom: 6, letterSpacing: "0.15em", textTransform: "uppercase", fontWeight: 700, margin: "0 0 6px" }}>
+                  Pay to Till
+                </p>
+                <p style={{ fontFamily: FONT, fontSize: 28, fontWeight: 900, color: "#2e7d32", margin: 0 }}>
+                  {TILL_NUMBER}
+                </p>
+              </div>
+            )}
+            <div style={{ background: "#f3e8ff", border: "2px solid #7c3aed", borderRadius: 8, padding: "14px 16px" }}>
+              <p style={{ fontFamily: FONT, fontSize: 9, color: "#7c3aed", marginBottom: 6, letterSpacing: "0.15em", textTransform: "uppercase", fontWeight: 700, margin: "0 0 6px" }}>
+                Account Ref
+              </p>
+              <p style={{ fontFamily: FONT, fontSize: 28, fontWeight: 900, color: "#7c3aed", margin: 0, wordBreak: "break-all" }}>
+                {c2bOrderRef}
+              </p>
+            </div>
           </div>
-          <p style={{ fontFamily: FONT, fontSize: 13, color: "#888", lineHeight: 1.7 }}>
-            Ask customer to pay to your Till and enter<br/>
-            <strong>{c2bOrderRef}</strong> as the reference.<br/>
-            This screen updates automatically when paid.
+
+          <p style={{ fontFamily: FONT, fontSize: 13, color: "#666", lineHeight: 1.8, margin: "0 0 24px" }}>
+            Customer pays via <strong>M-Pesa Buy Goods</strong>{TILL_NUMBER ? <> · Till <strong>{TILL_NUMBER}</strong></> : ""}<br/>
+            They enter <strong>{c2bOrderRef}</strong> as the account reference.<br/>
+            <span style={{ color: "#aaa", fontSize: 12 }}>Screen updates automatically once payment is received.</span>
           </p>
-          <button onClick={clearCart} style={{ marginTop: 20, fontFamily: FONT, fontSize: 11, letterSpacing: "0.15em", textTransform: "uppercase", background: "#f1f1f1", color: "#555", border: "none", borderRadius: 4, padding: "10px 20px", cursor: "pointer" }}>
-            Cancel Order
-          </button>
+
+          <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
+            <button
+              onClick={() => void markC2bPaid()}
+              style={{ fontFamily: FONT, fontSize: 11, letterSpacing: "0.15em", textTransform: "uppercase", background: "#2e7d32", color: "#fff", border: "none", borderRadius: 4, padding: "11px 20px", cursor: "pointer", fontWeight: 700 }}
+            >
+              ✓ Mark as Paid
+            </button>
+            <button
+              onClick={clearCart}
+              style={{ fontFamily: FONT, fontSize: 11, letterSpacing: "0.15em", textTransform: "uppercase", background: "#f1f1f1", color: "#555", border: "none", borderRadius: 4, padding: "11px 20px", cursor: "pointer" }}
+            >
+              Cancel Order
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -1009,20 +1056,30 @@ export default function POSPage() {
 
             {/* Payment method */}
             <label style={labelStyle}>Payment Method</label>
-            <div style={{ display: "flex", gap: 5, marginBottom: 12 }}>
+            <div style={{ display: "flex", gap: 5, marginBottom: 4 }}>
               {(["cash", "mpesa_stk", "mpesa_c2b"] as const).map(m => (
                 <button key={m} onClick={() => setPaymentMethod(m)} style={{
-                  flex: 1, padding: "7px 2px", fontFamily: FONT, fontSize: 8,
-                  letterSpacing: "0.1em", textTransform: "uppercase",
+                  flex: 1, padding: "8px 4px", fontFamily: FONT,
                   border: `2px solid ${paymentMethod === m ? "#7c3aed" : "#e0e0e0"}`,
                   background: paymentMethod === m ? "#7c3aed" : "transparent",
                   color: paymentMethod === m ? "#fff" : "#888",
-                  borderRadius: 4, cursor: "pointer", fontWeight: paymentMethod === m ? 700 : 400,
+                  borderRadius: 4, cursor: "pointer", lineHeight: 1.3,
                 }}>
-                  {m === "cash" ? "Cash\n[F1]" : m === "mpesa_stk" ? "STK\n[F2]" : "Till\n[F3]"}
+                  <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" }}>
+                    {m === "cash" ? "Cash" : m === "mpesa_stk" ? "STK Push" : "M-Pesa Till"}
+                  </div>
+                  <div style={{ fontSize: 9, opacity: 0.7, letterSpacing: "0.05em" }}>
+                    {m === "cash" ? "[F1]" : m === "mpesa_stk" ? "[F2]" : "[F3]"}
+                  </div>
                 </button>
               ))}
             </div>
+            {paymentMethod === "mpesa_stk" && (
+              <p style={{ fontFamily: FONT, fontSize: 10, color: "#c0392b", margin: "0 0 10px", letterSpacing: "0.03em" }}>
+                ⚠ STK Push requires a Paybill shortcode. If using a Buy Goods till, use M-Pesa Till instead.
+              </p>
+            )}
+            {paymentMethod !== "mpesa_stk" && <div style={{ marginBottom: 10 }} />}
 
             {/* Cash change calculator */}
             {paymentMethod === "cash" && (

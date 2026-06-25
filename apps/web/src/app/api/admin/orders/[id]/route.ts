@@ -15,6 +15,22 @@ function checkAuth(request: NextRequest): boolean {
   return isAuthenticatedAdminRequest(request);
 }
 
+const ALLOWED_STATUSES = [
+  "pending_payment", "paid", "payment_failed", "processing",
+  "ready_for_pickup", "shipped", "delivered", "cancelled", "refunded",
+] as const;
+
+const ALLOWED_COURIERS = ["DHL", "G4S", "Sendy", "Fargo", "Wells Fargo", "Direct", "Other"] as const;
+
+function isValidHttpUrl(s: string): boolean {
+  try {
+    const u = new URL(s);
+    return u.protocol === "http:" || u.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
@@ -82,7 +98,12 @@ export async function PUT(
   if (body.status !== undefined) patch.status = body.status;
   if (body.tracking_number !== undefined) patch.tracking_number = body.tracking_number || null;
   if (body.courier !== undefined) patch.courier = body.courier || null;
-  if (body.tracking_url !== undefined) patch.tracking_url = body.tracking_url || null;
+  if (body.tracking_url !== undefined) {
+    if (body.tracking_url && !isValidHttpUrl(body.tracking_url)) {
+      return NextResponse.json({ error: "Invalid tracking URL — must start with http:// or https://" }, { status: 400 });
+    }
+    patch.tracking_url = body.tracking_url || null;
+  }
   if (body.tracking_number) patch.shipped_at = new Date().toISOString();
 
   if (Object.keys(patch).length === 0) {
@@ -136,6 +157,10 @@ export async function PATCH(
 
   const body = await request.json();
   const { status } = body;
+
+  if (!status || !ALLOWED_STATUSES.includes(status)) {
+    return NextResponse.json({ error: `Invalid status. Allowed: ${ALLOWED_STATUSES.join(", ")}` }, { status: 400 });
+  }
 
   const supabase = getAdminClient();
   const { data, error } = await supabase
