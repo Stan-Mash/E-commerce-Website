@@ -366,6 +366,8 @@ export default function POSPage() {
     amountPaid: number; changeDue: number;
   } | null>(null);
 
+  const [variantPickerProduct, setVariantPickerProduct] = useState<Product | null>(null);
+
   const searchRef = useRef<HTMLInputElement>(null);
   const showShiftModalRef = useRef(false);
   useEffect(() => { showShiftModalRef.current = showShiftModal; }, [showShiftModal]);
@@ -795,6 +797,85 @@ export default function POSPage() {
       )}
       {showHeld && <HeldDrawer />}
 
+      {/* Variant Picker Modal */}
+      {variantPickerProduct && (
+        <div
+          onClick={() => setVariantPickerProduct(null)}
+          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 300, padding: 24 }}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{ background: "#fff", borderRadius: 16, maxWidth: 540, width: "100%", overflow: "hidden", boxShadow: "0 24px 64px rgba(0,0,0,0.22)" }}
+          >
+            {/* Product header */}
+            <div style={{ display: "flex", gap: 16, padding: "20px 24px", borderBottom: "1px solid #f5f5f5", alignItems: "center" }}>
+              {variantPickerProduct.image_url ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={variantPickerProduct.image_url} alt={variantPickerProduct.name} style={{ width: 68, height: 68, objectFit: "cover", borderRadius: 8, flexShrink: 0 }} />
+              ) : (
+                <div style={{ width: 68, height: 68, background: "linear-gradient(135deg,#f5f3ff,#ede9fe)", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#c4b5fd" strokeWidth="1.5"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/></svg>
+                </div>
+              )}
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <p style={{ fontFamily: FONT, fontSize: 16, fontWeight: 800, color: "#111", margin: "0 0 4px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {variantPickerProduct.name}
+                </p>
+                <p style={{ fontFamily: FONT, fontSize: 20, fontWeight: 900, color: "#7c3aed", margin: 0, letterSpacing: "-0.02em" }}>
+                  {formatKES(variantPickerProduct.base_price)}
+                </p>
+              </div>
+              <button
+                onClick={() => setVariantPickerProduct(null)}
+                style={{ background: "#f5f5f5", border: "none", borderRadius: "50%", width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0, color: "#666", fontSize: 18, lineHeight: 1 }}
+              >×</button>
+            </div>
+
+            {/* Variants */}
+            <div style={{ padding: 24 }}>
+              <p style={{ fontFamily: FONT, fontSize: 10, letterSpacing: "0.3em", textTransform: "uppercase", color: "#bbb", margin: "0 0 14px" }}>
+                Select Size / Colour
+              </p>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10, maxHeight: 300, overflowY: "auto" }}>
+                {variantPickerProduct.skus.filter(s => s.stock_quantity > 0).map(sku => (
+                  <button
+                    key={sku.id}
+                    onClick={() => { addToCart(variantPickerProduct, sku); setVariantPickerProduct(null); }}
+                    style={{
+                      fontFamily: FONT, border: `1.5px solid ${sku.stock_quantity <= 3 ? "#fde8e8" : "#ede9fe"}`,
+                      borderRadius: 10, padding: "12px 8px", cursor: "pointer",
+                      background: sku.stock_quantity <= 3 ? "#fffaf9" : "#faf8ff",
+                      textAlign: "center",
+                    }}
+                  >
+                    {sku.size !== "ONE SIZE" && (
+                      <p style={{ fontFamily: FONT, fontSize: 13, fontWeight: 700, color: "#111", margin: "0 0 2px" }}>{sku.size}</p>
+                    )}
+                    {sku.color && (
+                      <p style={{ fontFamily: FONT, fontSize: 12, color: "#555", margin: sku.size !== "ONE SIZE" ? "0 0 8px" : "0 0 8px", textTransform: "capitalize", fontWeight: sku.size === "ONE SIZE" ? 700 : 400 }}>
+                        {sku.color}
+                      </p>
+                    )}
+                    {!sku.color && sku.size === "ONE SIZE" && (
+                      <p style={{ fontFamily: FONT, fontSize: 12, color: "#555", margin: "0 0 8px" }}>One Size</p>
+                    )}
+                    <span style={{
+                      display: "inline-block", fontFamily: FONT, fontSize: 9, fontWeight: 700,
+                      letterSpacing: "0.08em", textTransform: "uppercase",
+                      color: sku.stock_quantity <= 3 ? "#c0392b" : "#2e7d32",
+                      background: sku.stock_quantity <= 3 ? "#fde8e8" : "#e8f5e9",
+                      padding: "2px 8px", borderRadius: 20,
+                    }}>
+                      {sku.stock_quantity} left
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div style={{ marginBottom: 18, display: "flex", alignItems: "flex-start", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
         <div>
@@ -848,81 +929,90 @@ export default function POSPage() {
 
         {/* Product browser */}
         <div style={{ flex: 1, minWidth: 0 }}>
-          <input
-            ref={searchRef}
-            type="text"
-            placeholder="Search products or scan barcode…"
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            style={{ ...inputStyle, marginBottom: 10, fontSize: 14 }}
-          />
+          {/* Search */}
+          <div style={{ position: "relative", marginBottom: 12 }}>
+            <svg style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", pointerEvents: "none" }} width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#bbb" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <input
+              ref={searchRef}
+              type="text"
+              placeholder="Search products or scan barcode…"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              style={{ ...inputStyle, paddingLeft: 36, marginBottom: 0, fontSize: 14, background: "#fafafa", border: "1.5px solid #ececec", borderRadius: 8 }}
+            />
+            {search && (
+              <button onClick={() => setSearch("")} style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: "#bbb", fontSize: 18, lineHeight: 1, padding: 0 }}>×</button>
+            )}
+          </div>
           {/* Category tabs */}
-          <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 14 }}>
+          <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 16 }}>
             {categories.map(cat => (
               <button
                 key={cat}
                 onClick={() => setCategoryFilter(cat)}
                 style={{
-                  fontFamily: FONT, fontSize: 10, fontWeight: categoryFilter === cat ? 700 : 500,
-                  letterSpacing: "0.08em", textTransform: "uppercase",
-                  padding: "5px 14px", borderRadius: 20,
-                  border: `1px solid ${categoryFilter === cat ? "#7c3aed" : "#e0e0e0"}`,
+                  fontFamily: FONT, fontSize: 10, fontWeight: 600,
+                  letterSpacing: "0.1em", textTransform: "uppercase",
+                  padding: "6px 16px", borderRadius: 20,
+                  border: `1.5px solid ${categoryFilter === cat ? "#7c3aed" : "#e8e8e8"}`,
                   background: categoryFilter === cat ? "#7c3aed" : "#fff",
-                  color: categoryFilter === cat ? "#fff" : "#666",
-                  cursor: "pointer",
+                  color: categoryFilter === cat ? "#fff" : "#999",
+                  cursor: "pointer", transition: "all 0.15s",
                 }}
               >{cat}</button>
             ))}
           </div>
 
           {loading ? (
-            <p style={{ fontFamily: FONT, fontSize: 14, color: "#aaa" }}>Loading products…</p>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: 220 }}>
+              <p style={{ fontFamily: FONT, fontSize: 13, color: "#ccc", letterSpacing: "0.1em" }}>Loading products…</p>
+            </div>
+          ) : filtered.length === 0 ? (
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: 220, gap: 10 }}>
+              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#ddd" strokeWidth="1.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+              <p style={{ fontFamily: FONT, fontSize: 13, color: "#ccc", margin: 0 }}>No products found</p>
+            </div>
           ) : (
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(175px, 1fr))", gap: 12, maxHeight: "calc(100vh - 300px)", overflowY: "auto", paddingRight: 4 }}>
-              {filtered.map(product => (
-                <div key={product.id} style={{ background: "#fff", borderRadius: 8, border: "1px solid #e8e8e8", overflow: "hidden", display: "flex", flexDirection: "column" }}>
-                  {product.image_url ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={product.image_url} alt={product.name} style={{ width: "100%", height: 110, objectFit: "cover" }} />
-                  ) : (
-                    <div style={{ width: "100%", height: 70, background: "#f7f3ff", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#c4b5fd" strokeWidth="1.5"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
-                    </div>
-                  )}
-                  <div style={{ padding: "10px 10px 12px" }}>
-                    <p style={{ fontFamily: FONT, fontSize: 12, fontWeight: 700, color: "#111", margin: "0 0 2px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                      {product.name}
-                    </p>
-                    <p style={{ fontFamily: FONT, fontSize: 11, color: "#7c3aed", margin: "0 0 8px", fontWeight: 600 }}>
-                      {formatKES(product.base_price)}
-                    </p>
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
-                      {product.skus.filter(s => s.stock_quantity > 0).map(sku => (
-                        <button
-                          key={sku.id}
-                          onClick={() => addToCart(product, sku)}
-                          title={sku.sku_code}
-                          style={{
-                            fontFamily: FONT, fontSize: 9, letterSpacing: "0.08em",
-                            textTransform: "uppercase", border: "none", cursor: "pointer",
-                            padding: "4px 7px", borderRadius: 3, fontWeight: 700,
-                            background: sku.stock_quantity <= 3 ? "#fff3cd" : "#f3e8ff",
-                            color: sku.stock_quantity <= 3 ? "#856404" : "#7c3aed",
-                          }}
-                        >
-                          {sku.size}{sku.color ? `/${sku.color}` : ""}
-                          <span style={{ fontSize: 7, opacity: 0.7, marginLeft: 2 }}>({sku.stock_quantity})</span>
-                        </button>
-                      ))}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(195px, 1fr))", gap: 14, maxHeight: "calc(100vh - 310px)", overflowY: "auto", paddingRight: 4 }}>
+              {filtered.map(product => {
+                const inStockSkus = product.skus.filter(s => s.stock_quantity > 0);
+                const lowStock = inStockSkus.some(s => s.stock_quantity <= 3);
+                return (
+                  <div
+                    key={product.id}
+                    onClick={() => {
+                      if (inStockSkus.length === 1 && inStockSkus[0]) addToCart(product, inStockSkus[0]);
+                      else setVariantPickerProduct(product);
+                    }}
+                    style={{ background: "#fff", borderRadius: 12, border: "1px solid #f0f0f0", overflow: "hidden", display: "flex", flexDirection: "column", cursor: "pointer", boxShadow: "0 1px 4px rgba(0,0,0,0.05)", transition: "box-shadow 0.15s" }}
+                  >
+                    {product.image_url ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={product.image_url} alt={product.name} style={{ width: "100%", height: 140, objectFit: "cover" }} />
+                    ) : (
+                      <div style={{ width: "100%", height: 140, background: "linear-gradient(135deg,#f5f3ff,#ede9fe)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#c4b5fd" strokeWidth="1.5"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+                      </div>
+                    )}
+                    <div style={{ padding: "12px 14px 14px", display: "flex", flexDirection: "column", flex: 1 }}>
+                      <p style={{ fontFamily: FONT, fontSize: 13, fontWeight: 700, color: "#111", margin: "0 0 3px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        {product.name}
+                      </p>
+                      <p style={{ fontFamily: FONT, fontSize: 15, fontWeight: 900, color: "#7c3aed", margin: 0, letterSpacing: "-0.02em" }}>
+                        {formatKES(product.base_price)}
+                      </p>
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 10 }}>
+                        <span style={{ fontFamily: FONT, fontSize: 10, color: lowStock ? "#c0392b" : "#aaa", letterSpacing: "0.03em" }}>
+                          {lowStock ? "⚠ Low stock" : `${inStockSkus.length} variant${inStockSkus.length !== 1 ? "s" : ""}`}
+                        </span>
+                        <span style={{ fontFamily: FONT, fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#fff", background: "#7c3aed", padding: "4px 12px", borderRadius: 20 }}>
+                          {inStockSkus.length === 1 ? "Add" : "Select"}
+                        </span>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
-              {filtered.length === 0 && !loading && (
-                <div style={{ gridColumn: "1/-1", padding: "48px 0", textAlign: "center", fontFamily: FONT, fontSize: 14, color: "#bbb" }}>
-                  No in-stock products found.
-                </div>
-              )}
+                );
+              })}
             </div>
           )}
         </div>
