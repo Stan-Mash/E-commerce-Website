@@ -8,7 +8,7 @@ type DeliveryType = "pickup" | "cbd" | "outside_cbd";
 type PayMethod = "mpesa" | "paybill" | "card" | "bnpl";
 
 const OUTSIDE_CBD_FEE = Number(process.env.NEXT_PUBLIC_DELIVERY_FEE_OUTSIDE_CBD ?? 300) || 300;
-const PHONE_RE = /^(?:254|0)7\d{8}$/;
+const PHONE_RE = /^(?:\+?254|0)7\d{8}$/;
 const PAYBILL = process.env.NEXT_PUBLIC_MPESA_PAYBILL ?? "";
 const PAYBILL_NAME = process.env.NEXT_PUBLIC_MPESA_PAYBILL_NAME ?? "Elite Style Co.";
 const CARD_ENABLED = (process.env.NEXT_PUBLIC_FLUTTERWAVE_PUBLIC_KEY ?? "").startsWith("FLWPUBK");
@@ -251,8 +251,8 @@ export default function CheckoutPage() {
   }
 
   const DELIVERY_OPTS: { value: DeliveryType; label: string; detail: string; sub: string }[] = [
-    { value: "pickup", label: "PICKUP", detail: "Westlands Flagship", sub: "Free · Ready in 2hrs" },
-    { value: "cbd", label: "NAIROBI CBD", detail: "Within the CBD", sub: "Free delivery" },
+    { value: "pickup", label: "PICKUP", detail: "Westlands Flagship", sub: "Ready in 2hrs" },
+    { value: "cbd", label: "NAIROBI CBD", detail: "Within the CBD", sub: "Nairobi CBD" },
     { value: "outside_cbd", label: "OUTSIDE CBD", detail: "Rest of Kenya", sub: `From ${formatKES(OUTSIDE_CBD_FEE)}` },
   ];
 
@@ -276,7 +276,7 @@ export default function CheckoutPage() {
               Checkout
             </h1>
             <p style={{ fontSize: 15, color: "var(--es-mute)", marginBottom: 40, maxWidth: 440 }}>
-              Choose delivery and payment. Free delivery within Nairobi CBD.
+              Choose your delivery option and payment method below.
             </p>
 
             {/* Delivery */}

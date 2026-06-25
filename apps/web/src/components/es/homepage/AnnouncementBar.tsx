@@ -1,7 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 
 const DEFAULT_TEXT =
-  "Complimentary delivery within Nairobi CBD  ·  New arrivals weekly  ·  Pay with M-Pesa or card";
+  "New arrivals weekly  ·  Pay with M-Pesa, card or Paybill  ·  Shop the latest drops now";
 
 async function getAnnouncementSettings(): Promise<{ text: string; enabled: boolean }> {
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {

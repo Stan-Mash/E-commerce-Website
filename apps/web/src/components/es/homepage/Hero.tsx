@@ -57,10 +57,10 @@ export function Hero({ productCount }: HeroProps = {}) {
 
           <div className="absolute bottom-5 right-5 bg-white/95 backdrop-blur-sm px-5 py-3 border border-es-hair">
             <p className="text-[10px] font-medium tracking-label uppercase text-es-mute mb-0.5 font-sans">
-              Complimentary delivery
+              New Season
             </p>
             <p className="text-[13px] font-bold text-es-ink font-sans">
-              Within Nairobi CBD
+              2026 Collection
             </p>
           </div>
         </div>
@@ -85,7 +85,7 @@ export function Hero({ productCount }: HeroProps = {}) {
 
           <p className="hero-sub font-sans text-[15px] text-es-mute leading-relaxed max-w-sm mb-10">
             Curated fashion for the whole family — KES pricing,
-            M-Pesa &amp; card checkout, free delivery within Nairobi CBD.
+            M-Pesa &amp; card checkout, fast delivery across Kenya.
           </p>
 
           <div className="hero-cta flex flex-wrap gap-3">

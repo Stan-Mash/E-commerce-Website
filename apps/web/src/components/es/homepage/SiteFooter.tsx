@@ -74,7 +74,7 @@ export function SiteFooter() {
             }}
           >
             Nairobi&apos;s go-to online fashion store — curated styles for the whole
-            family, free delivery within Nairobi CBD.
+            family, fast delivery across Kenya.
           </p>
           {/* Payment badges */}
           <div style={{ display: "flex", gap: 8, marginTop: 28, flexWrap: "wrap" }}>

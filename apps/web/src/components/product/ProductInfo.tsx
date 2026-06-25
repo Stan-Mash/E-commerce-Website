@@ -298,22 +298,6 @@ export function ProductInfo({ product }: Props) {
         </p>
       )}
 
-      {/* Delivery / pickup */}
-      <div className="flex flex-col gap-2 pt-1">
-        <p
-          className="text-[11px] tracking-[.25em] uppercase text-es-mute"
-        >
-          <span className="text-es-gold">◆</span>
-          {" "}FREE DELIVERY WITHIN NAIROBI CBD
-        </p>
-        <p
-          className="text-[11px] tracking-[.25em] uppercase text-es-mute"
-        >
-          <span className="text-es-gold">◆</span>
-          {" "}PICKUP WESTLANDS · READY IN 2 HOURS
-        </p>
-      </div>
-
       {/* Description */}
       {product.description && (
         <div>
