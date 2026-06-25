@@ -108,7 +108,7 @@ function whatsappLink(params: {
 
 // ESC/POS thermal receipt
 
-async function printReceipt(params: {
+interface ReceiptParams {
   orderRef:      string;
   items:         CartItem[];
   subtotal:      number;
@@ -120,21 +120,11 @@ async function printReceipt(params: {
   locationName:  string;
   amountPaid:    number;
   changeDue:     number;
-}): Promise<void> {
-  if (!("serial" in navigator)) {
-    alert("Web Serial API not supported.\nUse Chrome or Edge on desktop.");
-    return;
-  }
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let port: any;
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    port = await (navigator as any).serial.requestPort();
-    await port.open({ baudRate: 9600 });
-  } catch {
-    alert("Could not connect to printer. Make sure it is plugged in.");
-    return;
-  }
+}
+
+// Writes receipt to an already-open serial port (caller manages open/close)
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function writeESCPOS(port: any, params: ReceiptParams): Promise<void> {
 
   const enc = new TextEncoder();
   const ESC = 0x1b, GS = 0x1d;
@@ -208,7 +198,44 @@ async function printReceipt(params: {
   const writer = port.writable!.getWriter();
   for (const c of chunks) await writer.write(c);
   writer.releaseLock();
-  await port.close();
+}
+
+// Browser print fallback — no hardware required
+function browserPrintReceipt(params: ReceiptParams): void {
+  const pmLabel = params.paymentMethod === "cash" ? "CASH"
+    : params.paymentMethod === "mpesa_stk" ? "M-PESA STK" : "M-PESA TILL";
+  const rows = params.items.map(i => {
+    const amt  = i.unit_price * i.quantity - i.item_discount;
+    const name = `${i.quantity}x ${i.product_name} (${i.size}${i.color ? "/" + i.color : ""})`;
+    return `<div style="display:flex;justify-content:space-between;margin:2px 0"><span>${name}</span><span style="white-space:nowrap;margin-left:8px">${formatKES(amt)}</span></div>`;
+  }).join("");
+  const discRow = params.discount > 0 ? `
+    <div style="display:flex;justify-content:space-between"><span>Subtotal:</span><span>${formatKES(params.subtotal)}</span></div>
+    <div style="display:flex;justify-content:space-between"><span>Discount:</span><span>-${formatKES(params.discount)}</span></div>
+    <hr style="border:none;border-top:1px dashed #000;margin:6px 0">` : "";
+  const cashRow = params.paymentMethod === "cash" && params.amountPaid > 0 ? `
+    <div style="display:flex;justify-content:space-between"><span>Tendered:</span><span>${formatKES(params.amountPaid)}</span></div>
+    <div style="display:flex;justify-content:space-between"><span>Change:</span><span>${formatKES(params.changeDue)}</span></div>` : "";
+  const ts = new Date().toLocaleString("en-KE", { dateStyle: "short", timeStyle: "short" });
+  const html = `<!DOCTYPE html><html><head><title>Receipt — ${params.orderRef}</title>
+<style>@page{size:80mm auto;margin:4mm}body{font-family:'Courier New',monospace;font-size:12px;width:72mm;margin:0}hr{border:none;border-top:1px dashed #000;margin:6px 0}.c{text-align:center}@media print{.no-print{display:none}}</style>
+</head><body>
+<div class="c" style="font-size:16px;font-weight:bold">ELITE STYLE CO</div>
+<div class="c">${params.locationName}</div><div class="c">Nairobi, Kenya</div>
+<div class="c">${ts}</div><hr>
+${rows}<hr>${discRow}
+<div style="display:flex;justify-content:space-between;font-weight:bold;font-size:14px"><span>TOTAL:</span><span>${formatKES(params.total)}</span></div>
+<div>Payment: ${pmLabel}</div>${cashRow}<hr>
+<div class="c">Ref: ${params.orderRef}</div>
+${params.phone ? `<div class="c">Customer: ${params.phone}</div>` : ""}
+<div class="c">Cashier: ${params.cashierName}</div>
+<br><div class="c">Thank you for shopping with us!</div>
+<div class="c">www.elitestyleco.co.ke</div>
+<div class="c">Returns: 14 days with original receipt.</div>
+<br><button class="no-print" onclick="window.print()" style="display:block;margin:12px auto;padding:8px 24px;font-size:13px;cursor:pointer">Print</button>
+</body></html>`;
+  const w = window.open("", "_blank", "width=400,height=680,toolbar=0,menubar=0,scrollbars=1");
+  if (w) { w.document.write(html); w.document.close(); w.focus(); setTimeout(() => w.print(), 400); }
 }
 
 // Defined at module level (not inside POSPage) so React keeps it mounted;
@@ -367,6 +394,37 @@ export default function POSPage() {
   } | null>(null);
 
   const [variantPickerProduct, setVariantPickerProduct] = useState<Product | null>(null);
+
+  // Printer — connect once, reuse for all subsequent prints in this session
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [printerPort, setPrinterPort] = useState<any>(null);
+
+  const connectPrinter = useCallback(async () => {
+    if (!("serial" in navigator)) {
+      setErrorMsg("Web Serial not supported — use Chrome or Edge on desktop.");
+      return;
+    }
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const p = await (navigator as any).serial.requestPort();
+      await p.open({ baudRate: 9600 });
+      setPrinterPort(p);
+    } catch { /* user cancelled */ }
+  }, []);
+
+  const disconnectPrinter = useCallback(async () => {
+    if (!printerPort) return;
+    try { await printerPort.close(); } catch {}
+    setPrinterPort(null);
+  }, [printerPort]);
+
+  const handlePrint = useCallback(async (params: ReceiptParams) => {
+    if (printerPort) {
+      try { await writeESCPOS(printerPort, params); return; }
+      catch { setPrinterPort(null); } // port dropped — fall through to browser print
+    }
+    browserPrintReceipt(params);
+  }, [printerPort]);
 
   const searchRef = useRef<HTMLInputElement>(null);
   const showShiftModalRef = useRef(false);
@@ -726,7 +784,7 @@ export default function POSPage() {
           <div style={{ display: "flex", gap: 10, justifyContent: "center", marginTop: 24, flexWrap: "wrap" }}>
             {lastSale && <>
               <button
-                onClick={() => void printReceipt({ ...lastSale, cashierName: cashierName || "Staff", phone, locationName })}
+                onClick={() => void handlePrint({ ...lastSale, cashierName: cashierName || "Staff", phone, locationName })}
                 style={{ fontFamily: FONT, fontSize: 11, letterSpacing: "0.15em", textTransform: "uppercase", background: "#7c3aed", color: "#fff", border: "none", borderRadius: 4, padding: "10px 18px", cursor: "pointer" }}
               >Print Receipt</button>
               {phone && (
@@ -890,6 +948,15 @@ export default function POSPage() {
           </p>
         </div>
         <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+          {/* Printer connect/disconnect */}
+          <button
+            onClick={() => printerPort ? void disconnectPrinter() : void connectPrinter()}
+            title={printerPort ? "Printer connected — click to disconnect" : "Connect receipt printer"}
+            style={{ fontFamily: FONT, fontSize: 10, letterSpacing: "0.1em", textTransform: "uppercase", background: printerPort ? "#e8f5e9" : "#f5f5f5", color: printerPort ? "#2e7d32" : "#888", border: `1px solid ${printerPort ? "#a5d6a7" : "#ddd"}`, borderRadius: 4, padding: "7px 12px", cursor: "pointer", display: "flex", alignItems: "center", gap: 5 }}
+          >
+            <span style={{ fontSize: 14 }}>🖨</span>
+            <span>{printerPort ? "Printer On" : "Printer Off"}</span>
+          </button>
           {heldCarts.length > 0 && (
             <button onClick={() => setShowHeld(true)} style={{ fontFamily: FONT, fontSize: 10, letterSpacing: "0.1em", textTransform: "uppercase", background: "#fff8e1", color: "#92680a", border: "1px solid #f0c040", borderRadius: 4, padding: "7px 12px", cursor: "pointer", fontWeight: 700 }}>
               ⏸ Held ({heldCarts.length})
@@ -1052,7 +1119,7 @@ export default function POSPage() {
               )}
               <div style={{ display: "flex", gap: 6, justifyContent: "center", flexWrap: "wrap" }}>
                 {lastSale && (
-                  <button onClick={() => void printReceipt({ ...lastSale, cashierName: cashierName || "Staff", phone, locationName })}
+                  <button onClick={() => void handlePrint({ ...lastSale, cashierName: cashierName || "Staff", phone, locationName })}
                     style={{ fontFamily: FONT, fontSize: 9, letterSpacing: "0.12em", textTransform: "uppercase", background: "#7c3aed", color: "#fff", border: "none", borderRadius: 3, padding: "7px 12px", cursor: "pointer" }}>
                     Print
                   </button>
