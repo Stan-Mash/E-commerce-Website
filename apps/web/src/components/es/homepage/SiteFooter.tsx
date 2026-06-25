@@ -76,8 +76,40 @@ export function SiteFooter() {
             Nairobi&apos;s go-to online fashion store — curated styles for the whole
             family, fast delivery across Kenya.
           </p>
+          {/* Store address */}
+          <div style={{ marginTop: 28, borderTop: "1px solid rgba(255,255,255,.1)", paddingTop: 24 }}>
+            <p style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: 9, letterSpacing: ".45em", color: "#c9a961", textTransform: "uppercase", marginBottom: 10 }}>
+              Visit Our Store
+            </p>
+            <p style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: 13, color: "rgba(255,255,255,.85)", lineHeight: 1.7, margin: 0 }}>
+              Shop 35, 4th Floor, Wing B<br />
+              Stanbank House, Moi Avenue<br />
+              Nairobi CBD, Kenya
+            </p>
+            <p style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: 12, color: "rgba(255,255,255,.5)", marginTop: 8 }}>
+              Mon – Sat &nbsp;·&nbsp; 9 am – 6 pm EAT
+            </p>
+            <div style={{ display: "flex", gap: 10, marginTop: 12, flexWrap: "wrap" }}>
+              <a
+                href="https://www.google.com/maps/search/?api=1&query=Stanbank+House+Moi+Avenue+Nairobi"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: 10, letterSpacing: ".2em", textTransform: "uppercase", color: "#c9a961", textDecoration: "none" }}
+              >
+                Get Directions →
+              </a>
+              <span style={{ color: "rgba(255,255,255,.2)" }}>|</span>
+              <a
+                href="tel:+254142424802"
+                style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: 10, letterSpacing: ".2em", textTransform: "uppercase", color: "rgba(255,255,255,.55)", textDecoration: "none" }}
+              >
+                +254 142 424 802
+              </a>
+            </div>
+          </div>
+
           {/* Payment badges */}
-          <div style={{ display: "flex", gap: 8, marginTop: 28, flexWrap: "wrap" }}>
+          <div style={{ display: "flex", gap: 8, marginTop: 24, flexWrap: "wrap" }}>
             {PAYMENT_METHODS.map((m) => (
               <span
                 key={m}

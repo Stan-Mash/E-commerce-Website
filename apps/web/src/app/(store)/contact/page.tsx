@@ -21,7 +21,7 @@ type FormState = {
 const INITIAL: FormState = { name: "", email: "", phone: "", subject: "", message: "" };
 
 const STORE_ADDRESS = "Shop 35, 4th Floor, Wing B\nStanbank House, Moi Avenue Street\nNairobi, Kenya";
-const STORE_ADDRESS_ONELINE = "Shop 35, 4th Floor, Wing B, Stanbank House, Moi Avenue Street, Nairobi";
+const MAPS_URL = "https://www.google.com/maps/search/?api=1&query=Stanbank+House+Moi+Avenue+Nairobi";
 
 export default function ContactPage() {
   const [form, setForm] = useState<FormState>(INITIAL);
@@ -105,7 +105,7 @@ export default function ContactPage() {
               </div>
               <div className="sm:ml-auto flex-shrink-0">
                 <a
-                  href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(STORE_ADDRESS_ONELINE)}`}
+                  href={MAPS_URL}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 bg-white text-es-ink text-[11px] tracking-[.2em] uppercase font-semibold px-6 py-3 hover:bg-white/90 transition-colors"
@@ -256,7 +256,7 @@ export default function ContactPage() {
                     Nairobi CBD, Kenya
                   </p>
                   <a
-                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(STORE_ADDRESS_ONELINE)}`}
+                    href={MAPS_URL}
                     target="_blank" rel="noopener noreferrer"
                     className="mt-2 inline-block text-[11px] tracking-[.12em] uppercase"
                     style={{ color: "#c9a961", textDecoration: "none", fontFamily: "var(--font-inter)" }}
@@ -397,7 +397,7 @@ export default function ContactPage() {
             </div>
             <div className="flex gap-4 flex-wrap justify-center sm:justify-end flex-shrink-0">
               <a
-                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(STORE_ADDRESS_ONELINE)}`}
+                href={MAPS_URL}
                 target="_blank" rel="noopener noreferrer"
                 className="es-btn-outline-white px-8 py-4 text-[11px] tracking-[.35em] uppercase"
               >
