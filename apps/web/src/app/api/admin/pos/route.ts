@@ -130,7 +130,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "One or more items not found" }, { status: 404 });
     }
     console.error("[pos] RPC error:", rpcErr);
-    return NextResponse.json({ error: "Failed to create order" }, { status: 500 });
+    return NextResponse.json({ error: rpcErr.message ?? "Failed to create order" }, { status: 500 });
   }
 
   const order = rpcResult as { order_id: string; order_ref: string };
