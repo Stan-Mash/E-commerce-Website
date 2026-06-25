@@ -4,8 +4,8 @@ const FONT = "'Inter','Urbanist',sans-serif";
 
 const PERKS = [
   {
-    title: "Free CBD Delivery",
-    body: "Free within Nairobi CBD · low flat rate elsewhere",
+    title: "Fast Delivery",
+    body: "Nairobi CBD & countrywide · low flat rate",
     icon: (
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
         <rect x="1" y="3" width="15" height="13" rx="1"/>
