@@ -98,13 +98,6 @@ export function SiteFooter() {
               >
                 Get Directions →
               </a>
-              <span style={{ color: "rgba(255,255,255,.2)" }}>|</span>
-              <a
-                href="tel:+254142424802"
-                style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: 10, letterSpacing: ".2em", textTransform: "uppercase", color: "rgba(255,255,255,.55)", textDecoration: "none" }}
-              >
-                +254 142 424 802
-              </a>
             </div>
           </div>
 
@@ -177,6 +170,14 @@ export function SiteFooter() {
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="white"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
                   </span>
                   <span style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: 13, letterSpacing: ".06em", color: "rgba(255,255,255,.88)" }}>Elite Style</span>
+                </Link>
+                {/* Phone */}
+                <Link href="tel:+254142424802"
+                  style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none" }}>
+                  <span style={{ width: 28, height: 28, borderRadius: "50%", background: "#444", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.38 2 2 0 0 1 3.6 1.18h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.91a16 16 0 0 0 6 6l.91-.91a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 21.73 16.92z"/></svg>
+                  </span>
+                  <span style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: 13, letterSpacing: ".06em", color: "rgba(255,255,255,.88)" }}>+254 142 424 802</span>
                 </Link>
               </div>
             ) : (
