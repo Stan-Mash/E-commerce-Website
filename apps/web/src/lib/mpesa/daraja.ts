@@ -82,7 +82,7 @@ export async function initiateSTKPush(params: STKPushParams): Promise<STKPushRes
     BusinessShortCode: process.env.MPESA_SHORTCODE,
     Password: password,
     Timestamp: timestamp,
-    TransactionType: "CustomerPayBillOnline",
+    TransactionType: process.env.MPESA_TRANSACTION_TYPE ?? "CustomerBuyGoodsOnline",
     Amount: Math.round(params.amount),
     PartyA: params.phone,
     PartyB: process.env.MPESA_SHORTCODE,

@@ -263,7 +263,7 @@ export default function CheckoutPage() {
 
   const PAY_OPTS: { value: PayMethod; label: string; sub: string; show: boolean }[] = [
     { value: "mpesa", label: "M-PESA", sub: "STK push to your phone", show: true },
-    { value: "paybill", label: "PAYBILL", sub: PAYBILL ? `Paybill ${PAYBILL}` : "M-Pesa Paybill", show: !!PAYBILL },
+    { value: "paybill", label: "BUY GOODS", sub: PAYBILL ? `Till No. ${PAYBILL}` : "M-Pesa Till", show: !!PAYBILL },
     { value: "card", label: "CARD & MORE", sub: "Card, Airtel, bank", show: CARD_ENABLED },
     { value: "bnpl", label: "INSTALMENTS", sub: `Pay over time with ${BNPL_NAME}`, show: !!BNPL_NAME },
   ];
