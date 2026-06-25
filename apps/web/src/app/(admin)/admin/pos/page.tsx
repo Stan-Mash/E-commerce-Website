@@ -895,13 +895,19 @@ export default function POSPage() {
               ⏸ Held ({heldCarts.length})
             </button>
           )}
-          <select
-            value={locationId}
-            onChange={e => setLocationId(e.target.value)}
-            style={{ padding: "8px 12px", borderRadius: 4, border: "1px solid #e0e0e0", fontFamily: FONT, fontSize: 13, color: "#111", background: "#fff" }}
-          >
-            {locations.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
-          </select>
+          {locations.length > 1 ? (
+            <select
+              value={locationId}
+              onChange={e => setLocationId(e.target.value)}
+              style={{ padding: "8px 12px", borderRadius: 4, border: "1px solid #e0e0e0", fontFamily: FONT, fontSize: 13, color: "#111", background: "#fff" }}
+            >
+              {locations.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
+            </select>
+          ) : (
+            <span style={{ fontFamily: FONT, fontSize: 12, color: "#888", letterSpacing: "0.05em" }}>
+              {locationName}
+            </span>
+          )}
           {shift ? (
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <span style={{ fontFamily: FONT, fontSize: 12, color: "#2e7d32", fontWeight: 700 }}>
