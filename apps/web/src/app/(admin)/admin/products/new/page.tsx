@@ -29,6 +29,29 @@ const LABEL_STYLE: React.CSSProperties = {
   marginBottom: 6,
 };
 
+// Plain-English explanation shown under a label. Small, low-emphasis —
+// there to answer "what do I put here?" without shouting over the field.
+const HELP_STYLE: React.CSSProperties = {
+  display: "block",
+  fontFamily: "var(--font-inter)",
+  fontSize: 12,
+  lineHeight: 1.5,
+  color: "var(--es-mute)",
+  marginTop: 4,
+  letterSpacing: "normal",
+  textTransform: "none",
+};
+
+// Two-column on desktop, single column on narrow phones — replaces the old
+// fixed "1fr 1fr" grid, which forced two ~150px inputs side by side even on
+// a 320px-wide screen.
+const FIELD_ROW_STYLE: React.CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+  gap: 24,
+  marginBottom: 28,
+};
+
 function slugify(text: string) {
   return text
     .toLowerCase()
@@ -38,12 +61,25 @@ function slugify(text: string) {
     .replace(/-+/g, "-");
 }
 
+// Builds a product code from the product name + size + colour, e.g.
+// "Nairobi Wrap Dress" + "M" + "Blue" -> "NAIROB-M-BLUE". Users never need to
+// understand or type this themselves in the common case — it fills itself in
+// as they pick a size and colour, and stays editable for anyone who wants a
+// custom code.
+function autoSkuCode(productSlug: string, size: string, color: string): string {
+  const clean = (s: string) => s.toUpperCase().replace(/[^A-Z0-9]+/g, "").slice(0, 8);
+  return [clean(productSlug) || "ITEM", clean(size), clean(color)].filter(Boolean).join("-");
+}
+
 interface SkuForm {
   sku_code: string;
   size: string;
   color: string;
   color_hex: string;
   stock_quantity: string;
+  // Once the shopkeeper types directly into the code field, stop
+  // auto-overwriting it when they change size/colour afterward.
+  codeTouched: boolean;
 }
 
 interface FormState {
@@ -78,6 +114,7 @@ const BLANK_SKU: SkuForm = {
   color: "",
   color_hex: "#000000",
   stock_quantity: "",
+  codeTouched: false,
 };
 
 export default function NewProductPage() {
@@ -122,7 +159,15 @@ export default function NewProductPage() {
 
   function updateSku(index: number, field: keyof SkuForm, value: string) {
     setSkus((prev) =>
-      prev.map((sku, i) => (i === index ? { ...sku, [field]: value } : sku))
+      prev.map((sku, i) => {
+        if (i !== index) return sku;
+        if (field === "sku_code") return { ...sku, sku_code: value, codeTouched: true };
+        const next = { ...sku, [field]: value };
+        if ((field === "size" || field === "color") && !sku.codeTouched) {
+          next.sku_code = autoSkuCode(form.slug, next.size, next.color);
+        }
+        return next;
+      })
     );
   }
 
@@ -248,6 +293,21 @@ export default function NewProductPage() {
         </div>
       </div>
 
+      <p
+        style={{
+          fontFamily: "var(--font-inter)",
+          fontSize: 14,
+          lineHeight: 1.6,
+          color: "var(--es-mute)",
+          maxWidth: 560,
+          margin: "-32px 0 40px",
+        }}
+      >
+        Fill in the details below, add photos, then add at least one size with
+        its stock count near the bottom. Nothing here is permanent — you can
+        come back and edit any of it later.
+      </p>
+
       {apiError && (
         <div
           style={{
@@ -289,9 +349,9 @@ export default function NewProductPage() {
         </div>
 
         {/* Name + Slug */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24, marginBottom: 28 }}>
+        <div style={FIELD_ROW_STYLE}>
           <div>
-            <label htmlFor="name" style={LABEL_STYLE}>Name</label>
+            <label htmlFor="name" style={LABEL_STYLE}>Product Name</label>
             <input
               id="name"
               name="name"
@@ -307,7 +367,7 @@ export default function NewProductPage() {
             )}
           </div>
           <div>
-            <label htmlFor="slug" style={LABEL_STYLE}>Slug</label>
+            <label htmlFor="slug" style={LABEL_STYLE}>Web Address</label>
             <input
               id="slug"
               name="slug"
@@ -318,6 +378,9 @@ export default function NewProductPage() {
               style={INPUT_STYLE}
               placeholder="nairobi-wrap-dress"
             />
+            <span style={HELP_STYLE}>
+              Filled in automatically from the name. Most people never need to touch this.
+            </span>
             {errors["slug"] && (
               <p style={{ fontSize: 12, color: "#e53e3e", marginTop: 4 }}>{errors["slug"]}</p>
             )}
@@ -325,7 +388,7 @@ export default function NewProductPage() {
         </div>
 
         {/* Category + Status */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24, marginBottom: 28 }}>
+        <div style={FIELD_ROW_STYLE}>
           <div>
             <label htmlFor="category" style={LABEL_STYLE}>Category</label>
             <select
@@ -355,6 +418,9 @@ export default function NewProductPage() {
               <option value="coming_soon">Coming Soon</option>
               <option value="archived">Archived</option>
             </select>
+            <span style={HELP_STYLE}>
+              Draft = hidden. Active = live for customers to buy. Coming Soon = visible but not buyable yet.
+            </span>
           </div>
         </div>
 
@@ -373,9 +439,9 @@ export default function NewProductPage() {
         </div>
 
         {/* Prices */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24, marginBottom: 28 }}>
+        <div style={FIELD_ROW_STYLE}>
           <div>
-            <label htmlFor="basePrice" style={LABEL_STYLE}>Base Price KES</label>
+            <label htmlFor="basePrice" style={LABEL_STYLE}>Selling Price (KES)</label>
             <input
               id="basePrice"
               name="basePrice"
@@ -387,13 +453,14 @@ export default function NewProductPage() {
               style={INPUT_STYLE}
               placeholder="8500"
             />
+            <span style={HELP_STYLE}>What the customer pays, in Kenyan Shillings.</span>
             {errors["basePrice"] && (
               <p style={{ fontSize: 12, color: "#e53e3e", marginTop: 4 }}>{errors["basePrice"]}</p>
             )}
           </div>
           <div>
             <label htmlFor="comparePrice" style={LABEL_STYLE}>
-              Compare Price KES
+              Original Price
               <span style={{ marginLeft: 6, fontSize: 10, color: "#aaa", textTransform: "none", letterSpacing: 0 }}>
                 (optional)
               </span>
@@ -408,11 +475,14 @@ export default function NewProductPage() {
               style={INPUT_STYLE}
               placeholder="10000"
             />
+            <span style={HELP_STYLE}>
+              Only fill this in to show a discount, e.g. &ldquo;Was 10,000, Now 8,500.&rdquo;
+            </span>
           </div>
         </div>
 
         {/* Material + Care */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24, marginBottom: 28 }}>
+        <div style={FIELD_ROW_STYLE}>
           <div>
             <label htmlFor="material" style={LABEL_STYLE}>Material</label>
             <input
@@ -471,6 +541,9 @@ export default function NewProductPage() {
             </div>
             <span>Featured Product</span>
           </label>
+          <span style={{ ...HELP_STYLE, marginLeft: 56 }}>
+            Shows this item in the Featured section on your homepage.
+          </span>
         </div>
 
         {/* SKUs */}
@@ -484,23 +557,31 @@ export default function NewProductPage() {
           <div
             style={{
               display: "flex",
+              flexWrap: "wrap",
               justifyContent: "space-between",
-              alignItems: "center",
+              alignItems: "flex-start",
+              gap: 16,
               marginBottom: 20,
             }}
           >
-            <p
-              style={{
-                fontFamily: "var(--font-inter)",
-                fontSize: 11,
-                letterSpacing: "0.35em",
-                textTransform: "uppercase",
-                color: "var(--es-mute)",
-                margin: 0,
-              }}
-            >
-              SKUs (Size / Colour / Stock)
-            </p>
+            <div>
+              <p
+                style={{
+                  fontFamily: "var(--font-inter)",
+                  fontSize: 11,
+                  letterSpacing: "0.35em",
+                  textTransform: "uppercase",
+                  color: "var(--es-mute)",
+                  margin: 0,
+                }}
+              >
+                Sizes, Colours &amp; Stock
+              </p>
+              <span style={{ ...HELP_STYLE, marginTop: 6, maxWidth: 420 }}>
+                Add one card below for every size or colour you sell, with how
+                many you have of each. At least one is required.
+              </span>
+            </div>
             <button
               type="button"
               onClick={addSku}
@@ -512,12 +593,13 @@ export default function NewProductPage() {
                 color: "var(--es-plum)",
                 background: "none",
                 border: "1px solid var(--es-plum)",
-                padding: "6px 16px",
+                padding: "8px 16px",
                 cursor: "pointer",
                 borderRadius: 2,
+                flexShrink: 0,
               }}
             >
-              + Add SKU
+              + Add Size
             </button>
           </div>
 
@@ -525,87 +607,104 @@ export default function NewProductPage() {
             <div
               key={index}
               style={{
-                display: "grid",
-                gridTemplateColumns: "1fr 1fr 1fr 80px 80px 40px",
-                gap: 12,
-                marginBottom: 12,
-                alignItems: "start",
+                border: "1px solid var(--es-bone)",
+                borderRadius: 8,
+                padding: 16,
+                marginBottom: 14,
+                background: "var(--es-white)",
               }}
             >
-              <div>
-                {index === 0 && <label style={{ ...LABEL_STYLE, marginBottom: 4 }}>SKU Code</label>}
-                <input
-                  type="text"
-                  value={sku.sku_code}
-                  onChange={(e) => updateSku(index, "sku_code", e.target.value)}
-                  style={{ ...INPUT_STYLE, padding: "8px 12px", fontSize: 13 }}
-                  placeholder="DRESS-BLK-S"
-                />
-              </div>
-              <div>
-                {index === 0 && <label style={{ ...LABEL_STYLE, marginBottom: 4 }}>Size</label>}
-                <input
-                  type="text"
-                  value={sku.size}
-                  onChange={(e) => updateSku(index, "size", e.target.value)}
-                  style={{ ...INPUT_STYLE, padding: "8px 12px", fontSize: 13 }}
-                  placeholder="S / M / L / 2Y"
-                />
-              </div>
-              <div>
-                {index === 0 && <label style={{ ...LABEL_STYLE, marginBottom: 4 }}>Colour</label>}
-                <input
-                  type="text"
-                  value={sku.color}
-                  onChange={(e) => updateSku(index, "color", e.target.value)}
-                  style={{ ...INPUT_STYLE, padding: "8px 12px", fontSize: 13 }}
-                  placeholder="Black"
-                />
-              </div>
-              <div>
-                {index === 0 && <label style={{ ...LABEL_STYLE, marginBottom: 4 }}>Hex</label>}
-                <input
-                  type="color"
-                  value={sku.color_hex}
-                  onChange={(e) => updateSku(index, "color_hex", e.target.value)}
-                  style={{
-                    width: "100%",
-                    height: 38,
-                    border: "1px solid var(--es-bone)",
-                    borderRadius: 4,
-                    cursor: "pointer",
-                    padding: 2,
-                  }}
-                />
-              </div>
-              <div>
-                {index === 0 && <label style={{ ...LABEL_STYLE, marginBottom: 4 }}>Stock</label>}
-                <input
-                  type="number"
-                  min={0}
-                  value={sku.stock_quantity}
-                  onChange={(e) => updateSku(index, "stock_quantity", e.target.value)}
-                  style={{ ...INPUT_STYLE, padding: "8px 12px", fontSize: 13 }}
-                  placeholder="0"
-                />
-              </div>
-              <div style={{ paddingTop: index === 0 ? 22 : 0, display: "flex", alignItems: "center" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+                <span style={{ ...LABEL_STYLE, marginBottom: 0 }}>Size {index + 1}</span>
                 <button
                   type="button"
                   onClick={() => removeSku(index)}
+                  aria-label={`Remove size ${index + 1}`}
                   style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 6,
                     background: "none",
                     border: "none",
                     cursor: "pointer",
                     color: "#c0392b",
-                    fontSize: 18,
-                    padding: "4px",
-                    lineHeight: 1,
+                    fontSize: 12,
+                    letterSpacing: "0.1em",
+                    textTransform: "uppercase",
+                    padding: "8px 4px",
                   }}
-                  title="Remove SKU"
                 >
-                  ×
+                  Remove ×
                 </button>
+              </div>
+
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(110px, 1fr))", gap: 14 }}>
+                <div>
+                  <label style={{ ...LABEL_STYLE, marginBottom: 4 }}>Size</label>
+                  <input
+                    type="text"
+                    value={sku.size}
+                    onChange={(e) => updateSku(index, "size", e.target.value)}
+                    style={{ ...INPUT_STYLE, padding: "8px 12px", fontSize: 13 }}
+                    placeholder="S / M / L / 2Y"
+                  />
+                </div>
+                <div>
+                  <label style={{ ...LABEL_STYLE, marginBottom: 4 }}>Colour</label>
+                  <input
+                    type="text"
+                    value={sku.color}
+                    onChange={(e) => updateSku(index, "color", e.target.value)}
+                    style={{ ...INPUT_STYLE, padding: "8px 12px", fontSize: 13 }}
+                    placeholder="Black"
+                  />
+                </div>
+                <div>
+                  <label style={{ ...LABEL_STYLE, marginBottom: 4 }}>Swatch</label>
+                  <input
+                    type="color"
+                    value={sku.color_hex}
+                    onChange={(e) => updateSku(index, "color_hex", e.target.value)}
+                    style={{
+                      width: "100%",
+                      height: 38,
+                      border: "1px solid var(--es-bone)",
+                      borderRadius: 4,
+                      cursor: "pointer",
+                      padding: 2,
+                    }}
+                  />
+                </div>
+                <div>
+                  <label style={{ ...LABEL_STYLE, marginBottom: 4 }}>Stock</label>
+                  <input
+                    type="number"
+                    min={0}
+                    value={sku.stock_quantity}
+                    onChange={(e) => updateSku(index, "stock_quantity", e.target.value)}
+                    style={{ ...INPUT_STYLE, padding: "8px 12px", fontSize: 13 }}
+                    placeholder="0"
+                  />
+                </div>
+              </div>
+
+              <div style={{ marginTop: 14 }}>
+                <label style={{ ...LABEL_STYLE, marginBottom: 4 }}>
+                  Product Code
+                  <span style={{ marginLeft: 6, fontSize: 10, color: "#aaa", textTransform: "none", letterSpacing: 0 }}>
+                    (auto-filled)
+                  </span>
+                </label>
+                <input
+                  type="text"
+                  value={sku.sku_code}
+                  onChange={(e) => updateSku(index, "sku_code", e.target.value)}
+                  style={{ ...INPUT_STYLE, padding: "8px 12px", fontSize: 13, maxWidth: 280 }}
+                  placeholder="Fills in once you enter a size"
+                />
+                <span style={{ ...HELP_STYLE, maxWidth: 420 }}>
+                  A short code so this size/colour can be told apart from others. Filled in for you — only change it if you want something custom.
+                </span>
               </div>
             </div>
           ))}
