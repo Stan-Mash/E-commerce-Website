@@ -66,6 +66,8 @@ const nextConfig = {
       {
         source: "/(.*)",
         headers: [
+          // 6 months, extend after confirming HTTPS-only works across subdomains
+          { key: "Strict-Transport-Security", value: "max-age=15552000; includeSubDomains" },
           { key: "X-Frame-Options", value: "DENY" },
           { key: "X-Content-Type-Options", value: "nosniff" },
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },

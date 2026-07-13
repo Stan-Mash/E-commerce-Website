@@ -35,12 +35,27 @@ export async function POST(req: NextRequest) {
   // Idempotency: look up by checkout_request_id
   const { data: existing } = await supabase
     .from("mpesa_transactions")
-    .select("id, status")
+    .select("id, status, amount")
     .eq("checkout_request_id", parsed.checkoutRequestId)
     .single();
 
   if (existing && existing.status !== "pending") {
     // Already processed; return 200 so Safaricom stops retrying.
+    return NextResponse.json({ ResultCode: 0, ResultDesc: "Accepted" });
+  }
+
+  // Defence in depth: the callback's amount must cover what the STK push
+  // requested. The amount is server-set so a mismatch should never happen —
+  // if it does, don't mark the order paid; leave it pending for manual review.
+  if (
+    parsed.success &&
+    existing?.amount != null &&
+    parsed.amount != null &&
+    Math.round(parsed.amount) < Math.round(Number(existing.amount))
+  ) {
+    console.error(
+      `[mpesa-webhook] Amount mismatch on ${parsed.checkoutRequestId}: callback ${parsed.amount}, expected ${existing.amount}`
+    );
     return NextResponse.json({ ResultCode: 0, ResultDesc: "Accepted" });
   }
 

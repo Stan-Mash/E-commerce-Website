@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 
 const CATS = [
   { label: "Women",    sub: "Current edit",  href: "/woman" },
@@ -44,11 +45,14 @@ export function Hero({ productCount }: HeroProps = {}) {
 
         {/* Image panel */}
         <div className="relative overflow-hidden bg-es-bone order-first min-h-[60vw] md:min-h-0">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
+          {/* LCP element: priority disables lazy-loading and preloads it */}
+          <Image
             src="/products/tweed-set-black-white.jpg"
             alt="New season — Tweed Jacket & Skirt Set"
-            className="hero-img absolute inset-0 w-full h-full object-cover object-top"
+            fill
+            priority
+            sizes="(max-width: 768px) 100vw, 50vw"
+            className="hero-img object-cover object-top"
           />
 
           <div className="absolute top-5 left-5 bg-es-ink text-white px-4 py-[7px] text-[10px] font-semibold tracking-label uppercase font-sans">

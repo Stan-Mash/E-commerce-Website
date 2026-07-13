@@ -712,6 +712,13 @@ export default function POSPage() {
 
   const locationName = locations.find(l => l.id === locationId)?.name ?? "Store";
 
+  // Shift modal callbacks (stable references so ShiftModalComponent doesn't
+  // remount). Declared before the C2B early returns below — hooks must run in
+  // the same order on every render.
+  const handleOpenShift  = useCallback((name: string, float: number) => { void openShift(name, float); }, [locationId]); // eslint-disable-line react-hooks/exhaustive-deps
+  const handleCloseShift = useCallback((float: number) => { void closeShift(float); }, [shift]);                         // eslint-disable-line react-hooks/exhaustive-deps
+  const handleCancelShift = useCallback(() => setShowShiftModal(false), []);
+
   // C2B waiting screen
   if (c2bOrderId && !c2bPaid) {
     return (
@@ -833,11 +840,6 @@ export default function POSPage() {
       </div>
     </div>
   );
-
-  // Shift modal callbacks (stable references so ShiftModalComponent doesn't remount)
-  const handleOpenShift  = useCallback((name: string, float: number) => { void openShift(name, float); }, [locationId]); // eslint-disable-line react-hooks/exhaustive-deps
-  const handleCloseShift = useCallback((float: number) => { void closeShift(float); }, [shift]);                         // eslint-disable-line react-hooks/exhaustive-deps
-  const handleCancelShift = useCallback(() => setShowShiftModal(false), []);
 
   // Main render
   return (

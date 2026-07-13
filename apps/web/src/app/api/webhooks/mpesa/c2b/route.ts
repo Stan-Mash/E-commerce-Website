@@ -7,13 +7,14 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminSupabaseClient } from "@/lib/supabase/server";
+import { safeEqual } from "@/lib/adminAuth";
 
 const ACCEPTED  = { ResultCode: 0, ResultDesc: "Accepted" };
 const REJECTED  = { ResultCode: 1, ResultDesc: "Rejected" };
 
 function isAuthorised(req: NextRequest): boolean {
   const secret = req.nextUrl.searchParams.get("secret");
-  return !!secret && secret === process.env.MPESA_WEBHOOK_SECRET;
+  return !!secret && safeEqual(secret, process.env.MPESA_WEBHOOK_SECRET ?? "");
 }
 
 export async function POST(req: NextRequest) {

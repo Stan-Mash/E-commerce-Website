@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { createPublicSupabaseClient } from "@/lib/supabase/server";
 import { AnimateIn } from "@/components/es/AnimateIn";
 
@@ -94,14 +95,12 @@ export async function FeaturedGrid() {
                     marginBottom: 14,
                   }}>
                     {primaryImage ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
+                      <Image
                         src={primaryImage.url}
                         alt={primaryImage.alt ?? product.name}
-                        style={{
-                          width: "100%", height: "100%", objectFit: "cover",
-                          transition: "transform 0.5s ease",
-                        }}
+                        fill
+                        sizes="(max-width: 1024px) 50vw, 25vw"
+                        style={{ objectFit: "cover", transition: "transform 0.5s ease" }}
                         className="group-hover:scale-[1.04]"
                       />
                     ) : (

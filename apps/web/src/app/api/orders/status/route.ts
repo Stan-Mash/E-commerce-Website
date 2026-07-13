@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminSupabaseClient } from "@/lib/supabase/server";
+import { rateLimit, clientIp } from "@/lib/rateLimit";
 
 export const dynamic = "force-dynamic";
 
@@ -9,6 +10,12 @@ export async function GET(req: NextRequest) {
   const ref = (req.nextUrl.searchParams.get("ref") ?? "").trim();
   if (!ref) {
     return NextResponse.json({ error: "Missing order ref" }, { status: 400 });
+  }
+
+  // Checkout polls this every few seconds while waiting for the STK callback,
+  // so the window is generous — it only needs to stop bulk ref enumeration.
+  if (!(await rateLimit(`order-status:${clientIp(req)}`, 60))) {
+    return NextResponse.json({ error: "Too many requests" }, { status: 429 });
   }
 
   try {

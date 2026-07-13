@@ -23,10 +23,17 @@ export function slugify(text: string): string {
     .trim();
 }
 
+// Unambiguous alphabet (no 0/O, 1/I/L) — refs are read out loud at the till
+// and typed as M-Pesa account numbers. 10 chars ≈ 50 bits of CSPRNG entropy,
+// so refs can't be enumerated via the public status endpoint.
+const REF_ALPHABET = "23456789ABCDEFGHJKMNPQRSTUVWXYZ";
+
 export function generateOrderRef(): string {
-  const ts = Date.now().toString(36).toUpperCase();
-  const rand = Math.random().toString(36).substring(2, 6).toUpperCase();
-  return `NF-${ts}-${rand}`;
+  const bytes = new Uint8Array(10);
+  globalThis.crypto.getRandomValues(bytes);
+  let rand = "";
+  for (const b of bytes) rand += REF_ALPHABET[b % REF_ALPHABET.length];
+  return `NF-${rand.slice(0, 5)}-${rand.slice(5)}`;
 }
 
 export function maskPhone(phone: string): string {

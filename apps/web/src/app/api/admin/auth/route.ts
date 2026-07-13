@@ -1,5 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ADMIN_SESSION_TOKEN } from "@/lib/adminAuth";
+import { rateLimit, clientIp } from "@/lib/rateLimit";
+
+// Only allow same-site relative redirect targets. Rejects absolute URLs and
+// protocol-relative ("//evil.com") values, which would otherwise be an open
+// redirect after login.
+function safeRedirectPath(from: string): string {
+  return from.startsWith("/") && !from.startsWith("//") ? from : "/admin";
+}
 
 // No insecure fallback - if ADMIN_PASSWORD is not configured the admin is
 // locked entirely (fail closed). Set ADMIN_PASSWORD in the environment.
@@ -45,6 +53,14 @@ function operatorCookie(name: string): string {
 export async function POST(req: NextRequest) {
   const contentType = req.headers.get("content-type") ?? "";
 
+  // Brute-force guard: 5 attempts per minute per IP.
+  if (!(await rateLimit(`admin-login:${clientIp(req)}`, 5))) {
+    if (contentType.includes("application/x-www-form-urlencoded") || contentType.includes("multipart/form-data")) {
+      return NextResponse.redirect(new URL("/admin/login?error=rate", req.url), { status: 303 });
+    }
+    return NextResponse.json({ error: "Too many attempts. Wait a minute and try again." }, { status: 429 });
+  }
+
   // Form submission (native <form> POST)
   // Browser handles the Set-Cookie natively before following the redirect,
   // which is more reliable than relying on the Fetch API.
@@ -58,11 +74,11 @@ export async function POST(req: NextRequest) {
     const operator = ((formData.get("operator") as string | null) ?? "").trim().slice(0, 60);
 
     if (!ADMIN_PASSWORD || !safeEqual(password, ADMIN_PASSWORD)) {
-      const loginUrl = new URL(`/admin/login?error=1&from=${encodeURIComponent(from)}`, req.url);
+      const loginUrl = new URL(`/admin/login?error=1&from=${encodeURIComponent(safeRedirectPath(from))}`, req.url);
       return NextResponse.redirect(loginUrl, { status: 303 });
     }
 
-    const dest = new URL(from.startsWith("/") ? from : "/admin", req.url);
+    const dest = new URL(safeRedirectPath(from), req.url);
     const response = NextResponse.redirect(dest, { status: 303 });
     response.headers.append("Set-Cookie", SESSION_COOKIE);
     if (operator) response.headers.append("Set-Cookie", operatorCookie(operator));

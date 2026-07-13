@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { createPublicSupabaseClient, createAdminSupabaseClient } from "@/lib/supabase/server";
+import { rateLimit, clientIp } from "@/lib/rateLimit";
 
 export const dynamic = "force-dynamic";
 
@@ -44,6 +45,11 @@ const ReviewSchema = z.object({
 
 /** POST /api/reviews → submit a review (held for admin approval). */
 export async function POST(req: NextRequest) {
+  // Spam guard: 3 review submissions per minute per IP.
+  if (!(await rateLimit(`reviews:${clientIp(req)}`, 3))) {
+    return NextResponse.json({ error: "Too many submissions. Please wait a moment." }, { status: 429 });
+  }
+
   let body: unknown;
   try {
     body = await req.json();

@@ -45,7 +45,7 @@ export default function LegalPage() {
         <section style={SECTION_STYLE}>
           <h2 style={H2_STYLE}>Privacy Policy</h2>
           <p style={P_STYLE}>
-            Elite Style Co. ("we", "us", "our") collects only the information needed to process your order and deliver it to you. We do not sell your personal data to third parties.
+            Elite Style Co. (&ldquo;we&rdquo;, &ldquo;us&rdquo;, &ldquo;our&rdquo;) collects only the information needed to process your order and deliver it to you. We do not sell your personal data to third parties.
           </p>
           <p style={P_STYLE}>
             <strong>What we collect:</strong> Your name, phone number, delivery address, and M-Pesa transaction reference when you place an order. We may also collect your email address if you choose to provide it.
