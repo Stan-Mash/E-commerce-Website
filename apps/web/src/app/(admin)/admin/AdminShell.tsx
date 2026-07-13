@@ -29,6 +29,24 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
 
   return (
     <div style={{ display: "flex", minHeight: "100vh", fontFamily: "var(--font-inter)" }}>
+      {/* No apostrophes or other characters inside this <style> tag's text
+          content: <style> is an HTML "raw text" element, so the browser
+          never decodes character-reference entities in it. React's SSR
+          output still HTML-escapes apostrophes (' -> &#x27;) when
+          serializing any string child, including inside <style>. The
+          server HTML then contains the literal 6 characters "&#x27;" where
+          the client's hydration render has a literal apostrophe — a
+          guaranteed text mismatch, and a full-page hydration failure, on
+          every single admin page load. Keep CSS comments describing intent
+          in a JSX comment above the tag instead, like this one, never
+          inside the template string itself.
+
+          .admin-sidebar's `position: fixed !important` below must win over
+          the element's own inline style (position: sticky, height: 100vh)
+          — inline styles otherwise beat an unmarked class rule, which left
+          the sidebar's 100vh box sitting in normal document flow (just
+          visually offscreen) and pushing all real page content below the
+          fold. */}
       <style>{`
         .admin-nav-link:hover {
           color: var(--es-gold) !important;
@@ -53,11 +71,6 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
             width: 100%;
           }
           .admin-sidebar {
-            /* !important: this must win over the element's inline
-               position:sticky/height:100vh — inline styles otherwise beat
-               an unmarked class rule, which left the sidebar's 100vh box
-               sitting in normal flow (just visually offscreen), pushing all
-               real content below the fold. */
             position: fixed !important;
             top: 0;
             left: 0;

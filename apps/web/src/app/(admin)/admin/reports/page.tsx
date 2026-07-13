@@ -759,7 +759,7 @@ export default function ReportsPage() {
               >
                 Low Stock Alerts ({data.low_stock.length})
               </p>
-              <div style={{ background: "var(--es-white)", padding: 0, overflow: "hidden" }}>
+              <div style={{ background: "var(--es-white)", padding: 0, overflowX: "auto" }}>
                 <table style={{ width: "100%", borderCollapse: "collapse", fontFamily: "var(--font-inter)" }}>
                   <thead>
                     <tr style={{ background: "#fde8e8" }}>

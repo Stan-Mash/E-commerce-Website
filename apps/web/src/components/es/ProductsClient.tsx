@@ -202,19 +202,24 @@ export function ProductsClient({ products, activeCategory }: ProductsClientProps
 
   return (
     <>
+      {/* No apostrophes (or any character requiring HTML-entity escaping)
+          inside this template literal: <style> is an HTML raw-text element,
+          so the browser never decodes character references in it, but
+          React still HTML-escapes them when serializing server-rendered
+          text. Server text then permanently disagrees with the client's
+          hydration text, breaking hydration for this whole component. The
+          sort-dropdown arrow below is an inline SVG data URI with percent-
+          encoded %27 in place of every literal apostrophe for exactly this
+          reason — do not "simplify" it back to literal quotes. */}
       <style>{`
         /* Product card hover effects */
         .es-card-image-wrap {
           position: relative;
           width: 100%;
+          aspect-ratio: 4 / 5;
           overflow: hidden;
           background-color: var(--color-es-bone, #f0ece4);
           margin-bottom: 0.75rem;
-        }
-        .es-card-image-wrap::before {
-          content: "";
-          display: block;
-          padding-bottom: 125%;
         }
         .es-card-img,
         .es-card-placeholder {
@@ -307,7 +312,7 @@ export function ProductsClient({ products, activeCategory }: ProductsClientProps
           padding: 6px 28px 6px 10px;
           appearance: none;
           -webkit-appearance: none;
-          background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%239a9080'/%3E%3C/svg%3E");
+          background-image: url(data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%2710%27%20height=%276%27%20viewBox=%270%200%2010%206%27%3E%3Cpath%20d=%27M0%200l5%206%205-6z%27%20fill=%27%239a9080%27/%3E%3C/svg%3E);
           background-repeat: no-repeat;
           background-position: right 10px center;
           cursor: pointer;

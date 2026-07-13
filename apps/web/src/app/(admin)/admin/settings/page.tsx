@@ -231,7 +231,7 @@ export default function SettingsPage() {
       <div style={CARD_STYLE}>
         <h2 style={SECTION_TITLE_STYLE}>Store</h2>
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0 32px" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "0 32px" }}>
           <div style={FIELD_STYLE}>
             <label style={LABEL_STYLE}>Store Name</label>
             <input
@@ -314,7 +314,7 @@ export default function SettingsPage() {
       <div style={CARD_STYLE}>
         <h2 style={SECTION_TITLE_STYLE}>Delivery</h2>
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0 32px" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "0 32px" }}>
           <div style={FIELD_STYLE}>
             <label style={LABEL_STYLE}>Door Delivery Fee (KES)</label>
             <input
