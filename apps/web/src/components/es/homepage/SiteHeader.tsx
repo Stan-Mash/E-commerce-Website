@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { ShoppingBag, Search, User, Heart, Menu, X } from "lucide-react";
 import { useCart } from "@/components/checkout/CartProvider";
@@ -14,13 +15,32 @@ const NAV = [
   { label: "Journal",     href: "/journal" },
 ] as const;
 
+// Desktop shows these as icon-only buttons in the header; the mobile drawer
+// previously had no equivalent, so Account/Wishlist were unreachable on
+// mobile unless a customer scrolled all the way to the footer.
+const MOBILE_ACCOUNT_LINKS = [
+  { label: "Search",   href: "/search",   icon: Search },
+  { label: "Wishlist", href: "/wishlist", icon: Heart },
+  { label: "Account",  href: "/account",  icon: User },
+] as const;
+
 export function SiteHeader() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const { itemCount, openCart } = useCart();
+  const pathname = usePathname();
   useEffect(() => { setMounted(true); }, []);
 
+  // Close the drawer whenever the route changes, and lock page scroll while
+  // it's open — matches the pattern used by the admin mobile nav.
+  useEffect(() => { setMobileOpen(false); }, [pathname]);
+  useEffect(() => {
+    document.body.style.overflow = mobileOpen ? "hidden" : "";
+    return () => { document.body.style.overflow = ""; };
+  }, [mobileOpen]);
+
   return (
+    <>
     <header className="bg-white border-b border-es-hair sticky top-0 z-50">
 
       {/* Desktop */}
@@ -113,22 +133,59 @@ export function SiteHeader() {
           </button>
         </div>
       </div>
+    </header>
 
-      {/* Mobile drawer */}
-      {mobileOpen && (
-        <nav className="flex md:hidden flex-col border-t border-es-hair bg-white">
+    {/* Mobile menu: full-screen overlay, rendered as a sibling of <header>
+        (not nested inside it) so its z-index isn't capped by the header's
+        own `sticky` stacking context — nested here, it rendered underneath
+        the cookie-consent banner despite a higher z-index, since a
+        `position: sticky` ancestor with its own z-index creates a new
+        stacking context that traps descendants inside it. Not an in-flow
+        panel that pushes page content down, so it reads as a deliberate
+        navigation moment and doesn't lose the customer's scroll position. */}
+    {mobileOpen && (
+      <div className="fixed inset-0 z-[100] flex md:hidden flex-col bg-white">
+        <div className="flex items-center justify-between px-4 h-14 border-b border-es-hair flex-shrink-0">
+          <span className="font-cormorant text-[20px] font-semibold text-es-ink tracking-[-0.02em]">
+            Elite Style Co.
+          </span>
+          <button
+            onClick={() => setMobileOpen(false)}
+            className="bg-transparent border-0 cursor-pointer p-2 text-es-ink"
+            aria-label="Close menu"
+          >
+            <X size={22} strokeWidth={1.75} />
+          </button>
+        </div>
+
+        <nav className="flex-1 overflow-y-auto">
           {NAV.map((item) => (
             <Link
               key={item.label}
               href={item.href}
               onClick={() => setMobileOpen(false)}
-              className="font-sans text-[15px] font-medium text-es-char no-underline px-5 py-4 border-b border-es-hair/50 hover:bg-es-paper transition-colors duration-150"
+              className="block font-sans text-[17px] font-medium text-es-ink no-underline px-5 py-4 border-b border-es-hair/50 hover:bg-es-paper transition-colors duration-150"
             >
               {item.label}
             </Link>
           ))}
+
+          <div className="mt-2 border-t border-es-hair">
+            {MOBILE_ACCOUNT_LINKS.map(({ label, href, icon: Icon }) => (
+              <Link
+                key={label}
+                href={href}
+                onClick={() => setMobileOpen(false)}
+                className="flex items-center gap-3 font-sans text-[15px] font-medium text-es-char no-underline px-5 py-4 border-b border-es-hair/50 hover:bg-es-paper transition-colors duration-150"
+              >
+                <Icon size={18} strokeWidth={1.75} />
+                {label}
+              </Link>
+            ))}
+          </div>
         </nav>
-      )}
-    </header>
+      </div>
+    )}
+    </>
   );
 }

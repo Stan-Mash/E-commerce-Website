@@ -108,7 +108,7 @@ export function Hero({ productCount }: HeroProps = {}) {
               { num: "M-Pesa",    label: "Accepted" },
             ].map((s) => (
               <div key={s.label}>
-                <p className="font-cormorant text-2xl font-semibold text-es-ink leading-none mb-1">
+                <p className="font-cormorant text-2xl font-semibold text-es-ink leading-none mb-1 whitespace-nowrap">
                   {s.num}
                 </p>
                 <p className="text-[11px] text-es-mute tracking-wide font-sans">
