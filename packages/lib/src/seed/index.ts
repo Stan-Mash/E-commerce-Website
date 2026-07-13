@@ -5,14 +5,52 @@
  * Requires NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in environment.
  */
 import { createClient } from "@supabase/supabase-js";
-import type { Database } from "../types/database";
 
-const supabase = createClient<Database>(
+// Not typed against Database here: that hand-maintained type only declares
+// Tables (no Views/Functions/Enums/CompositeTypes), which newer
+// @supabase/supabase-js generics require for .from() to infer correctly —
+// PRODUCTS below is also a union of slightly different literal shapes, which
+// the same generic can't resolve either. Both push overload resolution to a
+// `never[]` dead end. This is a manually-run seeding script, not app runtime
+// code, so plain (unparameterized) typing is the pragmatic tradeoff.
+const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-const PRODUCTS = [
+interface SeedSku {
+  size: string;
+  color: string;
+  color_hex: string;
+  stock_quantity: number;
+  sku_code: string;
+}
+
+interface SeedImage {
+  url: string;
+  alt: string;
+  sort_order: number;
+}
+
+interface SeedProduct {
+  name: string;
+  slug: string;
+  category: string;
+  description: string;
+  base_price: number;
+  compare_price: number | null;
+  material: string;
+  care_instructions: string;
+  is_featured: boolean;
+  status: "active";
+  skus: SeedSku[];
+  video_url: string;
+  video_public_id: string;
+  thumbnail_url: string;
+  images: SeedImage[];
+}
+
+const PRODUCTS: SeedProduct[] = [
   {
     name: "Kikoy Wrap Dress",
     slug: "kikoy-wrap-dress",
