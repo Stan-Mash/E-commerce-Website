@@ -125,13 +125,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: skuError.message }, { status: 500 });
     }
 
-    // Create inventory_levels rows for Main Warehouse so the checkout RPC
+    // Create inventory_levels rows for the store location so the checkout RPC
     // can reserve stock (it reads inventory_levels, not skus.stock_quantity).
+    // Looked up by type, not a hardcoded name: migration 020 renamed the only
+    // location from "Main Warehouse" to "CBD Store", and this lookup was
+    // never updated to match — every product created since then silently
+    // got no inventory_levels row at all, so it displayed as in stock but
+    // failed at actual checkout with "item not found".
     if (insertedSkus && insertedSkus.length > 0) {
       const { data: warehouse } = await supabase
         .from("locations")
         .select("id")
-        .eq("name", "Main Warehouse")
+        .eq("type", "store")
+        .limit(1)
         .single();
 
       if (warehouse) {
@@ -143,6 +149,11 @@ export async function POST(request: NextRequest) {
         await supabase.from("inventory_levels").upsert(levelRows, {
           onConflict: "sku_id,location_id",
         });
+      } else {
+        // Never fail the whole save over this, but make sure it's loud
+        // somewhere — this exact silent no-op is what caused newly added
+        // stock to look available while being unbuyable.
+        console.error("[products POST] No active store location found — inventory_levels not created for", product.id);
       }
     }
   }

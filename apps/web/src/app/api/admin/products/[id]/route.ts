@@ -183,7 +183,15 @@ export async function PUT(
       }
     }
 
-    // Sync Main Warehouse inventory_levels with the current SKU set.
+    // Sync the store location's inventory_levels with the current SKU set —
+    // this is what checkout_and_reserve_stock and pos_checkout actually read
+    // and decrement; skus.stock_quantity is a display-only cached aggregate.
+    // Looked up by type, not a hardcoded name: migration 020 renamed the
+    // only location from "Main Warehouse" to "CBD Store", and this lookup
+    // was never updated to match, so every stock edit since then silently
+    // updated skus.stock_quantity (what the admin form and storefront
+    // listing show) while leaving inventory_levels untouched — the product
+    // looked in stock but checkout failed with "item not found" for it.
     const { data: currentSkus } = await supabase
       .from("skus")
       .select("id, stock_quantity")
@@ -192,7 +200,8 @@ export async function PUT(
       const { data: warehouse } = await supabase
         .from("locations")
         .select("id")
-        .eq("name", "Main Warehouse")
+        .eq("type", "store")
+        .limit(1)
         .single();
       if (warehouse) {
         await supabase.from("inventory_levels").upsert(
@@ -203,6 +212,8 @@ export async function PUT(
           })),
           { onConflict: "sku_id,location_id" }
         );
+      } else {
+        console.error("[products PUT] No active store location found — inventory_levels not synced for", params.id);
       }
     }
   }

@@ -46,3 +46,49 @@ export async function GET(req: NextRequest) {
 
   return NextResponse.json({ locations, sample: compare });
 }
+
+// One-time backfill: push skus.stock_quantity into inventory_levels for the
+// store location, for every SKU. Repairs the historical damage from the
+// "Main Warehouse" lookup bug (fixed in the same deploy as this call) —
+// admin-entered stock was saved to skus.stock_quantity (what the storefront
+// displays) but never synced to inventory_levels (what checkout actually
+// reserves against), so affected items looked in stock but failed at
+// checkout. Idempotent: safe to call more than once, always sets
+// inventory_levels to match the current skus.stock_quantity value.
+export async function POST(req: NextRequest) {
+  if (!isAuthorised(req)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const supabase = createAdminSupabaseClient();
+
+  const { data: store } = await supabase
+    .from("locations")
+    .select("id, name")
+    .eq("type", "store")
+    .limit(1)
+    .single();
+
+  if (!store) {
+    return NextResponse.json({ error: "No active store location found" }, { status: 500 });
+  }
+
+  const { data: allSkus, error: skusErr } = await supabase
+    .from("skus")
+    .select("id, stock_quantity");
+
+  if (skusErr || !allSkus) {
+    return NextResponse.json({ error: skusErr?.message ?? "Failed to fetch skus" }, { status: 500 });
+  }
+
+  const { error: upsertErr } = await supabase.from("inventory_levels").upsert(
+    allSkus.map((s) => ({ sku_id: s.id, location_id: store.id, quantity: s.stock_quantity })),
+    { onConflict: "sku_id,location_id" }
+  );
+
+  if (upsertErr) {
+    return NextResponse.json({ error: upsertErr.message }, { status: 500 });
+  }
+
+  return NextResponse.json({ repaired: allSkus.length, location: store.name });
+}
