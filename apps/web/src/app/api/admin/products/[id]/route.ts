@@ -143,6 +143,18 @@ export async function PUT(
     const idSet = new Set((existingSkus ?? []).map((s) => s.id));
     const codeToId = new Map((existingSkus ?? []).map((s) => [s.sku_code, s.id]));
     const keptIds = new Set<string>();
+    // Requested quantity per SKU id, from the form input directly — not
+    // re-read from skus.stock_quantity afterward. inventory_levels is the
+    // only thing this route writes a real quantity to; skus.stock_quantity
+    // is left for the DB trigger (see migration 006) to compute from it.
+    // Previously this route set stock_quantity directly here *and* tried to
+    // mirror it into inventory_levels in a second step — two writers of the
+    // same fact that can silently drift apart if the second step's location
+    // lookup ever fails again (as it did for months: see the "Main
+    // Warehouse" -> "CBD Store" rename bug fixed alongside this change).
+    // With one writer, a broken location lookup now makes the admin form
+    // show 0 immediately — visibly wrong instead of silently wrong.
+    const requestedQuantity = new Map<string, number>();
 
     for (const sku of skuList as SkuInput[]) {
       const row = {
@@ -151,8 +163,8 @@ export async function PUT(
         size: sku.size,
         color: sku.color ?? null,
         color_hex: sku.color_hex ?? null,
-        stock_quantity: Number(sku.stock_quantity ?? 0),
       };
+      const quantity = Number(sku.stock_quantity ?? 0);
 
       const matchId =
         (sku.id && idSet.has(sku.id) ? sku.id : undefined) ??
@@ -160,16 +172,20 @@ export async function PUT(
 
       if (matchId) {
         keptIds.add(matchId);
+        requestedQuantity.set(matchId, quantity);
         const { error } = await supabase.from("skus").update(row).eq("id", matchId);
         if (error) return NextResponse.json({ error: error.message }, { status: 500 });
       } else {
         const { data: inserted, error } = await supabase
           .from("skus")
-          .insert(row)
+          .insert({ ...row, stock_quantity: 0 })
           .select("id")
           .single();
         if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-        if (inserted) keptIds.add(inserted.id);
+        if (inserted) {
+          keptIds.add(inserted.id);
+          requestedQuantity.set(inserted.id, quantity);
+        }
       }
     }
 
@@ -183,20 +199,14 @@ export async function PUT(
       }
     }
 
-    // Sync the store location's inventory_levels with the current SKU set —
-    // this is what checkout_and_reserve_stock and pos_checkout actually read
-    // and decrement; skus.stock_quantity is a display-only cached aggregate.
-    // Looked up by type, not a hardcoded name: migration 020 renamed the
-    // only location from "Main Warehouse" to "CBD Store", and this lookup
-    // was never updated to match, so every stock edit since then silently
-    // updated skus.stock_quantity (what the admin form and storefront
-    // listing show) while leaving inventory_levels untouched — the product
-    // looked in stock but checkout failed with "item not found" for it.
-    const { data: currentSkus } = await supabase
-      .from("skus")
-      .select("id, stock_quantity")
-      .eq("product_id", params.id);
-    if (currentSkus && currentSkus.length > 0) {
+    // Write the store location's inventory_levels — what checkout_and_
+    // reserve_stock and pos_checkout actually read and decrement. The
+    // trigger from migration 006 recomputes skus.stock_quantity (the
+    // display-only cached aggregate the admin form and storefront listing
+    // read) from this automatically. Looked up by type, not a hardcoded
+    // name, since migration 020 renamed the only location from
+    // "Main Warehouse" to "CBD Store".
+    if (requestedQuantity.size > 0) {
       const { data: warehouse } = await supabase
         .from("locations")
         .select("id")
@@ -205,10 +215,10 @@ export async function PUT(
         .single();
       if (warehouse) {
         await supabase.from("inventory_levels").upsert(
-          currentSkus.map((s) => ({
-            sku_id: s.id,
+          [...requestedQuantity.entries()].map(([skuId, quantity]) => ({
+            sku_id: skuId,
             location_id: warehouse.id,
-            quantity: s.stock_quantity,
+            quantity,
           })),
           { onConflict: "sku_id,location_id" }
         );

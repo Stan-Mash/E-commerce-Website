@@ -100,38 +100,45 @@ export async function POST(request: NextRequest) {
     await syncProductVideos(supabase, product.id, videoList);
   }
 
-  // Insert SKUs + inventory_levels rows (so stock is tracked per location)
+  // Insert SKUs, then write their real stock to inventory_levels — the DB
+  // trigger from migration 006 recomputes skus.stock_quantity (the
+  // display-only cached aggregate the admin form and storefront listing
+  // read) from inventory_levels automatically. Every SKU is inserted with
+  // stock_quantity: 0 here on purpose: inventory_levels is the only place
+  // this route writes a real quantity, so a broken location lookup below
+  // fails visibly (shows 0 everywhere) instead of silently drifting from
+  // what checkout actually sees — which is exactly how this bug hid for
+  // months under the old two-writer version of this code.
   if (Array.isArray(skuList) && skuList.length > 0) {
-    const skuRows = skuList.map((sku: {
+    type SkuInput = {
       sku_code: string;
       size: string;
       color?: string;
       color_hex?: string;
       stock_quantity?: number;
-    }) => ({
+    };
+    const inputRows = skuList as SkuInput[];
+    const skuRows = inputRows.map((sku) => ({
       product_id: product.id,
       sku_code: sku.sku_code,
       size: sku.size,
       color: sku.color ?? null,
       color_hex: sku.color_hex ?? null,
-      stock_quantity: Number(sku.stock_quantity ?? 0),
+      stock_quantity: 0,
     }));
 
     const { data: insertedSkus, error: skuError } = await supabase
       .from("skus")
       .insert(skuRows)
-      .select("id, stock_quantity");
+      .select("id");
     if (skuError) {
       return NextResponse.json({ error: skuError.message }, { status: 500 });
     }
 
-    // Create inventory_levels rows for the store location so the checkout RPC
-    // can reserve stock (it reads inventory_levels, not skus.stock_quantity).
     // Looked up by type, not a hardcoded name: migration 020 renamed the only
-    // location from "Main Warehouse" to "CBD Store", and this lookup was
-    // never updated to match — every product created since then silently
-    // got no inventory_levels row at all, so it displayed as in stock but
-    // failed at actual checkout with "item not found".
+    // location from "Main Warehouse" to "CBD Store", and a stale lookup by
+    // that old name was what caused newly added stock to display as in
+    // stock while being unbuyable at actual checkout.
     if (insertedSkus && insertedSkus.length > 0) {
       const { data: warehouse } = await supabase
         .from("locations")
@@ -141,10 +148,13 @@ export async function POST(request: NextRequest) {
         .single();
 
       if (warehouse) {
-        const levelRows = insertedSkus.map((s) => ({
+        // A single multi-row insert with no ON CONFLICT returns rows in the
+        // same order they were given, so zipping by index against the
+        // original input is safe here.
+        const levelRows = insertedSkus.map((s, i) => ({
           sku_id: s.id,
           location_id: warehouse.id,
-          quantity: s.stock_quantity,
+          quantity: Number(inputRows[i]?.stock_quantity ?? 0),
         }));
         await supabase.from("inventory_levels").upsert(levelRows, {
           onConflict: "sku_id,location_id",
