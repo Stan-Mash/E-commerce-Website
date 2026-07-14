@@ -3,6 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useState, useEffect, useCallback } from "react";
+import { compareSizes } from "@/lib/sizeGuide";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -163,7 +164,7 @@ export function ProductsClient({ products, activeCategory }: ProductsClientProps
   // Build facet options from the category set.
   const allSizes = [
     ...new Set(inCategory.flatMap((p) => p.skus?.map((s) => s.size) ?? [])),
-  ].filter(Boolean).sort();
+  ].filter(Boolean).sort(compareSizes);
   const allColors = [
     ...new Set(
       inCategory.flatMap((p) => p.skus?.map((s) => s.color).filter(Boolean) ?? [])

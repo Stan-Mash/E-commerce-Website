@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useCart } from "@/components/checkout/CartProvider";
+import { compareSizes } from "@/lib/sizeGuide";
 
 interface Sku {
   id: string;
@@ -27,7 +28,7 @@ export function AddToBag({ productId, productName, imageUrl, skus }: Props) {
   const [adding, setAdding]   = useState(false);
   const [added,  setAdded]    = useState(false);
 
-  const sizes      = [...new Set(skus.map((s) => s.size).filter(Boolean))];
+  const sizes      = [...new Set(skus.map((s) => s.size).filter((s): s is string => Boolean(s)))].sort(compareSizes);
   const selectedSku = skus.find((s) => s.id === selectedSkuId);
   const isOutOfStock = selectedSku ? selectedSku.stock_quantity === 0 : false;
 

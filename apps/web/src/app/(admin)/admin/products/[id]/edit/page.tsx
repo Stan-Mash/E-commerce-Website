@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import MultiImageUploader from "@/components/admin/MultiImageUploader";
+import { SIZE_SUGGESTIONS } from "@/lib/sizeGuide";
 
 const INPUT_STYLE: React.CSSProperties = {
   display: "block",
@@ -530,7 +531,7 @@ export default function EditProductPage({ params }: Props) {
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(110px, 1fr))", gap: 14 }}>
                   <div>
                     <label style={{ ...LABEL_STYLE, marginBottom: 4 }}>Size</label>
-                    <input type="text" value={sku.size} onChange={(e) => updateSku(index, "size", e.target.value)} style={{ ...INPUT_STYLE, padding: "8px 12px", fontSize: 13 }} placeholder="S / M / L" />
+                    <input type="text" value={sku.size} onChange={(e) => updateSku(index, "size", e.target.value)} style={{ ...INPUT_STYLE, padding: "8px 12px", fontSize: 13 }} placeholder="S / M / L" list="size-suggestions" />
                   </div>
                   <div>
                     <label style={{ ...LABEL_STYLE, marginBottom: 4 }}>Colour</label>
@@ -594,6 +595,15 @@ export default function EditProductPage({ params }: Props) {
           </div>
         </div>
       </form>
+
+      {/* Autocomplete suggestions for the Size field above — still a free-text
+          input (custom sizes are fine), this just makes it fast to pick a
+          standard size and keeps the spelling consistent, so the storefront's
+          size filter doesn't end up with near-duplicates like "5xl" and "5XL"
+          for the same real size. */}
+      <datalist id="size-suggestions">
+        {SIZE_SUGGESTIONS.map((s) => <option key={s} value={s} />)}
+      </datalist>
     </div>
   );
 }

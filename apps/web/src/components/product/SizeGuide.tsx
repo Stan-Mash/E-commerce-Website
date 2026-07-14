@@ -2,23 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
-
-const ADULT_SIZES = [
-  { size: "XS", chest: 82, waist: 62, hips: 88, height: "155–160" },
-  { size: "S",  chest: 86, waist: 66, hips: 92, height: "160–165" },
-  { size: "M",  chest: 90, waist: 70, hips: 96, height: "165–170" },
-  { size: "L",  chest: 95, waist: 75, hips: 101, height: "170–175" },
-  { size: "XL", chest: 100, waist: 80, hips: 106, height: "175–180" },
-  { size: "XXL", chest: 106, waist: 86, hips: 112, height: "180+" },
-] as const;
-
-const KIDS_SIZES = [
-  { size: "2Y",  chest: 52, waist: 51, hips: 55, height: "86–92" },
-  { size: "4Y",  chest: 56, waist: 53, hips: 59, height: "98–104" },
-  { size: "6Y",  chest: 60, waist: 55, hips: 63, height: "110–116" },
-  { size: "8Y",  chest: 64, waist: 58, hips: 67, height: "122–128" },
-  { size: "10Y", chest: 68, waist: 61, hips: 72, height: "134–140" },
-] as const;
+import { ADULT_SIZES, KIDS_SIZES } from "@/lib/sizeGuide";
 
 type Tab = "adults" | "kids";
 

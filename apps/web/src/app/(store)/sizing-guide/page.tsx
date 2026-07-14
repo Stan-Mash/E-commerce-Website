@@ -1,25 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { SUPPORT_WHATSAPP_LINK, SUPPORT_EMAIL } from "@/lib/supportConfig";
+import { ADULT_SIZES, KIDS_SIZES } from "@/lib/sizeGuide";
 
 export const metadata: Metadata = { title: "Sizing Guide | Elite Style Co." };
-
-const ADULT_SIZES = [
-  { size: "XS",  chest: 82,  waist: 62, hips: 88,  height: "155–160" },
-  { size: "S",   chest: 86,  waist: 66, hips: 92,  height: "160–165" },
-  { size: "M",   chest: 90,  waist: 70, hips: 96,  height: "165–170" },
-  { size: "L",   chest: 95,  waist: 75, hips: 101, height: "170–175" },
-  { size: "XL",  chest: 100, waist: 80, hips: 106, height: "175–180" },
-  { size: "XXL", chest: 106, waist: 86, hips: 112, height: "180+" },
-];
-
-const KIDS_SIZES = [
-  { size: "2Y",  chest: 52, waist: 51, hips: 55, height: "86–92" },
-  { size: "4Y",  chest: 56, waist: 53, hips: 59, height: "98–104" },
-  { size: "6Y",  chest: 60, waist: 55, hips: 63, height: "110–116" },
-  { size: "8Y",  chest: 64, waist: 58, hips: 67, height: "122–128" },
-  { size: "10Y", chest: 68, waist: 61, hips: 72, height: "134–140" },
-];
 
 const TH: React.CSSProperties = {
   background: "#f8f7f5",

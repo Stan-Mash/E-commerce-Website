@@ -4,6 +4,7 @@ import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import MultiImageUploader from "@/components/admin/MultiImageUploader";
+import { SIZE_SUGGESTIONS } from "@/lib/sizeGuide";
 
 const INPUT_STYLE: React.CSSProperties = {
   display: "block",
@@ -647,6 +648,7 @@ export default function NewProductPage() {
                     onChange={(e) => updateSku(index, "size", e.target.value)}
                     style={{ ...INPUT_STYLE, padding: "8px 12px", fontSize: 13 }}
                     placeholder="S / M / L / 2Y"
+                    list="size-suggestions"
                   />
                 </div>
                 <div>
@@ -729,6 +731,15 @@ export default function NewProductPage() {
           </Link>
         </div>
       </form>
+
+      {/* Autocomplete suggestions for the Size field above — still a free-text
+          input (custom sizes are fine), this just makes it fast to pick a
+          standard size and keeps the spelling consistent, so the storefront's
+          size filter doesn't end up with near-duplicates like "5xl" and "5XL"
+          for the same real size. */}
+      <datalist id="size-suggestions">
+        {SIZE_SUGGESTIONS.map((s) => <option key={s} value={s} />)}
+      </datalist>
     </div>
   );
 }
