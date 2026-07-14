@@ -817,7 +817,7 @@ export default function POSPage() {
   // Held carts drawer
   const HeldDrawer = () => (
     <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)", display: "flex", justifyContent: "flex-end", zIndex: 150 }} onClick={() => setShowHeld(false)}>
-      <div style={{ width: 360, background: "#fff", height: "100%", overflowY: "auto", padding: 28, boxShadow: "-8px 0 40px rgba(0,0,0,0.12)" }} onClick={e => e.stopPropagation()}>
+      <div style={{ width: 360, maxWidth: "100%", background: "#fff", height: "100%", overflowY: "auto", padding: 28, boxShadow: "-8px 0 40px rgba(0,0,0,0.12)" }} onClick={e => e.stopPropagation()}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
           <h3 style={{ fontFamily: FONT, fontSize: 16, fontWeight: 800, color: "#111", margin: 0 }}>
             Held ({heldCarts.length})
@@ -1000,10 +1000,10 @@ export default function POSPage() {
         </div>
       )}
 
-      <div style={{ display: "flex", gap: 20, alignItems: "start" }}>
+      <div style={{ display: "flex", gap: 20, alignItems: "start", flexWrap: "wrap" }}>
 
         {/* Product browser */}
-        <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ flex: 1, minWidth: 280 }}>
           {/* Search */}
           <div style={{ position: "relative", marginBottom: 12 }}>
             <svg style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", pointerEvents: "none" }} width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#bbb" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
@@ -1093,7 +1093,7 @@ export default function POSPage() {
         </div>
 
         {/* Cart panel */}
-        <div style={{ width: 370, flexShrink: 0, background: "#fff", borderRadius: 10, padding: 22, border: "1px solid #e8e8e8", position: "sticky", top: 20 }}>
+        <div style={{ width: 370, maxWidth: "100%", flexShrink: 0, background: "#fff", borderRadius: 10, padding: 22, border: "1px solid #e8e8e8", position: "sticky", top: 20 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
             <p style={{ fontFamily: FONT, fontSize: 10, letterSpacing: "0.3em", textTransform: "uppercase", color: "#888", margin: 0 }}>
               Cart ({cart.length})
