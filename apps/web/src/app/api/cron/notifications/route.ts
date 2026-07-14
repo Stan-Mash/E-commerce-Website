@@ -91,6 +91,15 @@ export async function GET(req: NextRequest) {
   // 0. Enqueue abandoned-cart reminders for orders left unpaid.
   await enqueueCartReminders(supabase);
 
+  // 0a. Release stock reserved by checkouts that never resolved. checkout_and_
+  // reserve_stock decrements stock the moment an order is created (mpesa STK,
+  // card, or BNPL) — stock is only restored by an explicit "failed" webhook.
+  // A customer who lets an STK prompt time out, closes the tab on a card
+  // redirect, or a webhook that never arrives (secret rotated, transient
+  // outage) leaves that order in pending_payment forever, with its stock
+  // gone for good. Nothing else in this codebase ever revisits it.
+  await releaseStaleReservations(supabase);
+
   // 0b. Embed any new product images for visual search (no-op without JINA_API_KEY).
   try {
     const sweep = await sweepImageEmbeddings(supabase, 20);
@@ -292,6 +301,69 @@ async function enqueueCartReminders(
     }
   } catch (e) {
     console.warn("[notifications-cron] cart reminder enqueue failed:", (e as Error).message);
+  }
+}
+
+// Mark orders that have sat in pending_payment for over 2 hours as
+// payment_failed and give their reserved stock back — same restoration path
+// the mpesa/flutterwave webhooks use on an explicit failure. 2 hours is far
+// beyond any real STK, card-redirect, or BNPL completion time, so anything
+// still pending_payment past that point is a checkout that never resolved
+// (timed-out STK prompt, abandoned card redirect, or a webhook that never
+// arrived) rather than one still legitimately in progress. Best-effort;
+// never throws — a failure here must not break the rest of the cron run.
+async function releaseStaleReservations(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  supabase: any
+): Promise<void> {
+  try {
+    const cutoff = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString();
+
+    const { data: expired } = await supabase
+      .from("orders")
+      .select("id")
+      .eq("status", "pending_payment")
+      .lte("created_at", cutoff)
+      .limit(50);
+
+    if (!expired || expired.length === 0) return;
+
+    for (const order of expired as Array<{ id: string }>) {
+      // Claim the order by flipping its status FIRST, conditioned on it
+      // still being pending_payment, before touching any stock. If a
+      // very-late webhook resolved this exact order in the moments between
+      // the select above and this update, the conditional update affects
+      // zero rows and .select() returns empty — skip restoring stock for it
+      // rather than double-crediting on top of whatever the webhook already
+      // did. This is the same claim-before-act shape as claim_notification_
+      // jobs (SKIP LOCKED) elsewhere in this codebase, applied without a
+      // dedicated RPC since a single conditional UPDATE is enough here.
+      const { data: claimed } = await supabase
+        .from("orders")
+        .update({ status: "payment_failed" })
+        .eq("id", order.id)
+        .eq("status", "pending_payment")
+        .select("id");
+
+      if (!claimed || claimed.length === 0) continue;
+
+      const { data: items } = await supabase
+        .from("order_items")
+        .select("sku_id, quantity")
+        .eq("order_id", order.id);
+
+      for (const item of (items ?? []) as Array<{ sku_id: string; quantity: number }>) {
+        await supabase.rpc("increment_sku_stock", { p_sku_id: item.sku_id, p_delta: item.quantity });
+        await supabase.from("inventory_log").insert({
+          sku_id: item.sku_id,
+          delta: item.quantity, // positive = stock returned
+          reason: "reservation_expired",
+          reference: order.id,
+        });
+      }
+    }
+  } catch (e) {
+    console.warn("[notifications-cron] stale reservation release failed:", (e as Error).message);
   }
 }
 
