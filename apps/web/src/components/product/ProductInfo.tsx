@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { useCart } from "@/components/checkout/CartProvider";
 import { formatKES } from "@/lib/utils";
 import { SizeGuide } from "@/components/product/SizeGuide";
+import { compareSizes } from "@/lib/sizeGuide";
 import type { ProductDetail } from "@nairobi-fashion/lib";
 
 const LOW_STOCK_THRESHOLD = 5;
@@ -25,8 +26,31 @@ interface Props {
 
 export function ProductInfo({ product }: Props) {
   const { addItem, openCart } = useCart();
-  const [selectedSize, setSelectedSize] = useState<string | null>(null);
-  const [selectedColor, setSelectedColor] = useState<string | null>(null);
+
+  // Computed once from `product`, which doesn't change after this page loads
+  // — safe to derive before state and reuse for the initial selection below.
+  const uniqueSizes = [...new Set(product.skus?.map((s) => s.size) ?? [])].sort(compareSizes);
+  const uniqueColors = [
+    ...new Map(
+      (product.skus ?? [])
+        .filter((s) => s.color)
+        .map((s) => [s.color, { color: s.color!, colorHex: s.color_hex }])
+    ).values(),
+  ];
+
+  // Auto-select when there's only one real choice ("One Size", a single
+  // colourway) instead of forcing a click on a selector with nothing to
+  // actually choose between. Previously every product required an explicit
+  // click on size *and* colour before Add to Bag would work, even when only
+  // one option existed for each — easy to miss the colour swatch entirely on
+  // a single-colour item, which silently blocked checkout with "Please
+  // select a colour" for a colour that was never actually a choice.
+  const [selectedSize, setSelectedSize] = useState<string | null>(
+    uniqueSizes.length === 1 ? uniqueSizes[0] ?? null : null
+  );
+  const [selectedColor, setSelectedColor] = useState<string | null>(
+    uniqueColors.length === 1 ? uniqueColors[0]?.color ?? null : null
+  );
   const [adding, setAdding] = useState(false);
   const [addedMessage, setAddedMessage] = useState("");
   const [wishlisted, setWishlisted] = useState(false);
@@ -56,15 +80,6 @@ export function ProductInfo({ product }: Props) {
       });
     }
   }
-
-  const uniqueSizes = [...new Set(product.skus?.map((s) => s.size) ?? [])];
-  const uniqueColors = [
-    ...new Map(
-      (product.skus ?? [])
-        .filter((s) => s.color)
-        .map((s) => [s.color, { color: s.color!, colorHex: s.color_hex }])
-    ).values(),
-  ];
 
   const selectedSku = product.skus?.find(
     (s) =>
