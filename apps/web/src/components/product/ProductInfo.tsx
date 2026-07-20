@@ -9,6 +9,9 @@ import { SizeGuide } from "@/components/product/SizeGuide";
 import { compareSizes } from "@/lib/sizeGuide";
 import { trackViewItem, trackAddToCart } from "@/lib/analytics";
 import { recordRecentlyViewed } from "@/components/product/RecentlyViewed";
+import { AskStylist } from "@/components/product/AskStylist";
+import { TryOnModal } from "@/components/product/TryOnModal";
+import { isCategoryEligibleForTryOn } from "@/lib/tryon/provider";
 import type { ProductDetail } from "@nairobi-fashion/lib";
 
 const LOW_STOCK_THRESHOLD = 5;
@@ -24,10 +27,12 @@ function writeWishlist(ids: string[]) {
 
 interface Props {
   product: ProductDetail;
+  tryOnEnabled?: boolean;
 }
 
-export function ProductInfo({ product }: Props) {
+export function ProductInfo({ product, tryOnEnabled = false }: Props) {
   const { addItem, openCart } = useCart();
+  const [tryOnOpen, setTryOnOpen] = useState(false);
 
   // Computed once from `product`, which doesn't change after this page loads
   // — safe to derive before state and reuse for the initial selection below.
@@ -326,6 +331,23 @@ export function ProductInfo({ product }: Props) {
         >
           {copied ? <Check size={20} /> : <Share2 size={20} />}
         </button>
+      </div>
+
+      {tryOnEnabled && isCategoryEligibleForTryOn(product.category) && (
+        <button
+          type="button"
+          onClick={() => setTryOnOpen(true)}
+          className="inline-flex items-center justify-center gap-2 es-btn-outline-ink w-full"
+        >
+          See it on you ✨
+        </button>
+      )}
+      {tryOnOpen && (
+        <TryOnModal productId={product.id} productName={product.name} onClose={() => setTryOnOpen(false)} />
+      )}
+
+      <div className="pt-2">
+        <AskStylist productId={product.id} />
       </div>
 
       {addedMessage && (

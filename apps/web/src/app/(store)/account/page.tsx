@@ -118,7 +118,41 @@ export default function AccountPage() {
             ))}
           </div>
         )}
+
+        <PrivacySettings />
       </div>
     </main>
+  );
+}
+
+function PrivacySettings() {
+  const [status, setStatus] = useState<"idle" | "deleting" | "done">("idle");
+
+  async function deletePhotos() {
+    setStatus("deleting");
+    try {
+      await fetch("/api/tryon/delete-my-photos", { method: "POST" });
+    } catch {
+      // best-effort — the 24h cleanup cron is the backstop either way
+    } finally {
+      setStatus("done");
+    }
+  }
+
+  return (
+    <div className="mt-14 pt-10 border-t border-es-bone">
+      <p className="mb-2 text-[11px] tracking-[.3em] uppercase text-es-mute">Privacy</p>
+      <p className="text-[13px] text-es-mute mb-4 max-w-md">
+        If you&apos;ve used &ldquo;See it on you&rdquo; try-on, your photos are auto-deleted within
+        24 hours. You can also delete them immediately.
+      </p>
+      <button
+        onClick={() => void deletePhotos()}
+        disabled={status !== "idle"}
+        className="es-btn-outline-ink text-[11px] tracking-[.2em] uppercase"
+      >
+        {status === "done" ? "Photos deleted" : status === "deleting" ? "Deleting…" : "Delete my try-on photos now"}
+      </button>
+    </div>
   );
 }

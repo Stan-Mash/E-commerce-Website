@@ -62,6 +62,37 @@ export default function LegalPage() {
           </p>
         </section>
 
+        {/* Try-On & Your Photos */}
+        <section style={SECTION_STYLE}>
+          <h2 style={H2_STYLE}>Try-On &amp; Your Photos</h2>
+          <p style={P_STYLE}>
+            Our optional &ldquo;See it on you&rdquo; feature lets you upload a photo of yourself to
+            preview how a garment might look on you. This is entirely optional and requires your
+            explicit consent before your first upload.
+          </p>
+          <p style={P_STYLE}>
+            <strong>What&apos;s processed:</strong> Your photo is sent to a third-party AI image
+            provider to generate the preview. It is stored temporarily in a private, access-controlled
+            location — never in the same place as our public product photos.
+          </p>
+          <p style={P_STYLE}>
+            <strong>Retention:</strong> Uploaded photos and generated results are automatically
+            deleted within 24 hours. You can also delete them immediately at any time from your
+            account settings.
+          </p>
+          <p style={P_STYLE}>
+            <strong>What we don&apos;t do:</strong> We never use your try-on photos for marketing,
+            model training, or any purpose beyond generating your requested preview. Results are
+            labelled &ldquo;AI preview — style visualisation, not an exact fit guarantee.&rdquo;
+          </p>
+          <p style={P_STYLE}>
+            This processing is carried out under the Kenya Data Protection Act, 2019. You may
+            withdraw consent, or request deletion of any retained data, at any time by contacting us
+            at{" "}
+            <a href={`mailto:${SUPPORT_EMAIL}`} style={{ color: "var(--es-ink)" }}>{SUPPORT_EMAIL}</a>.
+          </p>
+        </section>
+
         {/* Terms of Service */}
         <section style={SECTION_STYLE}>
           <h2 style={H2_STYLE}>Terms of Service</h2>

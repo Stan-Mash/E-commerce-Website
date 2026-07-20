@@ -7,6 +7,7 @@ import { ProductBreadcrumb } from "@/components/product/ProductBreadcrumb";
 import { RelatedProducts } from "@/components/product/RelatedProducts";
 import { ProductReviews } from "@/components/product/ProductReviews";
 import { RecentlyViewed } from "@/components/product/RecentlyViewed";
+import { isTryOnConfigured } from "@/lib/tryon/provider";
 import type { ProductDetail } from "@nairobi-fashion/lib";
 import { absoluteUrl } from "@/lib/site";
 
@@ -148,7 +149,7 @@ export default async function ProductPage({ params }: Props) {
             videos={product.product_videos ?? []}
             productName={product.name}
           />
-          <ProductInfo product={product} />
+          <ProductInfo product={product} tryOnEnabled={isTryOnConfigured()} />
         </div>
         {product.status !== "coming_soon" && (
           <Suspense fallback={null}>

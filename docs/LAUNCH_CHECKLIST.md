@@ -65,15 +65,55 @@ See `docs/MARKETING_SETUP.md` for the full walkthrough. Feed URLs:
       has no product identifiers, which can limit Shopping ad performance
       for apparel (not a hard validation blocker today).
 
-## AI features (Phase 3 — code is scaffolded, not yet enabled)
+## AI features (Phase 3)
 
-- [ ] FASHN API account + billing (fashn.ai) for virtual try-on and the
-      admin AI Catalog Studio — set `FASHN_API_KEY`, then flip
-      `TRYON_ENABLED=true`.
-- [ ] Anthropic API key (console.anthropic.com) for the "Ask the Stylist"
-      chat — set `ANTHROPIC_API_KEY`.
-- [ ] Both are hard-gated by env vars / feature flags and stay completely
-      inert (no UI, no cost) until you set them.
+**AI Stylist chat — built, ready to enable.**
+- [ ] Get an Anthropic API key at console.anthropic.com, set
+      `ANTHROPIC_API_KEY`. Calls the Messages API directly (no SDK), model
+      configurable via `ANTHROPIC_MODEL` (defaults to `claude-sonnet-5`).
+      Rate-limited 20 msgs/day per session+IP, only recommends real in-stock
+      catalog items, no order data access. Fully inert (503 response) until
+      the key is set — safe to deploy as-is.
+
+**Virtual Try-On ("See it on you") — built, needs a smoke test before enabling.**
+- [ ] Get a FASHN API account + billing (fashn.ai), set `FASHN_API_KEY`
+      AND `TRYON_ENABLED=true` (both required — it's an explicit opt-in
+      given this processes photos of real people, not just a missing-key
+      no-op).
+- [ ] **Important:** the FASHN integration (`apps/web/src/lib/tryon/provider.ts`)
+      was written against FASHN's documented API contract but has not been
+      tested against a live account — there was no API key available while
+      building it. Before enabling in production: run one real try-on,
+      confirm the job-start/status-poll shape matches what FASHN actually
+      returns, and fix `provider.ts` if their contract has drifted from
+      what's implemented (the interface is designed so only this one file
+      needs to change).
+- [ ] Once you've run a real try-on, check what domain FASHN's returned
+      result-image URL is on, and add it to the `img-src` CSP directive in
+      `apps/web/next.config.js` — otherwise the browser will silently
+      refuse to load the result image even though generation succeeded.
+- [ ] The private `tryon-uploads` Storage bucket is created automatically
+      on first upload (same lazy-create pattern as `product-images`) — no
+      manual bucket setup needed.
+- [ ] Free-tier limit is 2 try-ons per anonymous session, enforced
+      server-side. Note: the original spec called for "2 free, then 10/day
+      per account," but this codebase has no customer account/login system
+      (only phone+order-ref lookup) — there's nothing to escalate to, so
+      it's a flat per-session cap for now.
+- [ ] A daily cleanup cron (`/api/cron/tryon-cleanup`, added to
+      `vercel.json`) deletes uploads/results past 24h. If this project is
+      on a Vercel plan that doesn't support 2 cron jobs, this is the one to
+      drop or merge with `/api/cron/notifications` — the "delete my photos
+      now" button and the 24h `expires_at` column are the actual compliance
+      backstops either way.
+
+**AI Catalog Studio (admin product-to-model tool) — not built.**
+- [ ] Explicitly out of scope for this pass — building it blind (no FASHN
+      account to test the product-to-model endpoint against) risked
+      shipping a broken admin tool. The provider interface has room for a
+      second method if you want to add this later; the try-on work above
+      should be smoke-tested first since it exercises the same FASHN
+      account/auth.
 
 ## Already-existing gaps worth knowing about (not blocking, not fixed here)
 
