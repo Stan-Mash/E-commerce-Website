@@ -44,7 +44,10 @@ export function Hero({ productCount }: HeroProps = {}) {
       <div className="grid grid-cols-1 md:grid-cols-2 min-h-[88vh]">
 
         {/* Image panel */}
-        <div className="relative overflow-hidden bg-es-bone order-first min-h-[60vw] md:min-h-0">
+        {/* Source photo is a 3:4 portrait crop (1205x1600). On mobile the
+            panel height must track that ratio, not a shorter arbitrary vh
+            value, or object-cover crops off the model's head/body. */}
+        <div className="relative overflow-hidden bg-es-bone order-first aspect-[3/4] md:aspect-auto md:min-h-0">
           {/* LCP element: priority disables lazy-loading and preloads it */}
           <Image
             src="/products/tweed-set-black-white.jpg"
