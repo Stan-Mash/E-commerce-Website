@@ -569,7 +569,10 @@ export default function CustomersPage() {
           position: "fixed",
           top: 0,
           right: 0,
-          width: 380,
+          // Uncapped 380px ran off the left edge on any phone narrower than
+          // that (i.e. almost all of them) since right:0 pins the panel to
+          // the viewport edge regardless of how much space is left.
+          width: "min(380px, 100vw)",
           height: "100vh",
           background: "#ffffff",
           boxShadow: "-4px 0 24px rgba(0, 0, 0, 0.12)",
@@ -762,9 +765,8 @@ export default function CustomersPage() {
                 </p>
 
                 <div
+                  className="grid grid-cols-2"
                   style={{
-                    display: "grid",
-                    gridTemplateColumns: "1fr 1fr",
                     gap: 16,
                     marginBottom: 16,
                   }}

@@ -111,7 +111,10 @@ export default function FinanceDashboardPage() {
             </div>
 
             {/* P&L waterfall */}
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, marginBottom: 24 }}>
+            <div
+              className="grid grid-cols-1 lg:grid-cols-2"
+              style={{ gap: 20, marginBottom: 24 }}
+            >
               {/* Summary */}
               <div style={{ background: "#fff", borderRadius: 10, padding: 24, border: "1px solid #e8e8e8" }}>
                 <h2 style={{ fontFamily: FONT, fontSize: 15, fontWeight: 800, color: "#111", margin: "0 0 20px" }}>P&amp;L Summary — {report.month}</h2>

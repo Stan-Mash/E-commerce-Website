@@ -472,7 +472,13 @@ export default function OrderDetailPage({ params }: Props) {
             </p>
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 340px", gap: 32, alignItems: "start" }}>
+          {/* Inline gridTemplateColumns can't take a media query — the fixed
+              340px sidebar column left almost no room for the order-items
+              column on mobile, forcing the whole page to scroll sideways. */}
+          <div
+            className="grid grid-cols-1 lg:grid-cols-[1fr_340px]"
+            style={{ gap: 32, alignItems: "start" }}
+          >
             {/* Left: order items */}
             <div>
               <div

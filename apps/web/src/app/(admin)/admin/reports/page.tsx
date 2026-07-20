@@ -515,7 +515,7 @@ export default function ReportsPage() {
           {/* ---------------------------------------------------------------- */}
           {/* Orders by status + Top products (2-col)                          */}
           {/* ---------------------------------------------------------------- */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 32 }}>
+          <div className="grid grid-cols-1 lg:grid-cols-2" style={{ gap: 32 }}>
 
             {/* Orders by status */}
             <section>
