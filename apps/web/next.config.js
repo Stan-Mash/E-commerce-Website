@@ -5,17 +5,22 @@ const withPWA = require("next-pwa")({
   disable: process.env.NODE_ENV === "development",
   register: true,
   skipWaiting: true,
+  fallbacks: {
+    document: "/offline",
+  },
   runtimeCaching: [
     {
       // Admin routes must NEVER be served from SW cache — always go to network
       // so authentication (cookies, middleware redirects) works correctly.
       urlPattern: /\/admin(\/|$)/,
       handler: "NetworkOnly",
+      options: {},
     },
     {
       // Admin API routes — also never cache
       urlPattern: /\/api\/admin\//,
       handler: "NetworkOnly",
+      options: {},
     },
     {
       // App shell — cache first
@@ -76,12 +81,16 @@ const nextConfig = {
             key: "Content-Security-Policy",
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-eval' 'unsafe-inline'",
+              // Analytics/marketing pixels (GTM, GA4, Meta, TikTok) only ever load
+              // client-side after consent is granted (see AnalyticsScripts.tsx),
+              // but the CSP still has to allow their origins or the browser blocks
+              // the script tag outright regardless of consent state.
+              "script-src 'self' 'unsafe-eval' 'unsafe-inline' www.googletagmanager.com www.google-analytics.com connect.facebook.net analytics.tiktok.com",
               "style-src 'self' 'unsafe-inline' fonts.googleapis.com",
               "font-src 'self' fonts.gstatic.com",
-              "img-src 'self' data: blob: res.cloudinary.com images.unsplash.com *.supabase.co",
+              "img-src 'self' data: blob: res.cloudinary.com images.unsplash.com *.supabase.co www.facebook.com",
               "media-src 'self' blob: res.cloudinary.com *.supabase.co",
-              "connect-src 'self' *.supabase.co *.sentry.io https://api.resend.com",
+              "connect-src 'self' *.supabase.co *.sentry.io https://api.resend.com www.googletagmanager.com www.google-analytics.com analytics.google.com connect.facebook.net analytics.tiktok.com",
               "frame-ancestors 'none'",
             ].join("; "),
           },

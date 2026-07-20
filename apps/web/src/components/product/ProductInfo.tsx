@@ -8,6 +8,7 @@ import { formatKES } from "@/lib/utils";
 import { SizeGuide } from "@/components/product/SizeGuide";
 import { compareSizes } from "@/lib/sizeGuide";
 import { trackViewItem, trackAddToCart } from "@/lib/analytics";
+import { recordRecentlyViewed } from "@/components/product/RecentlyViewed";
 import type { ProductDetail } from "@nairobi-fashion/lib";
 
 const LOW_STOCK_THRESHOLD = 5;
@@ -67,6 +68,13 @@ export function ProductInfo({ product }: Props) {
       item_name: product.name,
       price: product.base_price,
       item_category: product.category,
+    });
+    recordRecentlyViewed({
+      id: product.id,
+      slug: product.slug,
+      name: product.name,
+      price: product.base_price,
+      imageUrl: product.product_images?.[0]?.url ?? null,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [product.id]);

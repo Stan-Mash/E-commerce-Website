@@ -123,6 +123,9 @@ export default async function ChildrenPage() {
               const hasCompare =
                 product.compare_price && product.compare_price > product.base_price;
               const gradient = GRADIENTS[index % GRADIENTS.length];
+              const stock = product.skus.reduce((sum, s) => sum + (s.stock_quantity ?? 0), 0);
+              const soldOut = stock <= 0;
+              const lowStock = stock > 0 && stock <= 5;
 
               return (
                 <Link
@@ -133,6 +136,14 @@ export default async function ChildrenPage() {
                 >
                   <div className="relative w-full overflow-hidden bg-es-bone mb-3">
                     <div style={{ paddingBottom: "125%" }} />
+                    {(soldOut || lowStock) && (
+                      <span
+                        className="absolute top-2.5 left-2.5 z-10 text-white text-[9px] font-extrabold uppercase tracking-wide px-2 py-1"
+                        style={{ background: soldOut ? "#555" : "#c0392b" }}
+                      >
+                        {soldOut ? "Sold out" : `Only ${stock} left`}
+                      </span>
+                    )}
                     {primaryImage ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img

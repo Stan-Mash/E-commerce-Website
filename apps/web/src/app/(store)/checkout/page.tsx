@@ -296,6 +296,27 @@ export default function CheckoutPage() {
               Choose your delivery option and payment method below.
             </p>
 
+            {/* Contact — captured first so we can reach you even if payment doesn't complete */}
+            <div style={{ marginBottom: 36 }}>
+              <p style={LABEL}>Phone Number</p>
+              <input type="tel" value={phone} onChange={(e) => { setPhone(e.target.value); if (phoneError) setPhoneError(""); }}
+                placeholder="+254 7XX XXX XXX" disabled={waiting}
+                style={{ display: "block", width: "100%", fontSize: 18, fontFamily: "var(--font-inter)", padding: "14px 0", border: "none", borderBottom: phoneError ? "1px solid #c0392b" : "1px solid var(--es-ink)", background: "transparent", color: "var(--es-ink)", outline: "none" }} />
+              {phoneError && <p style={ERR}>{phoneError}</p>}
+            </div>
+
+            <div style={{ marginBottom: 36 }}>
+              <p style={LABEL}>Email <span style={{ textTransform: "none", letterSpacing: 0, color: "var(--es-faint)" }}>(optional, for a receipt)</span></p>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@example.com"
+                disabled={waiting}
+                style={{ display: "block", width: "100%", fontSize: 18, fontFamily: "var(--font-inter)", padding: "14px 0", border: "none", borderBottom: "1px solid var(--es-ink)", background: "transparent", color: "var(--es-ink)", outline: "none" }}
+              />
+            </div>
+
             {/* Delivery */}
             <div style={{ marginBottom: 36 }}>
               <p style={LABEL}>Delivery Option</p>
@@ -363,30 +384,6 @@ export default function CheckoutPage() {
                   );
                 })}
               </div>
-            </div>
-
-            {/* Phone (not needed for card; FW collects it) */}
-            {method !== "card" && (
-              <div style={{ marginBottom: 36 }}>
-                <p style={LABEL}>Safaricom Number</p>
-                <input type="tel" value={phone} onChange={(e) => { setPhone(e.target.value); if (phoneError) setPhoneError(""); }}
-                  placeholder="+254 7XX XXX XXX" disabled={waiting}
-                  style={{ display: "block", width: "100%", fontSize: 18, fontFamily: "var(--font-inter)", padding: "14px 0", border: "none", borderBottom: phoneError ? "1px solid #c0392b" : "1px solid var(--es-ink)", background: "transparent", color: "var(--es-ink)", outline: "none" }} />
-                {phoneError && <p style={ERR}>{phoneError}</p>}
-              </div>
-            )}
-
-            {/* Email (optional — for an emailed receipt) */}
-            <div style={{ marginBottom: 36 }}>
-              <p style={LABEL}>Email <span style={{ textTransform: "none", letterSpacing: 0, color: "var(--es-faint)" }}>(optional, for a receipt)</span></p>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@example.com"
-                disabled={waiting}
-                style={{ display: "block", width: "100%", fontSize: 18, fontFamily: "var(--font-inter)", padding: "14px 0", border: "none", borderBottom: "1px solid var(--es-ink)", background: "transparent", color: "var(--es-ink)", outline: "none" }}
-              />
             </div>
 
             {apiError && <div role="alert" style={{ fontSize: 13, color: "#c0392b", background: "#fdf2f2", border: "1px solid #f5c6c6", padding: "12px 16px", marginBottom: 24 }}>{apiError}</div>}
@@ -457,6 +454,7 @@ export default function CheckoutPage() {
                 <span style={{ fontFamily: "var(--font-bodoni)", fontSize: 24, color: "var(--es-ink)" }}>{formatKES(total)}</span>
               </div>
               <MpesaBadge />
+              <TrustStrip />
             </div>
           </aside>
         </div>
@@ -496,6 +494,35 @@ function WaitingState({ message }: { message: string }) {
       </p>
       <p style={{ fontSize: 14, color: "var(--es-mute)" }}>Check your phone and enter your M-Pesa PIN. This page updates automatically.</p>
       <style>{`@keyframes es-spin { to { transform: rotate(360deg); } }`}</style>
+    </div>
+  );
+}
+
+function TrustStrip() {
+  return (
+    <div style={{ marginTop: 20, paddingTop: 20, borderTop: "1px solid var(--es-bone)", display: "flex", flexDirection: "column", gap: 10 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12, color: "var(--es-mute)" }}>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+          <rect x="3" y="11" width="18" height="10" rx="2" />
+          <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+        </svg>
+        Secure checkout — your details are never stored unencrypted.
+      </div>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12, color: "var(--es-mute)" }}>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+          <path d="M3 3h18v6H3z" />
+          <path d="M3 9v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9" />
+          <path d="M3 3l2 6M21 3l-2 6" />
+        </svg>
+        <a href="/returns" style={{ color: "inherit", textDecoration: "underline" }}>14-day returns</a>
+      </div>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12, color: "var(--es-mute)" }}>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+          <path d="M21 10c0 7-9 12-9 12s-9-5-9-12a9 9 0 0 1 18 0z" />
+          <circle cx="12" cy="10" r="3" />
+        </svg>
+        Visit us — Shop 35, Stanbank House, Moi Avenue, Nairobi CBD
+      </div>
     </div>
   );
 }

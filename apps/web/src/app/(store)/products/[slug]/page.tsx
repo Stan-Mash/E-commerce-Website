@@ -6,6 +6,7 @@ import { ProductInfo } from "@/components/product/ProductInfo";
 import { ProductBreadcrumb } from "@/components/product/ProductBreadcrumb";
 import { RelatedProducts } from "@/components/product/RelatedProducts";
 import { ProductReviews } from "@/components/product/ProductReviews";
+import { RecentlyViewed } from "@/components/product/RecentlyViewed";
 import type { ProductDetail } from "@nairobi-fashion/lib";
 import { absoluteUrl } from "@/lib/site";
 
@@ -161,6 +162,7 @@ export default async function ProductPage({ params }: Props) {
           />
         </Suspense>
       </div>
+      <RecentlyViewed excludeProductId={product.id} />
     </>
   );
 }
