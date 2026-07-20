@@ -6,6 +6,7 @@ import { formatKES } from "@/lib/utils";
 export const metadata: Metadata = {
   title: "Coming Soon",
   description: "New arrivals landing soon at Elite Style Co. — bags, shoes, coats and more.",
+  alternates: { canonical: "/coming-soon" },
 };
 
 export const revalidate = 60;

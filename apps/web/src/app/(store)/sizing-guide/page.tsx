@@ -3,7 +3,7 @@ import Link from "next/link";
 import { SUPPORT_WHATSAPP_LINK, SUPPORT_EMAIL } from "@/lib/supportConfig";
 import { ADULT_SIZES, KIDS_SIZES } from "@/lib/sizeGuide";
 
-export const metadata: Metadata = { title: "Sizing Guide | Elite Style Co." };
+export const metadata: Metadata = { title: "Sizing Guide", alternates: { canonical: "/sizing-guide" } };
 
 const TH: React.CSSProperties = {
   background: "#f8f7f5",

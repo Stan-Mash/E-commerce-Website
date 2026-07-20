@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-export const metadata: Metadata = { title: "About Us" };
+export const metadata: Metadata = { title: "About Us", alternates: { canonical: "/atelier" } };
 
 export default function AboutPage() {
   return (

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { SUPPORT_PHONE, SUPPORT_EMAIL } from "@/lib/supportConfig";
 
-export const metadata: Metadata = { title: "Privacy, Terms & Cookies | Elite Style Co." };
+export const metadata: Metadata = { title: "Privacy, Terms & Cookies", alternates: { canonical: "/legal" } };
 
 const SECTION_STYLE: React.CSSProperties = {
   marginBottom: 48,

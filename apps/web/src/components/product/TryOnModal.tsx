@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { X, Sparkles } from "lucide-react";
 import { trackTryOnGenerated } from "@/lib/analytics";
 
@@ -34,6 +34,14 @@ export function TryOnModal({ productId, productName, onClose }: { productId: str
   const [showBefore, setShowBefore] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const startedAtRef = useRef(0);
+
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") onClose();
+    }
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [onClose]);
 
   async function handleFile(file: File) {
     if (!consent) {

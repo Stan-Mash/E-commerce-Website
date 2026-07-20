@@ -4,6 +4,7 @@ import ReturnRequestForm from "@/components/store/ReturnRequestForm";
 
 export const metadata: Metadata = {
   title: "Returns & Exchanges",
+  alternates: { canonical: "/returns" },
 };
 
 const STEPS = [
