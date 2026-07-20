@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import { formatKES } from "@/lib/utils";
+import { trackSearch } from "@/lib/analytics";
 
 // ---------------------------------------------------------------------------
 // Types - mirror the API /api/search response
@@ -72,6 +73,7 @@ export default function SearchPage() {
       const data = await res.json();
       setResults(Array.isArray(data.results) ? data.results : []);
       setSearched(true);
+      trackSearch(trimmed);
     } catch (err) {
       if ((err as Error).name !== "AbortError") {
         setResults([]);

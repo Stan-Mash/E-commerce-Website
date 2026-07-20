@@ -2,26 +2,17 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-
-const KEY = "es_cookie_consent_v1";
+import { readConsent, writeConsent } from "@/lib/consent";
 
 export default function CookieConsent() {
   const [show, setShow] = useState(false);
 
   useEffect(() => {
-    try {
-      if (!localStorage.getItem(KEY)) setShow(true);
-    } catch {
-      // localStorage unavailable — don't block the page
-    }
+    if (readConsent() === null) setShow(true);
   }, []);
 
-  function accept() {
-    try {
-      localStorage.setItem(KEY, new Date().toISOString());
-    } catch {
-      // ignore
-    }
+  function choose(state: "granted" | "denied") {
+    writeConsent(state);
     setShow(false);
   }
 
@@ -51,28 +42,47 @@ export default function CookieConsent() {
       }}
     >
       <p style={{ margin: 0, maxWidth: 640 }}>
-        We use essential cookies and local storage to run the shop (your bag, wishlist) and a little analytics to improve it. See our{" "}
+        We use essential cookies and local storage to run the shop (your bag, wishlist). With your
+        permission we&apos;d also like to use analytics cookies to improve it. See our{" "}
         <Link href="/legal" style={{ color: "#c9a961", textDecoration: "underline" }}>
           Privacy &amp; Cookie Policy
         </Link>
         .
       </p>
-      <button
-        onClick={accept}
-        style={{
-          background: "#fff",
-          color: "#1a1a1a",
-          border: "none",
-          padding: "10px 24px",
-          fontSize: 11,
-          letterSpacing: "0.25em",
-          textTransform: "uppercase",
-          cursor: "pointer",
-          whiteSpace: "nowrap",
-        }}
-      >
-        Got it
-      </button>
+      <div style={{ display: "flex", gap: 10, flexShrink: 0 }}>
+        <button
+          onClick={() => choose("denied")}
+          style={{
+            background: "none",
+            color: "#fff",
+            border: "1px solid rgba(255,255,255,0.4)",
+            padding: "10px 20px",
+            fontSize: 11,
+            letterSpacing: "0.25em",
+            textTransform: "uppercase",
+            cursor: "pointer",
+            whiteSpace: "nowrap",
+          }}
+        >
+          Decline
+        </button>
+        <button
+          onClick={() => choose("granted")}
+          style={{
+            background: "#fff",
+            color: "#1a1a1a",
+            border: "none",
+            padding: "10px 24px",
+            fontSize: 11,
+            letterSpacing: "0.25em",
+            textTransform: "uppercase",
+            cursor: "pointer",
+            whiteSpace: "nowrap",
+          }}
+        >
+          Accept
+        </button>
+      </div>
     </div>
   );
 }

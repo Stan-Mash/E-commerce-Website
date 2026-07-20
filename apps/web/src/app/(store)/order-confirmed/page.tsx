@@ -3,14 +3,22 @@
 import { useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { useCart } from "@/components/checkout/CartProvider";
+import { trackPurchase } from "@/lib/analytics";
 import Link from "next/link";
 
 function OrderConfirmedContent() {
   const searchParams = useSearchParams();
   const ref = searchParams.get("ref") ?? "—";
-  const { clearCart } = useCart();
+  const { items, subtotal, clearCart } = useCart();
 
   useEffect(() => {
+    if (items.length > 0) {
+      trackPurchase(
+        ref,
+        subtotal,
+        items.map((i) => ({ item_id: i.skuId, item_name: i.name, price: i.price, quantity: i.quantity }))
+      );
+    }
     clearCart();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

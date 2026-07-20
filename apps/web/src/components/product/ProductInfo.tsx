@@ -7,6 +7,7 @@ import { useCart } from "@/components/checkout/CartProvider";
 import { formatKES } from "@/lib/utils";
 import { SizeGuide } from "@/components/product/SizeGuide";
 import { compareSizes } from "@/lib/sizeGuide";
+import { trackViewItem, trackAddToCart } from "@/lib/analytics";
 import type { ProductDetail } from "@nairobi-fashion/lib";
 
 const LOW_STOCK_THRESHOLD = 5;
@@ -58,6 +59,16 @@ export function ProductInfo({ product }: Props) {
 
   useEffect(() => {
     setWishlisted(readWishlist().includes(product.id));
+  }, [product.id]);
+
+  useEffect(() => {
+    trackViewItem({
+      item_id: product.id,
+      item_name: product.name,
+      price: product.base_price,
+      item_category: product.category,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [product.id]);
 
   function toggleWishlist() {
@@ -124,6 +135,13 @@ export function ProductInfo({ product }: Props) {
       ...(selectedColor ? { color: selectedColor } : {}),
       imageUrl: product.product_images?.[0]?.url ?? "",
       quantity: 1,
+    });
+    trackAddToCart({
+      item_id: product.id,
+      item_name: product.name,
+      price: product.base_price,
+      quantity: 1,
+      item_category: product.category,
     });
     openCart();
     setAddedMessage("Added to bag!");

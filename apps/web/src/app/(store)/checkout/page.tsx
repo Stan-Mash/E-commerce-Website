@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/components/checkout/CartProvider";
+import { trackBeginCheckout, trackAddPaymentInfo } from "@/lib/analytics";
 
 type DeliveryType = "pickup" | "cbd" | "outside_cbd";
 type PayMethod = "mpesa" | "paybill" | "card" | "bnpl";
@@ -62,6 +63,16 @@ export default function CheckoutPage() {
       .then((r) => r.json())
       .then((d) => setPickupPoints(Array.isArray(d.points) ? d.points : []))
       .catch(() => setPickupPoints([]));
+  }, []);
+
+  useEffect(() => {
+    if (items.length > 0) {
+      trackBeginCheckout(
+        items.map((i) => ({ item_id: i.skuId, item_name: i.name, price: i.price, quantity: i.quantity })),
+        subtotal
+      );
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // A promotion's value can depend on the delivery method/fee, so any change
@@ -167,6 +178,7 @@ export default function CheckoutPage() {
     }
     setApiError("");
     setSubmitting(true);
+    trackAddPaymentInfo(total, method);
     const raw = phone.replace(/\s/g, "");
     const payload = {
       phone: raw || "0700000000",

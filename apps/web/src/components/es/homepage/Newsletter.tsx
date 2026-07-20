@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { AnimateIn } from "@/components/es/AnimateIn";
+import { trackSignUp } from "@/lib/analytics";
 
 const FONT = "'Inter','Urbanist',sans-serif";
 
@@ -29,6 +30,7 @@ export function Newsletter() {
       if (data.ok) {
         setSubmitted(true);
         setCode(data.code ?? null);
+        trackSignUp("newsletter");
       } else {
         setError(data.error ?? "Something went wrong. Please try again.");
       }

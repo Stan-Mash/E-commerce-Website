@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Analytics } from "@vercel/analytics/next";
 import { Inter, Cormorant_Garamond } from "next/font/google";
 import { SITE_URL } from "@/lib/site";
+import { AnalyticsScripts } from "@/components/analytics/AnalyticsScripts";
 import "@/styles/globals.css";
 
 const inter = Inter({
@@ -59,6 +60,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         {children}
         <Analytics />
+        <AnalyticsScripts />
       </body>
     </html>
   );
