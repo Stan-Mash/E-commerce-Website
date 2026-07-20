@@ -53,6 +53,33 @@
   }
 
   video { @apply w-full h-full object-cover; }
+
+  /* On-brand focus ring for keyboard navigation (champagne/gold accent) */
+  a:focus-visible,
+  button:focus-visible,
+  input:focus-visible,
+  textarea:focus-visible,
+  select:focus-visible,
+  [tabindex]:focus-visible {
+    outline: 2px solid var(--es-champagne-dk);
+    outline-offset: 2px;
+  }
+
+  .skip-link {
+    position: absolute;
+    left: -9999px;
+    top: 0;
+    z-index: 100;
+    background: var(--es-ink);
+    color: #fff;
+    padding: 12px 20px;
+    font-size: 13px;
+    text-decoration: none;
+  }
+  .skip-link:focus {
+    left: 12px;
+    top: 12px;
+  }
 }
 
 @layer components {

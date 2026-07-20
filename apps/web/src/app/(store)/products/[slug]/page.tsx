@@ -7,11 +7,31 @@ import { ProductBreadcrumb } from "@/components/product/ProductBreadcrumb";
 import { RelatedProducts } from "@/components/product/RelatedProducts";
 import { ProductReviews } from "@/components/product/ProductReviews";
 import type { ProductDetail } from "@nairobi-fashion/lib";
+import { absoluteUrl } from "@/lib/site";
 
 const PRODUCT_QUERY_TIMEOUT_MS = 8_000;
 
 interface Props {
   params: { slug: string };
+}
+
+async function getReviewSummary(productId: string): Promise<{ count: number; average: number }> {
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL) return { count: 0, average: 0 };
+  try {
+    const { createPublicSupabaseClient } = await import("@/lib/supabase/server");
+    const supabase = createPublicSupabaseClient();
+    const { data } = await supabase
+      .from("product_reviews")
+      .select("rating")
+      .eq("product_id", productId)
+      .eq("is_approved", true);
+    const ratings = data ?? [];
+    const count = ratings.length;
+    const average = count > 0 ? ratings.reduce((s, r) => s + r.rating, 0) / count : 0;
+    return { count, average: Math.round(average * 10) / 10 };
+  } catch {
+    return { count: 0, average: 0 };
+  }
 }
 
 async function getProduct(slug: string): Promise<ProductDetail | null> {
@@ -63,6 +83,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: product.name,
     description: product.description?.slice(0, 160) ?? null,
+    alternates: { canonical: `/products/${product.slug}` },
     openGraph: {
       title: product.name,
       description: product.description?.slice(0, 160) ?? "",
@@ -78,6 +99,9 @@ export default async function ProductPage({ params }: Props) {
   const product = await getProduct(params.slug);
   if (!product) notFound();
 
+  const reviewSummary = await getReviewSummary(product.id);
+  const productUrl = absoluteUrl(`/products/${product.slug}`);
+
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "Product",
@@ -86,10 +110,22 @@ export default async function ProductPage({ params }: Props) {
     image: product.product_images
       ?.sort((a, b) => a.sort_order - b.sort_order)
       .map((i) => i.url),
+    brand: { "@type": "Brand", name: "Elite Style Co." },
+    ...(reviewSummary.count > 0
+      ? {
+          aggregateRating: {
+            "@type": "AggregateRating",
+            ratingValue: reviewSummary.average,
+            reviewCount: reviewSummary.count,
+          },
+        }
+      : {}),
     offers: {
       "@type": "Offer",
+      url: productUrl,
       priceCurrency: "KES",
       price: product.base_price,
+      itemCondition: "https://schema.org/NewCondition",
       availability:
         product.skus?.some((s) => s.stock_quantity > 0)
           ? "https://schema.org/InStock"

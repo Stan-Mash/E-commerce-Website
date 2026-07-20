@@ -27,6 +27,24 @@ export function csvEscape(s: string): string {
   return s;
 }
 
+// Maps our internal category strings to Google's product taxonomy
+// (https://support.google.com/merchants/answer/6324436), required by name
+// as "google_product_category" in TikTok's catalog spec and recommended
+// (optional) in Google Merchant Center's own feed.
+const GOOGLE_PRODUCT_CATEGORY: Record<string, string> = {
+  women: "Apparel & Accessories > Clothing > Women's Clothing",
+  woman: "Apparel & Accessories > Clothing > Women's Clothing",
+  men: "Apparel & Accessories > Clothing > Men's Clothing",
+  man: "Apparel & Accessories > Clothing > Men's Clothing",
+  children: "Apparel & Accessories > Clothing > Children's Clothing",
+  child: "Apparel & Accessories > Clothing > Children's Clothing",
+  accessories: "Apparel & Accessories > Clothing Accessories",
+};
+
+export function googleProductCategory(category: string): string {
+  return GOOGLE_PRODUCT_CATEGORY[category.toLowerCase()] ?? "Apparel & Accessories > Clothing";
+}
+
 export function buildGoogleFeedXML(products: FeedProduct[], baseUrl: string, storeName: string): string {
   const items = products
     .filter((p) => p.imageUrls.length > 0)
@@ -49,6 +67,7 @@ export function buildGoogleFeedXML(products: FeedProduct[], baseUrl: string, sto
         "      <g:condition>new</g:condition>",
         `      <g:brand>${escapeXml(storeName)}</g:brand>`,
         `      <g:product_type>${escapeXml(p.category)}</g:product_type>`,
+        `      <g:google_product_category>${escapeXml(googleProductCategory(p.category))}</g:google_product_category>`,
         "    </item>",
       ].filter(Boolean).join("\n");
     })
@@ -68,7 +87,9 @@ export function buildGoogleFeedXML(products: FeedProduct[], baseUrl: string, sto
 }
 
 export function buildTikTokCSV(products: FeedProduct[], baseUrl: string, storeName: string): string {
-  const header = "sku_id,title,description,availability,condition,price,link,image_link,brand,product_type";
+  // Column names/order follow TikTok's catalog spec exactly:
+  // https://ads.tiktok.com/help/article/catalog-product-parameters
+  const header = "sku_id,title,description,availability,condition,price,link,image_link,brand,google_product_category";
   const rows = products
     .filter((p) => p.imageUrls.length > 0)
     .map((p) =>
@@ -82,7 +103,7 @@ export function buildTikTokCSV(products: FeedProduct[], baseUrl: string, storeNa
         `${baseUrl}/products/${p.slug}`,
         p.imageUrls[0]!,
         csvEscape(storeName),
-        csvEscape(p.category),
+        csvEscape(googleProductCategory(p.category)),
       ].join(",")
     );
   return [header, ...rows].join("\n");

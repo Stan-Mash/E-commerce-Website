@@ -1,7 +1,16 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { ElitePlate } from "@/components/es/ElitePlate";
+import { Breadcrumb } from "@/components/product/ProductBreadcrumb";
 import { formatKES } from "@/lib/utils";
 import { createPublicSupabaseClient } from "@/lib/supabase/server";
+
+export const metadata: Metadata = {
+  title: "Children's Fashion Nairobi",
+  description:
+    "Shop curated children's fashion in Nairobi — mini co-ords and everyday styles in KES pricing with M-Pesa checkout and free Nairobi CBD delivery.",
+  alternates: { canonical: "/children" },
+};
 
 interface ProductRow {
   id: string;
@@ -78,7 +87,8 @@ export default async function ChildrenPage() {
 
       {/* Product section */}
       <div className="mx-auto w-full max-w-[1200px] px-6 py-10 sm:px-16 sm:py-20">
-        <header className="mb-10">
+        <Breadcrumb items={[{ label: "Home", href: "/" }, { label: "Children" }]} />
+        <header className="mt-6 mb-10">
           <p className="mb-3 text-[11px] tracking-[.48em] uppercase text-es-gold">
             CHILDRENSWEAR
           </p>

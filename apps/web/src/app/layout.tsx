@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Analytics } from "@vercel/analytics/next";
 import { Inter, Cormorant_Garamond } from "next/font/google";
+import { SITE_URL } from "@/lib/site";
 import "@/styles/globals.css";
 
 const inter = Inter({
@@ -19,7 +20,7 @@ const cormorant = Cormorant_Garamond({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://elitestyle.co.ke"),
+  metadataBase: new URL(SITE_URL),
   title: {
     default: "Elite Style Co. | Dressed, generation to generation",
     template: "%s | Elite Style Co.",
@@ -29,6 +30,7 @@ export const metadata: Metadata = {
   keywords: ["Elite Style", "Nairobi fashion", "premium clothing Kenya", "curated fashion Nairobi", "M-Pesa fashion"],
   authors: [{ name: "Elite Style Co." }],
   creator: "Elite Style Co.",
+  alternates: { canonical: "/" },
   openGraph: {
     type: "website",
     locale: "en_KE",

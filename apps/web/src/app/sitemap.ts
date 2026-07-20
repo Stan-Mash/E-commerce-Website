@@ -1,7 +1,6 @@
 import type { MetadataRoute } from "next";
 import { createPublicSupabaseClient } from "@/lib/supabase/server";
-
-const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? "https://e-commerce-website-web.vercel.app";
+import { SITE_URL as BASE } from "@/lib/site";
 
 const STATIC_PATHS = [
   "", "/products", "/woman", "/man", "/children", "/coming-soon",

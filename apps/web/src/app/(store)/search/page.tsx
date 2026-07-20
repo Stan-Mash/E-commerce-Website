@@ -90,6 +90,12 @@ export default function SearchPage() {
     };
   }, [query, runSearch]);
 
+  // Pre-fill from ?q= so links (e.g. the homepage SearchAction / shared URLs) work.
+  useEffect(() => {
+    const q = new URLSearchParams(window.location.search).get("q");
+    if (q) setQuery(q);
+  }, []);
+
   async function handlePhoto(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;

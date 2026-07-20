@@ -9,6 +9,7 @@ export function Newsletter() {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [code, setCode] = useState<string | null>(null);
   const [error, setError] = useState("");
 
   async function handleSubmit(e: React.FormEvent) {
@@ -27,6 +28,7 @@ export function Newsletter() {
       const data = await res.json();
       if (data.ok) {
         setSubmitted(true);
+        setCode(data.code ?? null);
       } else {
         setError(data.error ?? "Something went wrong. Please try again.");
       }
@@ -59,7 +61,7 @@ export function Newsletter() {
             margin: "0 0 16px",
             lineHeight: 1.1,
           }}>
-            New arrivals. First access. No spam.
+            Get 10% off your first order.
           </h2>
 
           <p style={{
@@ -71,7 +73,7 @@ export function Newsletter() {
             lineHeight: 1.65,
           }}>
             Join 5,000+ Kenyans who get first access to new drops, private sales,
-            and styling tips every week.
+            and styling tips every week — plus a one-time welcome discount.
           </p>
 
           {submitted ? (
@@ -83,10 +85,25 @@ export function Newsletter() {
             }}>
               <p style={{
                 fontFamily: FONT, fontSize: 14, fontWeight: 600,
-                color: "#c9a961", margin: 0,
+                color: "#c9a961", margin: code ? "0 0 10px" : 0,
               }}>
                 Thank you! You&apos;re on the list.
               </p>
+              {code && (
+                <>
+                  <p style={{
+                    fontFamily: "monospace", fontSize: 18, fontWeight: 700,
+                    color: "#fff", letterSpacing: "0.08em", margin: "0 0 6px",
+                  }}>
+                    {code}
+                  </p>
+                  <p style={{
+                    fontFamily: FONT, fontSize: 12, color: "rgba(255,255,255,0.55)", margin: 0,
+                  }}>
+                    10% off your first order — enter this at checkout. We&apos;ve also emailed it to you.
+                  </p>
+                </>
+              )}
             </div>
           ) : (
             <>

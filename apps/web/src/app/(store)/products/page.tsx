@@ -1,7 +1,16 @@
 import { Suspense } from "react";
+import type { Metadata } from "next";
 import { ProductFilterTabs } from "@/components/es/ProductFilterTabs";
 import { ProductsClient } from "@/components/es/ProductsClient";
+import { Breadcrumb } from "@/components/product/ProductBreadcrumb";
 import { createPublicSupabaseClient } from "@/lib/supabase/server";
+
+export const metadata: Metadata = {
+  title: "New Arrivals",
+  description:
+    "Browse the full Elite Style Co. collection — new arrivals across Women, Men, and Children in KES pricing with M-Pesa checkout and free Nairobi CBD delivery.",
+  alternates: { canonical: "/products" },
+};
 
 // ---------------------------------------------------------------------------
 // Types
@@ -57,8 +66,9 @@ export default async function ProductsPage({ searchParams }: PageProps) {
   return (
     <main className="min-h-screen bg-es-paper">
       <div className="mx-auto w-full max-w-[1280px] px-4 sm:px-8 lg:px-16 py-10 sm:py-20">
+        <Breadcrumb items={[{ label: "Home", href: "/" }, { label: "New Arrivals" }]} />
         {/* Page header */}
-        <header className="mb-8">
+        <header className="mt-6 mb-8">
           <p className="mb-3 text-[11px] tracking-[.48em] uppercase text-es-gold">
             ELITE STYLE CO.
           </p>

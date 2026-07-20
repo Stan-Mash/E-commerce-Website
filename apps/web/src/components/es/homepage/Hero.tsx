@@ -64,10 +64,10 @@ export function Hero({ productCount }: HeroProps = {}) {
 
           <div className="absolute bottom-5 right-5 bg-white/95 backdrop-blur-sm px-5 py-3 border border-es-hair">
             <p className="text-[10px] font-medium tracking-label uppercase text-es-mute mb-0.5 font-sans">
-              New Season
+              Featured
             </p>
             <p className="text-[13px] font-bold text-es-ink font-sans">
-              2026 Collection
+              Tweed Jacket &amp; Skirt Set
             </p>
           </div>
         </div>

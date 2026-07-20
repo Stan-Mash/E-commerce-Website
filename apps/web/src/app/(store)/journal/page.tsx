@@ -1,4 +1,13 @@
 import Link from "next/link";
+import Image from "next/image";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Journal",
+  description:
+    "Style notes, trend reports, and Nairobi-made styling guidance from Elite Style Co.",
+  alternates: { canonical: "/journal" },
+};
 
 const ARTICLES = [
   {
@@ -8,6 +17,7 @@ const ARTICLES = [
     date: "May 2026",
     excerpt:
       "When the long rains arrive, dressing well is an act of defiance — a refusal to let the weather dictate your elegance.",
+    image: "/products/tweed-set-black-white.jpg",
   },
   {
     slug: "5-trends-nairobi-2026",
@@ -16,6 +26,7 @@ const ARTICLES = [
     date: "April 2026",
     excerpt:
       "From oversized blazers to bold co-ords — the looks dominating Nairobi streets right now, and exactly where to get them.",
+    image: "/products/tweed-set-pink-black.jpg",
   },
   {
     slug: "capsule-wardrobe-on-a-budget",
@@ -24,6 +35,7 @@ const ARTICLES = [
     date: "March 2026",
     excerpt:
       "You don't need a full wardrobe refresh to look great every day. Here are the ten pieces worth investing in first.",
+    image: "/products/knitted-vest-blue.png",
   },
   {
     slug: "linen-season-nairobi",
@@ -32,14 +44,8 @@ const ARTICLES = [
     date: "February 2026",
     excerpt:
       "The case for linen in a city that never really gets cold — why breathable, natural fabrics belong in every wardrobe year-round.",
+    image: "/products/tweed-set-white-gold.jpg",
   },
-];
-
-const GRADIENTS = [
-  "from-[#e8dff0] to-[#c9a96130]",
-  "from-[#e6e0d8] to-[#d4b88030]",
-  "from-[#dce8e0] to-[#8fbfaa30]",
-  "from-[#e8e0d0] to-[#c9a96120]",
 ];
 
 export default function JournalPage() {
@@ -61,8 +67,7 @@ export default function JournalPage() {
 
         {/* Article grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-14">
-          {ARTICLES.map((article, index) => {
-            const gradient = GRADIENTS[index % GRADIENTS.length];
+          {ARTICLES.map((article) => {
             return (
               <Link
                 key={article.slug}
@@ -70,13 +75,16 @@ export default function JournalPage() {
                 className="group block"
                 aria-label={`Read ${article.title}`}
               >
-                {/* Placeholder image */}
                 <div
                   className="relative w-full overflow-hidden bg-es-bone mb-5"
                   style={{ aspectRatio: "3 / 2" }}
                 >
-                  <div
-                    className={`absolute inset-0 bg-gradient-to-br ${gradient} transition-transform duration-500 group-hover:scale-[1.03]`}
+                  <Image
+                    src={article.image}
+                    alt=""
+                    fill
+                    sizes="(max-width: 640px) 100vw, 50vw"
+                    className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
                   />
                 </div>
 

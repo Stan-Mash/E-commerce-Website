@@ -55,6 +55,7 @@ test("google feed: valid envelope, escaped fields, availability, price format", 
   assert.ok(xml.includes("<g:availability>out of stock</g:availability>"));
   assert.ok(xml.includes("<g:link>https://shop.example/products/tweed-set</g:link>"));
   assert.ok(xml.includes("<g:additional_image_link>https://cdn.example/b.jpg</g:additional_image_link>"));
+  assert.ok(xml.includes("<g:google_product_category>Apparel &amp; Accessories &gt; Clothing &gt; Women&apos;s Clothing</g:google_product_category>"));
   // Imageless products are excluded (feeds reject them anyway).
   assert.ok(!xml.includes("no-image"));
 });
@@ -62,8 +63,9 @@ test("google feed: valid envelope, escaped fields, availability, price format", 
 test("tiktok csv: header + one row per product with an image", () => {
   const csv = buildTikTokCSV(sample, "https://shop.example", "Elite Style Co.");
   const lines = csv.split("\n");
-  assert.equal(lines[0], "sku_id,title,description,availability,condition,price,link,image_link,brand,product_type");
+  assert.equal(lines[0], "sku_id,title,description,availability,condition,price,link,image_link,brand,google_product_category");
   assert.equal(lines.length, 3); // header + 2 products (imageless excluded)
   assert.ok(lines[1]!.includes('"Tweed Set ""Premium"" & Co"'));
+  assert.ok(lines[1]!.includes("Apparel & Accessories > Clothing > Women's Clothing"));
   assert.ok(lines[2]!.includes("out of stock"));
 });

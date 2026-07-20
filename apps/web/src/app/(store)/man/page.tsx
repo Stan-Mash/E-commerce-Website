@@ -1,7 +1,16 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { ElitePlate } from "@/components/es/ElitePlate";
+import { Breadcrumb } from "@/components/product/ProductBreadcrumb";
 import { formatKES } from "@/lib/utils";
 import { createPublicSupabaseClient } from "@/lib/supabase/server";
+
+export const metadata: Metadata = {
+  title: "Men's Fashion Nairobi",
+  description:
+    "Shop curated men's fashion in Nairobi — sharp tailoring and everyday essentials in KES pricing with M-Pesa checkout and free Nairobi CBD delivery.",
+  alternates: { canonical: "/man" },
+};
 
 interface ProductRow {
   id: string;
@@ -78,7 +87,8 @@ export default async function ManPage() {
 
       {/* Product section */}
       <div className="mx-auto w-full max-w-[1200px] px-6 py-10 sm:px-16 sm:py-20">
-        <header className="mb-10">
+        <Breadcrumb items={[{ label: "Home", href: "/" }, { label: "Man" }]} />
+        <header className="mt-6 mb-10">
           <p className="mb-3 text-[11px] tracking-[.48em] uppercase text-es-gold">
             MENSWEAR
           </p>

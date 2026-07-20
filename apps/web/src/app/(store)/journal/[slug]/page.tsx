@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import type { Metadata } from "next";
 
 interface Props {
@@ -13,7 +14,7 @@ const ARTICLES = [
     category: "STYLE",
     date: "May 2026",
     readTime: "4 min read",
-    gradient: "linear-gradient(160deg, #c4c8d0 0%, #9ba0aa 55%, #6b717d 100%)",
+    image: "/products/tweed-set-black-white.jpg",
     body: [
       "When the long rains arrive in Nairobi, dressing well is an act of defiance. The city transforms — rivers run down Uhuru Highway, the air smells of red earth, and umbrellas become the city's most traded commodity.",
       "The instinct is to retreat into waterproofs and practicality. But the most elegant Nairobians know something the weather forecasts don't: that dressing for rain is about fabric, not function. A well-woven cotton blend dries in minutes. A linen coat loses nothing to a light shower. A good knit wicks moisture while holding its form.",
@@ -27,7 +28,7 @@ const ARTICLES = [
     category: "TRENDS",
     date: "April 2026",
     readTime: "5 min read",
-    gradient: "linear-gradient(160deg, #d4c4a8 0%, #b8a484 55%, #967e60 100%)",
+    image: "/products/tweed-set-pink-black.jpg",
     body: [
       "Nairobi's fashion scene moves fast. In a city where the weekend includes a rooftop in Westlands, a Sunday in Karen, and a Monday morning in the CBD, versatility isn't a nice-to-have — it's a requirement. Here are the five looks that are everywhere right now.",
       "First: the oversized blazer. Worn open over a fitted top, belted as a dress, or thrown over tailored trousers, the oversized blazer has become the defining piece of the 2026 Nairobi wardrobe. The trick is fit in the shoulders — everything else can be big.",
@@ -42,7 +43,7 @@ const ARTICLES = [
     category: "STYLE",
     date: "March 2026",
     readTime: "6 min read",
-    gradient: "linear-gradient(160deg, #7b4d8c 0%, #4e2460 55%, #2a1135 100%)",
+    image: "/products/knitted-vest-blue.png",
     body: [
       "A capsule wardrobe is not about owning less. It is about owning the right things — pieces that work together, that cover most situations, and that you actually want to wear. The good news is that it doesn't require a large budget.",
       "Start with your base layers. Two or three fitted tops in neutral tones — white, black, camel — are the foundation of almost every outfit. They go under blazers, over trousers, and tuck into skirts. Spend moderately here: these are the pieces that see the most wear.",
@@ -57,7 +58,7 @@ const ARTICLES = [
     category: "STYLE",
     date: "February 2026",
     readTime: "3 min read",
-    gradient: "linear-gradient(160deg, #b4bfb0 0%, #8a9885 55%, #5f6e5a 100%)",
+    image: "/products/tweed-set-white-gold.jpg",
     body: [
       "The case for linen in a city that never really gets cold is almost too easy to make. Nairobi sits at 1,700 metres. The sun is direct. The seasons are a negotiation rather than a declaration. In this climate, linen is not a seasonal choice — it is a permanent one.",
       "Good linen is heavier than you might expect — more structural, slower to wrinkle in the way that becomes character rather than flaw. Stonewashed, it softens immediately. Raw, it stiffens pleasingly with wear.",
@@ -70,7 +71,11 @@ const ARTICLES = [
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const article = ARTICLES.find((a) => a.slug === params.slug);
   if (!article) return { title: "Article Not Found" };
-  return { title: article.title, description: article.body[0]?.slice(0, 160) ?? null };
+  return {
+    title: article.title,
+    description: article.body[0]?.slice(0, 160) ?? null,
+    alternates: { canonical: `/journal/${article.slug}` },
+  };
 }
 
 export default function JournalArticlePage({ params }: Props) {
@@ -85,17 +90,24 @@ export default function JournalArticlePage({ params }: Props) {
           width: "100%",
           height: "55vh",
           minHeight: 320,
-          background: article.gradient,
           position: "relative",
           display: "flex",
           alignItems: "flex-end",
         }}
       >
+        <Image
+          src={article.image}
+          alt=""
+          fill
+          priority
+          sizes="100vw"
+          className="object-cover"
+        />
         <div
           style={{
             position: "absolute",
             inset: 0,
-            background: "linear-gradient(to top, rgba(0,0,0,0.45) 0%, transparent 55%)",
+            background: "linear-gradient(to top, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.15) 55%, rgba(0,0,0,0.25) 100%)",
           }}
         />
         <div style={{ position: "relative", padding: "0 clamp(24px, 8vw, 96px) 48px" }}>

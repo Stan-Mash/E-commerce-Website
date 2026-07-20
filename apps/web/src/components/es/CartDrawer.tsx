@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { X, Trash2 } from "lucide-react";
@@ -14,6 +15,38 @@ const fmt = (amount: number) =>
 
 export function CartDrawer() {
   const { items, itemCount, subtotal, removeItem, updateQty, closeCart, isCartOpen } = useCart();
+  const panelRef = useRef<HTMLDivElement>(null);
+  const closeBtnRef = useRef<HTMLButtonElement>(null);
+
+  // Esc-to-close + a basic Tab-cycle focus trap while the drawer is open.
+  useEffect(() => {
+    if (!isCartOpen) return;
+    closeBtnRef.current?.focus();
+
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        closeCart();
+        return;
+      }
+      if (e.key !== "Tab" || !panelRef.current) return;
+      const focusable = panelRef.current.querySelectorAll<HTMLElement>(
+        'a[href], button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])'
+      );
+      if (focusable.length === 0) return;
+      const first = focusable[0]!;
+      const last = focusable[focusable.length - 1]!;
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    }
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [isCartOpen, closeCart]);
 
   return (
     <>
@@ -34,6 +67,7 @@ export function CartDrawer() {
 
       {/* Drawer panel */}
       <div
+        ref={panelRef}
         role="dialog"
         aria-modal="true"
         aria-label="Shopping bag"
@@ -74,6 +108,7 @@ export function CartDrawer() {
             YOUR BAG ({itemCount})
           </span>
           <button
+            ref={closeBtnRef}
             onClick={closeCart}
             aria-label="Close bag"
             style={{
