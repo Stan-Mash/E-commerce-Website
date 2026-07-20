@@ -30,6 +30,7 @@
   html {
     -webkit-text-size-adjust: 100%;
     scroll-behavior: smooth;
+    overflow-x: hidden;
   }
 
   body {
@@ -38,6 +39,11 @@
     font-family: var(--font-inter), system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    /* Off-canvas panels (cart drawer, mobile nav) are `position: fixed` and
+       translated out of view when closed, but that still widens the
+       document's scrollable area on many browsers, letting a stray
+       rightward swipe reveal blank space past the real content. */
+    overflow-x: hidden;
   }
 
   /* Tap targets */
