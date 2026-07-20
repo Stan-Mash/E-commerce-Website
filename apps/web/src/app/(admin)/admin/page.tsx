@@ -300,10 +300,13 @@ export default async function AdminDashboardPage() {
         </Link>
       </div>
 
+      {/* Inline gridTemplateColumns can't take a media query, so the
+          responsive column count lives in a className instead — without it
+          this stayed two columns on mobile and squeezed the Recent Orders
+          rows (nowrap badges) past the viewport width. */}
       <div
+        className="grid grid-cols-1 lg:grid-cols-2"
         style={{
-          display: "grid",
-          gridTemplateColumns: "1fr 1fr",
           gap: 32,
           alignItems: "start",
         }}
