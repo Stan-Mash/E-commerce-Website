@@ -11,14 +11,17 @@ below — these are the account/config steps only a human can do.
       the custom domain once it's connected — see below). Everything else
       (OG images, canonical tags, JSON-LD, robots.txt, sitemap.xml) derives
       from this one variable.
-- [ ] Run the two new Supabase migrations (SQL Editor, in order — same
-      process as existing migrations per `DEPLOY-NOTES.md`):
+- [ ] Run the new Supabase migrations (SQL Editor, in order — same process
+      as existing migrations per `DEPLOY-NOTES.md`):
       - `apps/web/supabase/migrations/022_newsletter_discount_codes.sql`
       - `apps/web/supabase/migrations/023_equinox_reservations.sql`
-      Until these run, newsletter signup still mints and emails a real
-      promo code (the `promotions` table already exists) but won't
-      remember which subscriber has which code; Equinox reservations will
-      fail until `023` runs.
+      - `apps/web/supabase/migrations/024_tryon_uploads.sql`
+      - `apps/web/supabase/migrations/025_release_promotion.sql`
+      Until 022/023 run, newsletter signup still mints and emails a real
+      promo code but won't remember which subscriber has which code, and
+      Equinox reservations will fail. Until 025 runs, the notifications
+      cron's promo-restore-on-abandonment fix silently no-ops (fails safe,
+      logs a warning) rather than erroring.
 - [ ] Set `RESEND_API_KEY` + `EMAIL_FROM` if not already set, so the
       newsletter welcome-discount email and Equinox notification actually
       send (the code is still shown on-screen either way).
