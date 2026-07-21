@@ -1,12 +1,13 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const NAV_ITEMS = [
   { label: "Dashboard", href: "/admin" },
   { label: "Orders", href: "/admin/orders" },
-  { label: "Abandoned Checkouts", href: "/admin/abandoned-checkouts" },
+  { label: "Abandoned Checkouts", href: "/admin/abandoned-checkouts", countKey: "abandoned" as const },
   { label: "Products", href: "/admin/products" },
   { label: "Stock", href: "/admin/stock" },
   { label: "Promotions", href: "/admin/promotions" },
@@ -39,8 +40,31 @@ const activeStyle: React.CSSProperties = {
   paddingLeft: 26, // compensate for 2px border so text doesn't shift
 };
 
+const COUNT_POLL_MS = 2 * 60 * 1000; // 2 minutes — a badge, not a live ticker
+
 export default function AdminNav() {
   const pathname = usePathname();
+  const [abandonedCount, setAbandonedCount] = useState<number | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function loadCount() {
+      try {
+        const res = await fetch("/api/admin/orders/abandoned/count");
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!cancelled) setAbandonedCount(typeof data.count === "number" ? data.count : null);
+      } catch {
+        // nav badge is best-effort — silently skip on failure
+      }
+    }
+    void loadCount();
+    const interval = setInterval(loadCount, COUNT_POLL_MS);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, []);
 
   return (
     <>
@@ -68,6 +92,23 @@ export default function AdminNav() {
                 className="admin-nav-link"
               >
                 {item.label}
+                {"countKey" in item && item.countKey === "abandoned" && !!abandonedCount && (
+                  <span
+                    style={{
+                      marginLeft: 8,
+                      display: "inline-block",
+                      background: "#c0392b",
+                      color: "#fff",
+                      fontSize: 9,
+                      letterSpacing: 0,
+                      borderRadius: 10,
+                      padding: "1px 7px",
+                      verticalAlign: "middle",
+                    }}
+                  >
+                    {abandonedCount}
+                  </span>
+                )}
               </Link>
             </li>
           );

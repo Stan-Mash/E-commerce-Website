@@ -321,14 +321,14 @@ async function releaseStaleReservations(
 
     const { data: expired } = await supabase
       .from("orders")
-      .select("id")
+      .select("id, promotion_id")
       .eq("status", "pending_payment")
       .lte("created_at", cutoff)
       .limit(50);
 
     if (!expired || expired.length === 0) return;
 
-    for (const order of expired as Array<{ id: string }>) {
+    for (const order of expired as Array<{ id: string; promotion_id: string | null }>) {
       // Claim the order by flipping its status FIRST, conditioned on it
       // still being pending_payment, before touching any stock. If a
       // very-late webhook resolved this exact order in the moments between
@@ -360,6 +360,13 @@ async function releaseStaleReservations(
           reason: "reservation_expired",
           reference: order.id,
         });
+      }
+
+      // A promo code redeemed at STK-push time (checkout/route.ts) has now
+      // been permanently consumed by a checkout that never paid — give the
+      // slot back so a capped promotion isn't exhausted by abandoned carts.
+      if (order.promotion_id) {
+        await supabase.rpc("release_promotion", { p_promotion_id: order.promotion_id });
       }
     }
   } catch (e) {

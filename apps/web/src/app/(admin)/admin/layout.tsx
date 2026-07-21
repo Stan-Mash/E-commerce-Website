@@ -6,10 +6,14 @@ import { ToastProvider } from "@/components/admin";
 // a stale router-cache RSC response (e.g. a pre-login redirect to /admin/login).
 export const dynamic = "force-dynamic";
 
+// Nested title templates compose: this produces the string the ROOT
+// layout's own "%s | Elite Style Co." template then wraps — so this one
+// must NOT also append "Elite Style Co.", or every admin page ends up
+// "... · Admin · Elite Style Co. | Elite Style Co." in the tab title.
 export const metadata: Metadata = {
   title: {
-    default: "Admin · Elite Style Co.",
-    template: "%s · Admin · Elite Style Co.",
+    default: "Admin",
+    template: "%s · Admin",
   },
 };
 
