@@ -401,12 +401,13 @@ export default function CheckoutPage() {
                   );
                 })}
               </div>
+              {method === "paybill" && !waiting && PAYBILL && <CopyTillNumber till={PAYBILL} />}
             </div>
 
             {apiError && <div role="alert" style={{ fontSize: 13, color: "#c0392b", background: "#fdf2f2", border: "1px solid #f5c6c6", padding: "12px 16px", marginBottom: 24 }}>{apiError}</div>}
 
             {waiting ? (
-              <WaitingState message={statusMsg} method={method} onCancel={cancelWaiting} />
+              <WaitingState message={statusMsg} method={method} till={PAYBILL} onCancel={cancelWaiting} />
             ) : (
               <button type="button" className="es-btn-plum" style={{ width: "100%" }} onClick={handlePay} disabled={submitting || items.length === 0}>
                 {submitting ? "Processing…" : `PAY ${formatKES(total)} →`}
@@ -502,7 +503,7 @@ function Row({ label, value }: { label: string; value: string }) {
   );
 }
 
-function WaitingState({ message, method, onCancel }: { message: string; method: PayMethod; onCancel: () => void }) {
+function WaitingState({ message, method, till, onCancel }: { message: string; method: PayMethod; till: string; onCancel: () => void }) {
   const sub =
     method === "paybill"
       ? "This won't confirm on its own — open M-Pesa, go to Lipa na M-Pesa → Buy Goods, enter the Till number and amount shown above, then your PIN. This page updates automatically once we receive it."
@@ -514,11 +515,38 @@ function WaitingState({ message, method, onCancel }: { message: string; method: 
         {message || "Waiting for M-Pesa confirmation…"}
       </p>
       <p style={{ fontSize: 14, color: "var(--es-mute)" }}>{sub}</p>
+      {method === "paybill" && till && <CopyTillNumber till={till} />}
       <button type="button" onClick={onCancel} style={{ marginTop: 20, fontSize: 12, color: "var(--es-mute)", textDecoration: "underline", background: "none", border: "none", cursor: "pointer" }}>
         Cancel and choose another payment method
       </button>
       <style>{`@keyframes es-spin { to { transform: rotate(360deg); } }`}</style>
     </div>
+  );
+}
+
+function CopyTillNumber({ till }: { till: string }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <button
+      type="button"
+      onClick={() => {
+        navigator.clipboard.writeText(till).then(() => {
+          setCopied(true);
+          setTimeout(() => setCopied(false), 2000);
+        }).catch(() => {});
+      }}
+      style={{
+        marginTop: 12, display: "inline-flex", alignItems: "center", gap: 8,
+        fontSize: 13, color: "var(--es-ink)", background: "var(--es-paper)",
+        border: "1px solid var(--es-bone)", padding: "8px 14px", cursor: "pointer",
+      }}
+    >
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+        <rect x="9" y="9" width="13" height="13" rx="2" />
+        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+      </svg>
+      {copied ? "Copied!" : `Copy Till Number (${till})`}
+    </button>
   );
 }
 
