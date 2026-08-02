@@ -17,6 +17,11 @@ const PAYBILL_NAME = process.env.NEXT_PUBLIC_MPESA_PAYBILL_NAME ?? "Elite Style 
 // key-presence check.
 const CARD_ENABLED = process.env.NEXT_PUBLIC_PESAPAL_ENABLED === "true";
 const BNPL_NAME = process.env.NEXT_PUBLIC_BNPL_NAME ?? "";
+// Direct Daraja STK push requires Safaricom Go-Live approval on the shortcode.
+// Kept behind its own flag (separate from the manual Buy Goods/Till option
+// below) so it can be hidden the moment it's broken and switched back on
+// with a single env var + redeploy once Safaricom approves it — no code change.
+const MPESA_STK_ENABLED = process.env.NEXT_PUBLIC_MPESA_STK_ENABLED === "true";
 
 function formatKES(amount: number) {
   return new Intl.NumberFormat("en-KE", {
@@ -35,7 +40,9 @@ export default function CheckoutPage() {
   const [email, setEmail] = useState("");
   const [delivery, setDelivery] = useState<DeliveryType>("cbd");
   const [address, setAddress] = useState("");
-  const [method, setMethod] = useState<PayMethod>("mpesa");
+  const [method, setMethod] = useState<PayMethod>(
+    MPESA_STK_ENABLED ? "mpesa" : PAYBILL ? "paybill" : "card"
+  );
   const [phoneError, setPhoneError] = useState("");
   const [addressError, setAddressError] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -169,6 +176,13 @@ export default function CheckoutPage() {
     }, INTERVAL);
   }
 
+  function cancelWaiting() {
+    if (pollRef.current) clearInterval(pollRef.current);
+    setWaiting(false);
+    setSubmitting(false);
+    setApiError("");
+  }
+
   async function handlePay() {
     if (!validate()) return;
     // Guard: any item missing a valid SKU id means the product was added without
@@ -277,7 +291,7 @@ export default function CheckoutPage() {
   ];
 
   const PAY_OPTS: { value: PayMethod; label: string; sub: string; show: boolean }[] = [
-    { value: "mpesa", label: "M-PESA", sub: "STK push to your phone", show: true },
+    { value: "mpesa", label: "M-PESA", sub: "STK push to your phone", show: MPESA_STK_ENABLED },
     { value: "paybill", label: "BUY GOODS", sub: PAYBILL ? `Till No. ${PAYBILL}` : "M-Pesa Till", show: !!PAYBILL },
     { value: "card", label: "CARD & MORE", sub: "Card, Airtel, bank", show: CARD_ENABLED },
     { value: "bnpl", label: "INSTALMENTS", sub: `Pay over time with ${BNPL_NAME}`, show: !!BNPL_NAME },
@@ -392,7 +406,7 @@ export default function CheckoutPage() {
             {apiError && <div role="alert" style={{ fontSize: 13, color: "#c0392b", background: "#fdf2f2", border: "1px solid #f5c6c6", padding: "12px 16px", marginBottom: 24 }}>{apiError}</div>}
 
             {waiting ? (
-              <WaitingState message={statusMsg} />
+              <WaitingState message={statusMsg} method={method} onCancel={cancelWaiting} />
             ) : (
               <button type="button" className="es-btn-plum" style={{ width: "100%" }} onClick={handlePay} disabled={submitting || items.length === 0}>
                 {submitting ? "Processing…" : `PAY ${formatKES(total)} →`}
@@ -488,14 +502,21 @@ function Row({ label, value }: { label: string; value: string }) {
   );
 }
 
-function WaitingState({ message }: { message: string }) {
+function WaitingState({ message, method, onCancel }: { message: string; method: PayMethod; onCancel: () => void }) {
+  const sub =
+    method === "paybill"
+      ? "This won't confirm on its own — open M-Pesa, go to Lipa na M-Pesa → Buy Goods, enter the Till number and amount shown above, then your PIN. This page updates automatically once we receive it."
+      : "Check your phone and enter your M-Pesa PIN. This page updates automatically.";
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "32px 24px", background: "var(--es-white)", border: "1px solid var(--es-bone)", textAlign: "center" }}>
       <span aria-hidden="true" style={{ display: "inline-block", width: 36, height: 36, border: "3px solid var(--es-bone)", borderTopColor: "var(--es-ink)", borderRadius: "50%", animation: "es-spin 0.75s linear infinite" }} />
       <p style={{ fontFamily: "var(--font-bodoni)", fontSize: 20, color: "var(--es-ink)", marginTop: 20, marginBottom: 8 }}>
         {message || "Waiting for M-Pesa confirmation…"}
       </p>
-      <p style={{ fontSize: 14, color: "var(--es-mute)" }}>Check your phone and enter your M-Pesa PIN. This page updates automatically.</p>
+      <p style={{ fontSize: 14, color: "var(--es-mute)" }}>{sub}</p>
+      <button type="button" onClick={onCancel} style={{ marginTop: 20, fontSize: 12, color: "var(--es-mute)", textDecoration: "underline", background: "none", border: "none", cursor: "pointer" }}>
+        Cancel and choose another payment method
+      </button>
       <style>{`@keyframes es-spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
