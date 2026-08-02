@@ -306,7 +306,7 @@ async function enqueueCartReminders(
 
 // Mark orders that have sat in pending_payment for over 2 hours as
 // payment_failed and give their reserved stock back — same restoration path
-// the mpesa/flutterwave webhooks use on an explicit failure. 2 hours is far
+// the mpesa/pesapal webhooks use on an explicit failure. 2 hours is far
 // beyond any real STK, card-redirect, or BNPL completion time, so anything
 // still pending_payment past that point is a checkout that never resolved
 // (timed-out STK prompt, abandoned card redirect, or a webhook that never

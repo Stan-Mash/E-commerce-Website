@@ -5,7 +5,7 @@ import { Redis } from "@upstash/redis";
 import { createAdminSupabaseClient } from "@/lib/supabase/server";
 import { normaliseKenyanPhone, generateOrderRef } from "@/lib/utils";
 import { deliveryFeeFor, requiresAddress, normaliseDeliveryType } from "@/lib/delivery";
-import { createPaymentLink, isFlutterwaveConfigured } from "@/lib/flutterwave/client";
+import { submitOrderRequest, isPesapalConfigured } from "@/lib/pesapal/client";
 
 const ratelimit = new Ratelimit({
   redis: Redis.fromEnv(),
@@ -36,13 +36,13 @@ const Schema = z
   );
 
 /**
- * Card / multi-method checkout via Flutterwave.
+ * Card / multi-method checkout via Pesapal.
  * Creates the order (reserving stock atomically, same RPC as M-Pesa), then
- * returns a hosted Flutterwave payment link. The order stays 'pending_payment'
- * until the Flutterwave webhook confirms it.
+ * returns a hosted Pesapal payment link. The order stays 'pending_payment'
+ * until the Pesapal IPN webhook confirms it.
  */
 export async function POST(req: NextRequest) {
-  if (!isFlutterwaveConfigured()) {
+  if (!isPesapalConfigured()) {
     return NextResponse.json(
       { error: "Card payment is not available yet. Please use M-Pesa." },
       { status: 503 }
@@ -132,21 +132,25 @@ export async function POST(req: NextRequest) {
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? new URL(req.url).origin;
 
   try {
-    const { link } = await createPaymentLink({
-      txRef: orderRef,
+    const { redirectUrl, orderTrackingId } = await submitOrderRequest({
+      orderRef,
       amount: total,
+      description: `Elite Style Co. order ${orderRef}`,
+      callbackUrl: `${siteUrl}/order-confirmed?ref=${encodeURIComponent(orderRef)}`,
       customerPhone: normalisedPhone,
       customerEmail: email,
-      redirectUrl: `${siteUrl}/order-confirmed?ref=${encodeURIComponent(orderRef)}`,
-      title: "Elite Style Co.",
     });
 
-    // Record the pending payment intent for reconciliation in the webhook.
-    await supabase.from("orders").update({ payment_provider: "flutterwave" }).eq("id", order.order_id);
+    // Record the pending payment intent + Pesapal's tracking ID for the IPN
+    // webhook to look up (it only receives orderTrackingId, not our order id).
+    await supabase
+      .from("orders")
+      .update({ payment_provider: "pesapal", pesapal_order_tracking_id: orderTrackingId })
+      .eq("id", order.order_id);
 
-    return NextResponse.json({ orderId: order.order_id, orderRef, paymentLink: link, total });
+    return NextResponse.json({ orderId: order.order_id, orderRef, paymentLink: redirectUrl, total });
   } catch {
-    // Couldn't reach Flutterwave - restore stock and mark failed.
+    // Couldn't reach Pesapal - restore stock and mark failed.
     await supabase.from("orders").update({ status: "payment_failed" }).eq("id", order.order_id);
     for (const item of rpcItems) {
       await supabase.rpc("increment_sku_stock", { p_sku_id: item.sku_id, p_delta: item.quantity });

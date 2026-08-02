@@ -12,7 +12,10 @@ const OUTSIDE_CBD_FEE = Number(process.env.NEXT_PUBLIC_DELIVERY_FEE_OUTSIDE_CBD 
 const PHONE_RE = /^(?:\+?254|0)7\d{8}$/;
 const PAYBILL = process.env.NEXT_PUBLIC_MPESA_PAYBILL ?? "";
 const PAYBILL_NAME = process.env.NEXT_PUBLIC_MPESA_PAYBILL_NAME ?? "Elite Style Co.";
-const CARD_ENABLED = (process.env.NEXT_PUBLIC_FLUTTERWAVE_PUBLIC_KEY ?? "").startsWith("FLWPUBK");
+// Pesapal's consumer key/secret are server-only (no client-safe "publishable"
+// key like Flutterwave had), so this is a plain boolean flag rather than a
+// key-presence check.
+const CARD_ENABLED = process.env.NEXT_PUBLIC_PESAPAL_ENABLED === "true";
 const BNPL_NAME = process.env.NEXT_PUBLIC_BNPL_NAME ?? "";
 
 function formatKES(amount: number) {

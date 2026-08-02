@@ -54,7 +54,7 @@ export default function LegalPage() {
             <strong>How we use it:</strong> To fulfil and track your order, send you order confirmation via SMS, and provide customer support. We may occasionally send you updates about new arrivals if you opt in.
           </p>
           <p style={P_STYLE}>
-            <strong>Data security:</strong> All payments are processed by Safaricom M-Pesa and Flutterwave. We do not store card or M-Pesa PIN data. Order data is stored on secured servers in compliance with applicable Kenyan data protection law.
+            <strong>Data security:</strong> All payments are processed by Safaricom M-Pesa and Pesapal. We do not store card or M-Pesa PIN data. Order data is stored on secured servers in compliance with applicable Kenyan data protection law.
           </p>
           <p style={P_STYLE}>
             <strong>Your rights:</strong> You may request access to, correction of, or deletion of your personal data by contacting us at{" "}
@@ -133,7 +133,7 @@ export default function LegalPage() {
             <strong>Analytics:</strong> We may use anonymised analytics to understand how visitors use the site. No personally identifiable information is collected for analytics purposes.
           </p>
           <p style={P_STYLE}>
-            <strong>Third-party cookies:</strong> Our payment providers (Safaricom M-Pesa, Flutterwave) may set cookies during the payment process. These are governed by their own privacy policies.
+            <strong>Third-party cookies:</strong> Our payment providers (Safaricom M-Pesa, Pesapal) may set cookies during the payment process. These are governed by their own privacy policies.
           </p>
           <p style={P_STYLE}>
             You can disable cookies in your browser settings, but this may affect your ability to use the shopping bag and checkout.
