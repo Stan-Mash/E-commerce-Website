@@ -95,7 +95,12 @@ export async function PUT(
 
   // Only set fields that were sent (tracking columns come from migration 014).
   const patch: Record<string, unknown> = {};
-  if (body.status !== undefined) patch.status = body.status;
+  if (body.status !== undefined) {
+    if (!ALLOWED_STATUSES.includes(body.status as (typeof ALLOWED_STATUSES)[number])) {
+      return NextResponse.json({ error: `Invalid status. Allowed: ${ALLOWED_STATUSES.join(", ")}` }, { status: 400 });
+    }
+    patch.status = body.status;
+  }
   if (body.tracking_number !== undefined) patch.tracking_number = body.tracking_number || null;
   if (body.courier !== undefined) patch.courier = body.courier || null;
   if (body.tracking_url !== undefined) {

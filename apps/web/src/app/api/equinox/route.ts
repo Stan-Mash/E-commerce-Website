@@ -10,6 +10,14 @@ const EquinoxSchema = z.object({
   phone: z.string().trim().max(20).optional(),
 });
 
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
 // Stores Equinox Edit "Reserve Access" submissions in equinox_reservations
 // (migration 023) — separate from the newsletter list since this is a
 // one-time private-preview waitlist, not a recurring subscription.
@@ -53,7 +61,7 @@ export async function POST(req: NextRequest) {
     await sendEmail({
       to: SUPPORT_EMAIL,
       subject: "[Equinox Edit] New reservation",
-      html: `<p>${email}${phone ? ` &middot; ${phone}` : ""}</p>`,
+      html: `<p>${escapeHtml(email)}${phone ? ` &middot; ${escapeHtml(phone)}` : ""}</p>`,
     }).catch(() => undefined);
   }
 
