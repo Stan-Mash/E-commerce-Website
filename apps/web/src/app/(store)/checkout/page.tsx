@@ -256,8 +256,11 @@ export default function CheckoutPage() {
         }
         setSubmitting(false);
         setWaiting(true);
+        // Buy Goods/Till has no account-number field (that's Paybill-only) and
+        // sends no automatic confirmation — this headline used to say the
+        // opposite of the correct instructions shown right below it.
         setStatusMsg(
-          `Pay ${formatKES(total)} to Paybill ${PAYBILL}, account ${data.orderRef}. We'll confirm automatically.`
+          `Pay ${formatKES(total)} to Till ${PAYBILL} via M-Pesa Buy Goods. Order ${data.orderRef}.`
         );
         pollStatus(data.orderRef);
         return;

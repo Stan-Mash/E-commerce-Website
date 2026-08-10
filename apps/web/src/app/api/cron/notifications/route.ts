@@ -318,15 +318,34 @@ async function releaseStaleReservations(
 ): Promise<void> {
   try {
     const cutoff = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString();
+    // Manual M-Pesa Buy Goods (payment_method "mpesa_c2b") never gets an STK
+    // prompt or card redirect to time out — "pending" just means nobody has
+    // reconciled it against the till yet, which can reasonably take longer
+    // than 2 hours. Auto-failing it that fast risks cancelling and
+    // restocking an order the customer already paid for. Give it a much
+    // longer grace period instead of excluding it from cleanup entirely.
+    const c2bCutoff = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
 
-    const { data: expired } = await supabase
-      .from("orders")
-      .select("id, promotion_id")
-      .eq("status", "pending_payment")
-      .lte("created_at", cutoff)
-      .limit(50);
+    const [{ data: expiredNormal }, { data: expiredC2b }] = await Promise.all([
+      supabase
+        .from("orders")
+        .select("id, promotion_id")
+        .eq("status", "pending_payment")
+        .neq("payment_method", "mpesa_c2b")
+        .lte("created_at", cutoff)
+        .limit(50),
+      supabase
+        .from("orders")
+        .select("id, promotion_id")
+        .eq("status", "pending_payment")
+        .eq("payment_method", "mpesa_c2b")
+        .lte("created_at", c2bCutoff)
+        .limit(50),
+    ]);
 
-    if (!expired || expired.length === 0) return;
+    const expired = [...(expiredNormal ?? []), ...(expiredC2b ?? [])];
+
+    if (expired.length === 0) return;
 
     for (const order of expired as Array<{ id: string; promotion_id: string | null }>) {
       // Claim the order by flipping its status FIRST, conditioned on it

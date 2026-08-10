@@ -217,9 +217,16 @@ async function _handlePost(req: NextRequest) {
   const order = rpcResult as { order_id: string; order_ref: string };
 
   // Record email + discount ledger + pickup point (columns from migrations
-  // 014/017). Best-effort: a missing column on an un-migrated DB must not
-  // fail the checkout.
-  if (email || discount.discountAmount > 0 || pickupPoint) {
+  // 014/017) + payment method. Best-effort: a missing column on an
+  // un-migrated DB must not fail the checkout.
+  //
+  // checkout_and_reserve_stock never receives a payment method, so every web
+  // order defaults to the DB column's "mpesa_stk" regardless of what was
+  // actually chosen — harmless for STK/card/BNPL (nothing currently reads it
+  // for those), but it matters here: the stale-reservation cron uses this
+  // column to give manual Buy Goods orders a longer grace period than a
+  // timed-out STK prompt, and that only works if paybill orders are tagged.
+  if (email || discount.discountAmount > 0 || pickupPoint || parsed.data.paymentMethod === "paybill") {
     const ledger: Record<string, unknown> = {};
     if (email) ledger.email = email;
     if (pickupPoint) ledger.pickup_point_id = pickupPoint.id;
@@ -227,6 +234,7 @@ async function _handlePost(req: NextRequest) {
       ledger.discount_amount = discount.discountAmount;
       if (discount.appliedPromotion) ledger.promotion_id = discount.appliedPromotion.id;
     }
+    if (parsed.data.paymentMethod === "paybill") ledger.payment_method = "mpesa_c2b";
     const { error: ledgerErr } = await supabase.from("orders").update(ledger).eq("id", order.order_id);
     if (ledgerErr && !/column .* does not exist|could not find/i.test(ledgerErr.message)) {
       console.warn("[checkout] order ledger update warning:", ledgerErr.message);
