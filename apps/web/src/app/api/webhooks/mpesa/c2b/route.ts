@@ -38,26 +38,64 @@ export async function POST(req: NextRequest) {
 
   // Safaricom Confirmation: match and settle
   const {
-    BillRefNumber,   // = order_ref (cashier shows this to customer)
+    BillRefNumber,   // Paybill: the account ref the customer typed.
+                      // Buy Goods/Till: NOT the order_ref — the customer's
+                      // phone can't type a reference there at all, so
+                      // Safaricom fills this with the paying phone number
+                      // instead. Confirmed via Daraja integration docs.
     TransAmount,     // "8500.00"
     MSISDN,         // customer phone
     TransID,        // Safaricom receipt number
   } = body;
 
-  if (!BillRefNumber) {
-    return NextResponse.json(ACCEPTED); // always 200 so Safaricom stops retrying
-  }
-
   const supabase = createAdminSupabaseClient();
 
-  const { data: pending } = await supabase
-    .from("c2b_payments")
-    .select("id, order_id, expected_amount, status")
-    .eq("order_ref", BillRefNumber)
-    .maybeSingle();
+  let pending: { id: string; order_id: string; expected_amount: number; status: string } | null = null;
+
+  if (BillRefNumber) {
+    const { data } = await supabase
+      .from("c2b_payments")
+      .select("id, order_id, expected_amount, status")
+      .eq("order_ref", BillRefNumber)
+      .maybeSingle();
+    pending = data;
+  }
+
+  // Fall back to phone + amount matching — the only real signal a Buy Goods
+  // confirmation carries. Restrict candidates to ones this payment could
+  // actually satisfy (expected_amount <= what was paid) and take the oldest,
+  // so an unrelated smaller pending order from the same phone doesn't win
+  // over the one the customer actually meant to pay. Ambiguous when a phone
+  // has multiple eligible pending orders — logged below so it's visible,
+  // not silently guessed away.
+  if (!pending) {
+    const normalisedMsisdn = (MSISDN ?? "").replace(/\D/g, "");
+    const paidAmount = parseFloat(TransAmount ?? "0");
+
+    if (normalisedMsisdn && paidAmount > 0) {
+      const { data: candidates } = await supabase
+        .from("c2b_payments")
+        .select("id, order_id, order_ref, expected_amount, status, created_at")
+        .eq("phone", normalisedMsisdn)
+        .eq("status", "pending")
+        .lte("expected_amount", paidAmount)
+        .order("created_at", { ascending: true })
+        .limit(2);
+
+      const match = candidates?.[0];
+      if (match) {
+        pending = match;
+        console.log(
+          `[c2b webhook] phone-fallback match: phone=${normalisedMsisdn} amount=${paidAmount} ` +
+          `-> order_ref=${match.order_ref}` +
+          (candidates && candidates.length > 1 ? ` (ambiguous: ${candidates.length} eligible pending orders for this phone)` : "")
+        );
+      }
+    }
+  }
 
   if (!pending || pending.status !== "pending") {
-    // Unknown order ref or already processed - accept silently
+    // Unknown reference/phone or already processed - accept silently
     return NextResponse.json(ACCEPTED);
   }
 

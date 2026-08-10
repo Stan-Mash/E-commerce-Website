@@ -241,15 +241,20 @@ async function _handlePost(req: NextRequest) {
     }
   }
 
-  // Manual paybill: no STK push. Register the expected payment so the C2B
-  // webhook confirms the order when the customer pays with this reference.
-  // (Previously this path still fired an STK prompt and the payment could
-  // never be matched — web paybill orders sat unconfirmed forever.)
+  // Manual paybill/Buy Goods: no STK push. Register the expected payment so
+  // the C2B webhook can confirm the order once Safaricom's callback arrives.
+  // Storing `phone` here matters: a standard Lipa na M-Pesa > Buy Goods and
+  // Services payment has no account-number field for the customer to type
+  // the order ref into — Safaricom fills BillRefNumber with the paying
+  // phone number instead, so exact-order_ref matching alone can never fire
+  // for a real Buy Goods payment. The webhook falls back to phone+amount
+  // matching against this row when that happens.
   if (parsed.data.paymentMethod === "paybill") {
     await supabase.from("c2b_payments").insert({
       order_id:        order.order_id,
       order_ref:       orderRef,
       expected_amount: total,
+      phone:           normalisedPhone,
       status:          "pending",
     });
 

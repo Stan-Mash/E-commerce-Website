@@ -214,11 +214,19 @@ export async function POST(request: NextRequest) {
 
   if (payment_method === "mpesa_c2b") {
     // C2B: customer pays the Till. Create a c2b_payments row so the webhook
-    // can match the incoming Safaricom callback to this order by order_ref.
+    // can match the incoming Safaricom callback to this order.
+    //
+    // A standard Lipa na M-Pesa > Buy Goods and Services payment has no
+    // account-number field for the customer to type a reference into —
+    // Safaricom fills BillRefNumber with the paying phone number instead of
+    // whatever the cashier asks for. Storing `phone` lets the webhook fall
+    // back to phone+amount matching, since order_ref matching alone can
+    // never fire for a real Buy Goods payment.
     await supabase.from("c2b_payments").insert({
       order_id:        order.order_id,
       order_ref:       orderRef,
       expected_amount: total,
+      phone:           normalisedPhone || null,
       status:          "pending",
     });
 
@@ -227,8 +235,10 @@ export async function POST(request: NextRequest) {
       order_ref:      orderRef,
       total,
       payment_method: "mpesa_c2b",
-      // Cashier shows this ref to the customer - they enter it as Account Ref
-      instruction: `Ask customer to pay KES ${total.toLocaleString()} to our Till and enter reference: ${orderRef}`,
+      // The customer's Till payment has no reference field — tell the
+      // cashier to just confirm amount and Till, not ask for a reference
+      // that doesn't exist in that payment flow.
+      instruction: `Ask customer to pay KES ${total.toLocaleString()} to our Till. No reference number needed — this page updates once we receive it.`,
     }, { status: 201 });
   }
 
