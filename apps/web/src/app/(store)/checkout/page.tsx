@@ -145,7 +145,6 @@ export default function CheckoutPage() {
     let elapsed = 0;
     const INTERVAL = 4000;
     const TIMEOUT = 120000; // 2 minutes
-    setStatusMsg("Waiting for payment confirmation…");
     pollRef.current = setInterval(async () => {
       elapsed += INTERVAL;
       try {
@@ -280,6 +279,7 @@ export default function CheckoutPage() {
       }
       setSubmitting(false);
       setWaiting(true);
+      setStatusMsg("Waiting for payment confirmation…");
       pollStatus(data.orderRef);
     } catch {
       setApiError("Network error. Please check your connection and try again.");
