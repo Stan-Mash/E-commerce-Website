@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import DashboardChart from "./DashboardChart";
 import AnimatedCounter from "./AnimatedCounter";
+import { createAdminSupabaseClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = { title: "Dashboard" };
 
@@ -56,12 +57,7 @@ async function getDashboardData(): Promise<DashboardData> {
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL) return empty;
 
   try {
-    const { createClient } = await import("@supabase/supabase-js");
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
-      { auth: { autoRefreshToken: false, persistSession: false } }
-    );
+    const supabase = createAdminSupabaseClient();
 
     const PAID_STATUSES = ["paid", "processing", "ready_for_pickup", "shipped", "delivered"];
 

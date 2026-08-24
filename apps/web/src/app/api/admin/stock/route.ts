@@ -1,21 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { z } from "zod";
 import { isAuthenticatedAdminRequest } from "@/lib/adminAuth";
 import { recordAudit, getOperator } from "@/lib/audit";
-
-function getAdminClient() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { autoRefreshToken: false, persistSession: false } }
-  );
-}
+import { withApiErrorHandling } from "@/lib/apiErrorHandler";
+import { createAdminSupabaseClient } from "@/lib/supabase/server";
 
 function checkAuth(request: NextRequest): boolean {
   return isAuthenticatedAdminRequest(request);
 }
 
-export async function GET(request: NextRequest) {
+const StockAdjustSchema = z.object({
+  sku_id: z.string(),
+  delta: z.coerce.number(),
+  reason: z.string().optional(),
+});
+
+export const GET = withApiErrorHandling("admin/stock GET", async (request: NextRequest) => {
   if (!checkAuth(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ skus: [] });
   }
 
-  const supabase = getAdminClient();
+  const supabase = createAdminSupabaseClient();
   const { data, error } = await supabase
     .from("skus")
     .select(`
@@ -42,9 +42,9 @@ export async function GET(request: NextRequest) {
   }
 
   return NextResponse.json({ skus: data ?? [] });
-}
+});
 
-export async function POST(request: NextRequest) {
+export const POST = withApiErrorHandling("admin/stock POST", async (request: NextRequest) => {
   if (!checkAuth(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -53,18 +53,23 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Not configured" }, { status: 503 });
   }
 
-  const body = await request.json();
-  const {
-    sku_id,
-    delta,
-    reason,
-  }: { sku_id: string; delta: number; reason: string } = body;
+  let jsonBody: unknown;
+  try {
+    jsonBody = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
+  }
+  const parseResult = StockAdjustSchema.safeParse(jsonBody);
+  if (!parseResult.success) {
+    return NextResponse.json({ error: "Validation failed", details: parseResult.error.flatten() }, { status: 422 });
+  }
+  const { sku_id, delta, reason } = parseResult.data;
 
   if (!sku_id || delta === undefined) {
     return NextResponse.json({ error: "sku_id and delta are required" }, { status: 400 });
   }
 
-  const supabase = getAdminClient();
+  const supabase = createAdminSupabaseClient();
 
   // Adjust via the RPC so inventory_levels is updated and the trigger keeps
   // skus.stock_quantity in sync. This is the single source of truth that
@@ -118,4 +123,4 @@ export async function POST(request: NextRequest) {
   });
 
   return NextResponse.json({ ok: true, new_quantity: after?.stock_quantity ?? null });
-}
+});

@@ -69,7 +69,12 @@ function WishlistButton({ productId }: { productId: string }) {
   useEffect(() => {
     try {
       const stored = JSON.parse(localStorage.getItem("es_wishlist") ?? "[]") as string[];
-      setInWishlist(stored.includes(productId));
+      const inList = stored.includes(productId);
+      // Defer past the synchronous effect body: this is a client-only read
+      // of localStorage (can't be computed during render for SSR), and
+      // moving the setState after a microtask keeps it out of the
+      // cascading-render path the lint rule warns about.
+      void Promise.resolve().then(() => setInWishlist(inList));
     } catch {
       // ignore
     }

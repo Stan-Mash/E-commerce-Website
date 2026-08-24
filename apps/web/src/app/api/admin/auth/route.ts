@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { ADMIN_SESSION_TOKEN } from "@/lib/adminAuth";
 import { rateLimit, clientIp } from "@/lib/rateLimit";
+import { withApiErrorHandling } from "@/lib/apiErrorHandler";
 
 // Only allow same-site relative redirect targets. Rejects absolute URLs and
 // protocol-relative ("//evil.com") values, which would otherwise be an open
@@ -12,6 +14,10 @@ function safeRedirectPath(from: string): string {
 // No insecure fallback - if ADMIN_PASSWORD is not configured the admin is
 // locked entirely (fail closed). Set ADMIN_PASSWORD in the environment.
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
+
+const AuthSchema = z.object({
+  password: z.string(),
+});
 
 /** Constant-time string comparison to avoid timing side-channels. */
 function safeEqual(a: string, b: string): boolean {
@@ -50,7 +56,7 @@ function operatorCookie(name: string): string {
  * JSON endpoint - used by the old fetch-based login (kept for compatibility).
  * Prefer the form-POST flow below which is more reliable with Service Workers.
  */
-export async function POST(req: NextRequest) {
+export const POST = withApiErrorHandling("admin/auth POST", async (req: NextRequest) => {
   const contentType = req.headers.get("content-type") ?? "";
 
   // Brute-force guard: 5 attempts per minute per IP.
@@ -86,7 +92,17 @@ export async function POST(req: NextRequest) {
   }
 
   // JSON endpoint (fetch-based login)
-  const { password } = await req.json() as { password: string };
+  let jsonBody: unknown;
+  try {
+    jsonBody = await req.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
+  }
+  const parsed = AuthSchema.safeParse(jsonBody);
+  if (!parsed.success) {
+    return NextResponse.json({ error: "Validation failed", details: parsed.error.flatten() }, { status: 422 });
+  }
+  const { password } = parsed.data;
 
   if (!ADMIN_PASSWORD || !safeEqual(password ?? "", ADMIN_PASSWORD)) {
     return NextResponse.json({ error: "Incorrect password" }, { status: 401 });
@@ -95,4 +111,4 @@ export async function POST(req: NextRequest) {
   const response = NextResponse.json({ ok: true });
   response.headers.append("Set-Cookie", SESSION_COOKIE);
   return response;
-}
+});

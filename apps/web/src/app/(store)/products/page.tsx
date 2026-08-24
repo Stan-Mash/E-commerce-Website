@@ -54,12 +54,13 @@ async function getProducts(): Promise<ProductRow[]> {
 // Page
 // ---------------------------------------------------------------------------
 interface PageProps {
-  searchParams: { category?: string };
+  searchParams: Promise<{ category?: string }>;
 }
 
 export const revalidate = 60; // ISR: refresh every 60 seconds
 
-export default async function ProductsPage({ searchParams }: PageProps) {
+export default async function ProductsPage(props: PageProps) {
+  const searchParams = await props.searchParams;
   const activeCategory = searchParams.category ?? "All";
   const products = await getProducts();
 

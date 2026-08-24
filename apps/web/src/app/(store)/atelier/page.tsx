@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 
 export const metadata: Metadata = { title: "About Us", alternates: { canonical: "/atelier" } };
 
@@ -134,9 +135,9 @@ export default function AboutPage() {
           >
             Find your next favourite outfit.
           </h2>
-          <a href="/products" className="es-btn-plum px-10 py-4 text-[11px] tracking-[.38em] uppercase">
+          <Link href="/products" className="es-btn-plum px-10 py-4 text-[11px] tracking-[.38em] uppercase">
             Shop Now
-          </a>
+          </Link>
           <p className="mt-10 text-[11px] tracking-[.32em] uppercase text-es-mute">
             Questions? Reach us on WhatsApp or at hello@elitestyle.co.ke
           </p>

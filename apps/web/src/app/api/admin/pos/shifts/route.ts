@@ -1,14 +1,30 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { createAdminSupabaseClient } from "@/lib/supabase/server";
 import { isAuthenticatedAdminRequest } from "@/lib/adminAuth";
+import { withApiErrorHandling } from "@/lib/apiErrorHandler";
 
 function checkAuth(req: NextRequest): boolean {
   return isAuthenticatedAdminRequest(req);
 }
 
+const ShiftBodySchema = z.discriminatedUnion("action", [
+  z.object({
+    action: z.literal("open"),
+    location_id: z.string().optional(),
+    cashier_name: z.string().optional(),
+    opening_float: z.coerce.number().optional(),
+  }),
+  z.object({
+    action: z.literal("close"),
+    shift_id: z.string().optional(),
+    closing_float: z.coerce.number().optional(),
+  }),
+]);
+
 // GET /api/admin/pos/shifts?location_id=xxx
 // Returns the currently open shift for a location (if any)
-export async function GET(req: NextRequest) {
+export const GET = withApiErrorHandling("admin/pos/shifts GET", async (req: NextRequest) => {
   if (!checkAuth(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const locationId = req.nextUrl.searchParams.get("location_id");
@@ -27,22 +43,25 @@ export async function GET(req: NextRequest) {
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
   return NextResponse.json({ shift: data });
-}
+});
 
 // POST /api/admin/pos/shifts
 // Body: { action: "open", location_id, cashier_name, opening_float }
 //     | { action: "close", shift_id, closing_float }
-export async function POST(req: NextRequest) {
+export const POST = withApiErrorHandling("admin/pos/shifts POST", async (req: NextRequest) => {
   if (!checkAuth(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const body = await req.json() as {
-    action:        "open" | "close";
-    location_id?:  string;
-    cashier_name?: string;
-    opening_float?: number;
-    shift_id?:     string;
-    closing_float?: number;
-  };
+  let jsonBody: unknown;
+  try {
+    jsonBody = await req.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
+  }
+  const parseResult = ShiftBodySchema.safeParse(jsonBody);
+  if (!parseResult.success) {
+    return NextResponse.json({ error: "Validation failed", details: parseResult.error.flatten() }, { status: 422 });
+  }
+  const body = parseResult.data;
 
   const supabase = createAdminSupabaseClient();
 
@@ -119,4 +138,4 @@ export async function POST(req: NextRequest) {
   }
 
   return NextResponse.json({ error: "Invalid action" }, { status: 400 });
-}
+});

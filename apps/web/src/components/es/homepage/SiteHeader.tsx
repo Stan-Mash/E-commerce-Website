@@ -29,11 +29,19 @@ export function SiteHeader() {
   const [mounted, setMounted] = useState(false);
   const { itemCount, openCart } = useCart();
   const pathname = usePathname();
+  // Classic hydration-guard flag: must run post-mount (not derivable from a
+  // prop/dep change, so the adjust-during-render pattern doesn't fit) to
+  // avoid an SSR/CSR markup mismatch on `itemCount`/cart state below.
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- mount-only hydration guard, not a dep-change reset
   useEffect(() => { setMounted(true); }, []);
 
   // Close the drawer whenever the route changes, and lock page scroll while
   // it's open — matches the pattern used by the admin mobile nav.
-  useEffect(() => { setMobileOpen(false); }, [pathname]);
+  const [prevPathname, setPrevPathname] = useState(pathname);
+  if (pathname !== prevPathname) {
+    setPrevPathname(pathname);
+    setMobileOpen(false);
+  }
   useEffect(() => {
     document.body.style.overflow = mobileOpen ? "hidden" : "";
     return () => { document.body.style.overflow = ""; };

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { createAdminSupabaseClient } from "@/lib/supabase/server";
 import { normaliseKenyanPhone, generateOrderRef } from "@/lib/utils";
 import { applyDiscounts, type Promotion, type CartLineItem } from "@/lib/promotions/engine";
@@ -9,30 +10,39 @@ function checkAuth(request: NextRequest): boolean {
   return isAuthenticatedAdminRequest(request);
 }
 
-interface PosItem {
-  sku_id:     string;
-  quantity:   number;
-  unit_price: number;
-}
+const PosItemSchema = z.object({
+  sku_id: z.string(),
+  quantity: z.coerce.number(),
+  unit_price: z.coerce.number(),
+});
 
-interface PosBody {
-  phone:          string;
-  payment_method: "cash" | "mpesa_stk" | "mpesa_c2b";
-  location_id:    string;
-  shift_id:       string;   // required: no sale without an open shift
-  cashier_name:   string;
-  items:          PosItem[];
-  promo_code?:    string;
-  notes?:         string;
-}
+const PosSchema = z.object({
+  phone: z.string(),
+  payment_method: z.enum(["cash", "mpesa_stk", "mpesa_c2b"]),
+  location_id: z.string(),
+  shift_id: z.string(), // required: no sale without an open shift
+  cashier_name: z.string(),
+  items: z.array(PosItemSchema),
+  promo_code: z.string().optional(),
+  notes: z.string().optional(),
+});
 
 export async function POST(request: NextRequest) {
   if (!checkAuth(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const body = (await request.json()) as PosBody;
-  const { phone, payment_method, location_id, shift_id, cashier_name, items, promo_code, notes } = body;
+  let jsonBody: unknown;
+  try {
+    jsonBody = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
+  }
+  const parseResult = PosSchema.safeParse(jsonBody);
+  if (!parseResult.success) {
+    return NextResponse.json({ error: "Validation failed", details: parseResult.error.flatten() }, { status: 422 });
+  }
+  const { phone, payment_method, location_id, shift_id, cashier_name, items, promo_code, notes } = parseResult.data;
 
   if (!items || items.length === 0) {
     return NextResponse.json({ error: "No items in order" }, { status: 400 });

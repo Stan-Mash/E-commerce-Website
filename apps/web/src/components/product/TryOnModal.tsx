@@ -50,6 +50,9 @@ export function TryOnModal({ productId, productName, onClose }: { productId: str
     }
     setError("");
     setStage("uploading");
+    // Timing telemetry only — handleFile runs solely from the file <input>'s
+    // onChange handler, never during render, so Date.now() here is safe.
+    // eslint-disable-next-line react-hooks/purity
     startedAtRef.current = Date.now();
     try {
       const { base64: downscaled } = await downscaleToBase64(file);
@@ -65,12 +68,14 @@ export function TryOnModal({ productId, productName, onClose }: { productId: str
       if (!data.ok) {
         setError(data.error ?? "Something went wrong.");
         setStage("error");
+        // eslint-disable-next-line react-hooks/purity -- see note above; event-handler-only.
         trackTryOnGenerated(productId, Date.now() - startedAtRef.current, false);
         return;
       }
       if (data.status === "completed") {
         setResultUrl(data.resultUrl);
         setStage("result");
+        // eslint-disable-next-line react-hooks/purity -- see note above; event-handler-only.
         trackTryOnGenerated(productId, Date.now() - startedAtRef.current, true);
         return;
       }

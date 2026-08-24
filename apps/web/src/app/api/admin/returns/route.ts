@@ -1,19 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { z } from "zod";
 import { isAuthenticatedAdminRequest } from "@/lib/adminAuth";
-
-function getAdminClient() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { autoRefreshToken: false, persistSession: false } }
-  );
-}
+import { withApiErrorHandling } from "@/lib/apiErrorHandler";
+import { createAdminSupabaseClient } from "@/lib/supabase/server";
 
 const STATUSES = ["requested", "approved", "rejected", "refunded"];
 const RESOLUTIONS = ["refund", "store_credit", "exchange"];
 
-export async function GET(request: NextRequest) {
+const ReturnPatchSchema = z.object({
+  id: z.string().optional(),
+  status: z.string().optional(),
+  resolution: z.string().nullable().optional(),
+  amount: z.coerce.number().nullable().optional(),
+  notes: z.string().nullable().optional(),
+});
+
+export const GET = withApiErrorHandling("admin/returns GET", async (request: NextRequest) => {
   if (!isAuthenticatedAdminRequest(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -21,7 +23,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ returns: [] });
   }
 
-  const supabase = getAdminClient();
+  const supabase = createAdminSupabaseClient();
   const { data, error } = await supabase
     .from("returns")
     .select("*, order:orders(order_ref, phone, total, status)")
@@ -31,9 +33,9 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
   return NextResponse.json({ returns: data ?? [] });
-}
+});
 
-export async function PATCH(request: NextRequest) {
+export const PATCH = withApiErrorHandling("admin/returns PATCH", async (request: NextRequest) => {
   if (!isAuthenticatedAdminRequest(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -41,13 +43,17 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ error: "Not configured" }, { status: 503 });
   }
 
-  const body = await request.json() as {
-    id?: string;
-    status?: string;
-    resolution?: string | null;
-    amount?: number | null;
-    notes?: string | null;
-  };
+  let jsonBody: unknown;
+  try {
+    jsonBody = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
+  }
+  const parseResult = ReturnPatchSchema.safeParse(jsonBody);
+  if (!parseResult.success) {
+    return NextResponse.json({ error: "Validation failed", details: parseResult.error.flatten() }, { status: 422 });
+  }
+  const body = parseResult.data;
 
   if (!body.id) {
     return NextResponse.json({ error: "Missing return id" }, { status: 400 });
@@ -65,7 +71,7 @@ export async function PATCH(request: NextRequest) {
   if (body.amount !== undefined) patch.amount = body.amount;
   if (body.notes !== undefined) patch.notes = body.notes;
 
-  const supabase = getAdminClient();
+  const supabase = createAdminSupabaseClient();
   const { data, error } = await supabase
     .from("returns")
     .update(patch)
@@ -77,4 +83,4 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
   return NextResponse.json({ return: data });
-}
+});

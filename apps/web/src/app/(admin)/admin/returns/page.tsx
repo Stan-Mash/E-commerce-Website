@@ -39,7 +39,11 @@ export default function AdminReturnsPage() {
     }
   }, []);
 
-  useEffect(() => { load(); }, [load]);
+  // load is also called manually after patching a return's status (see
+  // below), not just from this mount effect — its setLoading(true) is
+  // needed to re-show the loading state on those refreshes too, so it isn't
+  // a redundant initializer we can delete.
+  useEffect(() => { load(); }, [load]); // eslint-disable-line react-hooks/set-state-in-effect
 
   async function patch(id: string, body: Record<string, unknown>) {
     await fetch("/api/admin/returns", {

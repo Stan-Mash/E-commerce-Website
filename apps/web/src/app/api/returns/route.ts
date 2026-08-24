@@ -2,10 +2,15 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { createAdminSupabaseClient } from "@/lib/supabase/server";
 import { rateLimit, clientIp } from "@/lib/rateLimit";
+import { normaliseKenyanPhone } from "@/lib/utils";
 
 // POST /api/returns — a customer requests a return/exchange for a paid order.
+// Requires the order phone as proof of ownership (same model as /api/track
+// and /api/account/orders) so a return can't be filed against a stranger's
+// order using only the order_ref, which can leak via shipping labels/receipts.
 const Schema = z.object({
   orderRef: z.string().min(3).max(40),
+  phone: z.string().min(9).max(15),
   reason: z.string().min(5).max(500),
   notes: z.string().max(500).optional(),
 });
@@ -32,17 +37,26 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Please provide a valid order reference and reason." }, { status: 422 });
   }
 
-  const { orderRef, reason, notes } = parsed.data;
+  const { orderRef, phone: phoneRaw, reason, notes } = parsed.data;
+
+  let phone: string;
+  try {
+    phone = normaliseKenyanPhone(phoneRaw);
+  } catch {
+    return NextResponse.json({ error: "We couldn't find an order with that reference and phone." }, { status: 404 });
+  }
+
   const supabase = createAdminSupabaseClient();
 
   const { data: order } = await supabase
     .from("orders")
     .select("id, status")
     .eq("order_ref", orderRef.trim().toUpperCase())
+    .eq("phone", phone)
     .single();
 
   if (!order) {
-    return NextResponse.json({ error: "We couldn't find an order with that reference." }, { status: 404 });
+    return NextResponse.json({ error: "We couldn't find an order with that reference and phone." }, { status: 404 });
   }
   if (INELIGIBLE.has(order.status)) {
     return NextResponse.json({ error: "This order isn't eligible for a return." }, { status: 409 });

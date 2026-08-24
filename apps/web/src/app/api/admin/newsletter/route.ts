@@ -1,21 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { z } from "zod";
 import { isAuthenticatedAdminRequest } from "@/lib/adminAuth";
 import { isEmailConfigured } from "@/lib/email/client";
-
-function getAdminClient() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { autoRefreshToken: false, persistSession: false } }
-  );
-}
+import { withApiErrorHandling } from "@/lib/apiErrorHandler";
+import { createAdminSupabaseClient } from "@/lib/supabase/server";
 
 const MISSING_TABLE = /relation .* does not exist|could not find the table/i;
 
+const NewsletterSchema = z.object({
+  subject: z.string().optional(),
+  html: z.string().optional(),
+});
+
 // GET /api/admin/newsletter         -> { subscribers, migrated }
 // GET /api/admin/newsletter?format=csv -> CSV download
-export async function GET(request: NextRequest) {
+export const GET = withApiErrorHandling("admin/newsletter GET", async (request: NextRequest) => {
   if (!isAuthenticatedAdminRequest(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -23,7 +22,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ subscribers: [], migrated: false });
   }
 
-  const supabase = getAdminClient();
+  const supabase = createAdminSupabaseClient();
   const { data, error } = await supabase
     .from("newsletter_subscribers")
     .select("email, source, created_at")
@@ -54,10 +53,10 @@ export async function GET(request: NextRequest) {
   }
 
   return NextResponse.json({ subscribers, migrated: true });
-}
+});
 
 // POST /api/admin/newsletter  { subject, html } -> send campaign to all subscribers
-export async function POST(request: NextRequest) {
+export const POST = withApiErrorHandling("admin/newsletter POST", async (request: NextRequest) => {
   if (!isAuthenticatedAdminRequest(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -68,13 +67,22 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Email not configured. Add RESEND_API_KEY and EMAIL_FROM to Vercel env vars." }, { status: 503 });
   }
 
-  const body = await request.json() as { subject?: string; html?: string };
-  const { subject, html } = body;
+  let jsonBody: unknown;
+  try {
+    jsonBody = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
+  }
+  const parseResult = NewsletterSchema.safeParse(jsonBody);
+  if (!parseResult.success) {
+    return NextResponse.json({ error: "Validation failed", details: parseResult.error.flatten() }, { status: 422 });
+  }
+  const { subject, html } = parseResult.data;
   if (!subject?.trim() || !html?.trim()) {
     return NextResponse.json({ error: "subject and html are required" }, { status: 400 });
   }
 
-  const supabase = getAdminClient();
+  const supabase = createAdminSupabaseClient();
   const { data, error } = await supabase
     .from("newsletter_subscribers")
     .select("email");
@@ -118,4 +126,4 @@ export async function POST(request: NextRequest) {
   }
 
   return NextResponse.json({ sent, failed });
-}
+});

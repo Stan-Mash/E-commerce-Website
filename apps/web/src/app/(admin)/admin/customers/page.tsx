@@ -41,20 +41,19 @@ export default function CustomersPage() {
   const [selectedCustomer, setSelectedCustomer] = useState<CustomerRow | null>(null);
   const [panelOpen, setPanelOpen] = useState(false);
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    try {
-      const res = await fetch("/api/admin/customers");
-      if (res.status === 401) { window.location.href = "/admin/login"; return; }
-      if (res.ok) {
-        const json = await res.json() as { customers: CustomerRow[] };
-        setCustomers(json.customers ?? []);
-      }
-    } catch {
-      // ignore
-    } finally {
-      setLoading(false);
-    }
+  const load = useCallback(() => {
+    fetch("/api/admin/customers")
+      .then(async (res) => {
+        if (res.status === 401) { window.location.href = "/admin/login"; return; }
+        if (res.ok) {
+          const json = await res.json() as { customers: CustomerRow[] };
+          setCustomers(json.customers ?? []);
+        }
+      })
+      .catch(() => {
+        // ignore
+      })
+      .finally(() => setLoading(false));
   }, []);
 
   useEffect(() => {
@@ -80,9 +79,11 @@ export default function CustomersPage() {
   }, [customers, search]);
 
   // Reset to page 1 when search changes
-  useEffect(() => {
+  const [prevSearch, setPrevSearch] = useState(search);
+  if (search !== prevSearch) {
+    setPrevSearch(search);
     setPage(1);
-  }, [search]);
+  }
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const safePage = Math.min(page, totalPages);

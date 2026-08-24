@@ -30,7 +30,11 @@ export default function AdminReviewsPage() {
     }
   }, []);
 
-  useEffect(() => { load(); }, [load]);
+  // load is also called manually after approving/rejecting a review (see
+  // below), not just from this mount effect — its setLoading(true) is
+  // needed to re-show the loading state on those refreshes too, so it isn't
+  // a redundant initializer we can delete.
+  useEffect(() => { load(); }, [load]); // eslint-disable-line react-hooks/set-state-in-effect
 
   async function setApproved(id: string, is_approved: boolean) {
     await fetch("/api/admin/reviews", {

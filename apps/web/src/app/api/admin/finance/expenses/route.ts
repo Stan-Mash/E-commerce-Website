@@ -1,8 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { createAdminSupabaseClient } from "@/lib/supabase/server";
 import { isAuthenticatedOwnerRequest } from "@/lib/adminAuth";
+import { withApiErrorHandling } from "@/lib/apiErrorHandler";
 
-export async function GET(request: NextRequest) {
+const ExpenseSchema = z.object({
+  category_id: z.string(),
+  description: z.string(),
+  amount: z.coerce.number(),
+  expense_date: z.string(),
+  payment_method: z.string(),
+  location_id: z.string().optional(),
+  receipt_url: z.string().optional(),
+  notes: z.string().optional(),
+});
+
+export const GET = withApiErrorHandling("admin/finance/expenses GET", async (request: NextRequest) => {
   if (!isAuthenticatedOwnerRequest(request)) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const sb = createAdminSupabaseClient();
@@ -22,21 +35,22 @@ export async function GET(request: NextRequest) {
   const { data, error } = await query;
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ expenses: data });
-}
+});
 
-export async function POST(request: NextRequest) {
+export const POST = withApiErrorHandling("admin/finance/expenses POST", async (request: NextRequest) => {
   if (!isAuthenticatedOwnerRequest(request)) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
-  const body = await request.json() as {
-    category_id:    string;
-    description:    string;
-    amount:         number;
-    expense_date:   string;
-    payment_method: string;
-    location_id?:   string;
-    receipt_url?:   string;
-    notes?:         string;
-  };
+  let jsonBody: unknown;
+  try {
+    jsonBody = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
+  }
+  const parseResult = ExpenseSchema.safeParse(jsonBody);
+  if (!parseResult.success) {
+    return NextResponse.json({ error: "Validation failed", details: parseResult.error.flatten() }, { status: 422 });
+  }
+  const body = parseResult.data;
 
   const sb = createAdminSupabaseClient();
   const { data, error } = await sb.from("expenses").insert({
@@ -52,7 +66,7 @@ export async function POST(request: NextRequest) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ expense: data }, { status: 201 });
-}
+});
 
 function incrementMonth(ym: string): string {
   const parts = ym.split("-").map(Number);

@@ -1,18 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { z } from "zod";
 import { isAuthenticatedAdminRequest } from "@/lib/adminAuth";
-
-function getAdminClient() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { autoRefreshToken: false, persistSession: false } }
-  );
-}
+import { createAdminSupabaseClient } from "@/lib/supabase/server";
 
 function checkAuth(request: NextRequest): boolean {
   return isAuthenticatedAdminRequest(request);
 }
+
+const SettingsSchema = z.record(z.string(), z.string());
 
 const DEFAULTS: Record<string, string> = {
   store_name: "Elite Style Co.",
@@ -37,7 +32,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(DEFAULTS);
   }
 
-  const supabase = getAdminClient();
+  const supabase = createAdminSupabaseClient();
 
   const { data, error } = await supabase
     .from("app_settings")
@@ -62,18 +57,23 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  let body: Record<string, string>;
+  let jsonBody: unknown;
   try {
-    body = (await request.json()) as Record<string, string>;
+    jsonBody = await request.json();
   } catch {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
+  const parseResult = SettingsSchema.safeParse(jsonBody);
+  if (!parseResult.success) {
+    return NextResponse.json({ error: "Validation failed", details: parseResult.error.flatten() }, { status: 422 });
+  }
+  const body = parseResult.data;
 
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
     return NextResponse.json({ ok: true });
   }
 
-  const supabase = getAdminClient();
+  const supabase = createAdminSupabaseClient();
 
   const upserts = Object.entries(body).map(([key, value]) => ({
     namespace: "store",

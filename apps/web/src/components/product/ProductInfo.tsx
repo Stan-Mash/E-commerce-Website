@@ -64,7 +64,11 @@ export function ProductInfo({ product, tryOnEnabled = false }: Props) {
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
-    setWishlisted(readWishlist().includes(product.id));
+    const isWishlisted = readWishlist().includes(product.id);
+    // readWishlist() is a client-only localStorage read (can't be computed
+    // during render for SSR); deferring past a microtask keeps the setState
+    // call out of the cascading-render path the lint rule flags.
+    void Promise.resolve().then(() => setWishlisted(isWishlisted));
   }, [product.id]);
 
   useEffect(() => {

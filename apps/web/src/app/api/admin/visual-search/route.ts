@@ -3,11 +3,12 @@ import { createAdminSupabaseClient } from "@/lib/supabase/server";
 import { isAuthenticatedAdminRequest } from "@/lib/adminAuth";
 import { isVisualSearchConfigured } from "@/lib/embeddings";
 import { sweepImageEmbeddings } from "@/lib/visualSearch";
+import { withApiErrorHandling } from "@/lib/apiErrorHandler";
 
 export const maxDuration = 60;
 
 // GET — status: how many images are embedded vs pending.
-export async function GET(request: NextRequest) {
+export const GET = withApiErrorHandling("admin/visual-search GET", async (request: NextRequest) => {
   if (!isAuthenticatedAdminRequest(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -33,10 +34,10 @@ export async function GET(request: NextRequest) {
     embedded: embedded ?? 0,
     pending: pending ?? 0,
   });
-}
+});
 
 // POST — run one backfill sweep (embeds up to 20 images per call).
-export async function POST(request: NextRequest) {
+export const POST = withApiErrorHandling("admin/visual-search POST", async (request: NextRequest) => {
   if (!isAuthenticatedAdminRequest(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -47,4 +48,4 @@ export async function POST(request: NextRequest) {
   const supabase = createAdminSupabaseClient();
   const result = await sweepImageEmbeddings(supabase, 20);
   return NextResponse.json(result);
-}
+});

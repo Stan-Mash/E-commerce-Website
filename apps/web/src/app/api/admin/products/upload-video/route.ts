@@ -3,20 +3,12 @@
 // returns { url, path } pointing at the public Supabase Storage object.
 
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
 import { isAuthenticatedAdminRequest } from "@/lib/adminAuth";
+import { createAdminSupabaseClient } from "@/lib/supabase/server";
 
 const BUCKET   = "product-videos";
 const MAX_SIZE = 100 * 1024 * 1024; // 100 MB
 const ALLOWED  = ["video/mp4", "video/webm", "video/quicktime", "video/ogg"];
-
-function getAdminClient() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { autoRefreshToken: false, persistSession: false } }
-  );
-}
 
 export async function POST(request: NextRequest) {
   if (!isAuthenticatedAdminRequest(request)) {
@@ -50,7 +42,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const supabase = getAdminClient();
+  const supabase = createAdminSupabaseClient();
 
   const extMap: Record<string, string> = {
     "video/mp4":        "mp4",

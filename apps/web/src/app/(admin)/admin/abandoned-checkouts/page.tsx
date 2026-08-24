@@ -140,6 +140,11 @@ export default function AbandonedCheckoutsPage() {
   }, []);
 
   useEffect(() => {
+    // load() is also invoked on an interval below (with showSpinner=false)
+    // for background refresh, not just here on mount/view-change — the
+    // showSpinner-gated setLoading(true) is needed for this initial/
+    // view-change call, so it isn't a redundant initializer we can delete.
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- conditional setLoading(true) also serves the interval-driven refresh below
     void load(view, true);
     const interval = setInterval(() => void load(view, false), REFRESH_MS);
     return () => clearInterval(interval);

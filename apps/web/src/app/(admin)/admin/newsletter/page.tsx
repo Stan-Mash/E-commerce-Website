@@ -22,7 +22,6 @@ export default function AdminNewsletterPage() {
   const [sendResult, setSendResult] = useState<{ sent: number; failed: number; error?: string } | null>(null);
 
   const load = useCallback(async () => {
-    setLoading(true);
     try {
       const res = await fetch("/api/admin/newsletter", { credentials: "include" });
       if (res.status === 401) { window.location.href = "/admin/login"; return; }

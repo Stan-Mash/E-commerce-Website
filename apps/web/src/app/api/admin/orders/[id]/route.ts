@@ -1,15 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { z } from "zod";
 import { isAuthenticatedAdminRequest } from "@/lib/adminAuth";
 import { recordAudit, getOperator } from "@/lib/audit";
-
-function getAdminClient() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { autoRefreshToken: false, persistSession: false } }
-  );
-}
+import { createAdminSupabaseClient } from "@/lib/supabase/server";
 
 function checkAuth(request: NextRequest): boolean {
   return isAuthenticatedAdminRequest(request);
@@ -31,10 +24,19 @@ function isValidHttpUrl(s: string): boolean {
   }
 }
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+const OrderPutSchema = z.object({
+  status: z.string().optional(),
+  tracking_number: z.string().nullable().optional(),
+  courier: z.string().nullable().optional(),
+  tracking_url: z.string().nullable().optional(),
+});
+
+const OrderPatchSchema = z.object({
+  status: z.string(),
+});
+
+export async function GET(request: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   if (!checkAuth(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -43,7 +45,7 @@ export async function GET(
     return NextResponse.json({ error: "Not configured" }, { status: 503 });
   }
 
-  const supabase = getAdminClient();
+  const supabase = createAdminSupabaseClient();
   const { data, error } = await supabase
     .from("orders")
     .select(`
@@ -74,10 +76,8 @@ export async function GET(
   return NextResponse.json({ order: data });
 }
 
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function PUT(request: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   if (!checkAuth(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -86,12 +86,17 @@ export async function PUT(
     return NextResponse.json({ error: "Not configured" }, { status: 503 });
   }
 
-  const body = await request.json() as {
-    status?: string;
-    tracking_number?: string | null;
-    courier?: string | null;
-    tracking_url?: string | null;
-  };
+  let jsonBody: unknown;
+  try {
+    jsonBody = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
+  }
+  const parseResult = OrderPutSchema.safeParse(jsonBody);
+  if (!parseResult.success) {
+    return NextResponse.json({ error: "Validation failed", details: parseResult.error.flatten() }, { status: 422 });
+  }
+  const body = parseResult.data;
 
   // Only set fields that were sent (tracking columns come from migration 014).
   const patch: Record<string, unknown> = {};
@@ -115,7 +120,7 @@ export async function PUT(
     return NextResponse.json({ error: "Nothing to update" }, { status: 400 });
   }
 
-  const supabase = getAdminClient();
+  const supabase = createAdminSupabaseClient();
   const { data, error } = await supabase
     .from("orders")
     .update(patch)
@@ -148,10 +153,8 @@ export async function PUT(
   return NextResponse.json({ order: data });
 }
 
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function PATCH(request: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   if (!checkAuth(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -160,14 +163,23 @@ export async function PATCH(
     return NextResponse.json({ error: "Not configured" }, { status: 503 });
   }
 
-  const body = await request.json();
-  const { status } = body;
+  let jsonBody: unknown;
+  try {
+    jsonBody = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
+  }
+  const parseResult = OrderPatchSchema.safeParse(jsonBody);
+  if (!parseResult.success) {
+    return NextResponse.json({ error: "Validation failed", details: parseResult.error.flatten() }, { status: 422 });
+  }
+  const { status } = parseResult.data;
 
-  if (!status || !ALLOWED_STATUSES.includes(status)) {
+  if (!status || !ALLOWED_STATUSES.includes(status as (typeof ALLOWED_STATUSES)[number])) {
     return NextResponse.json({ error: `Invalid status. Allowed: ${ALLOWED_STATUSES.join(", ")}` }, { status: 400 });
   }
 
-  const supabase = getAdminClient();
+  const supabase = createAdminSupabaseClient();
   const { data, error } = await supabase
     .from("orders")
     .update({ status })

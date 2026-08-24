@@ -40,8 +40,16 @@ export default function ReportsPage() {
   const [exporting, setExporting] = useState(false);
   const router = useRouter();
 
-  const loadReport = useCallback(() => {
+  // Show the loading state again on every month switch, not just on mount
+  // (useState(true) only covers the first render) — derived during render
+  // instead of inside loadReport, which only performs the fetch.
+  const [prevMonth, setPrevMonth] = useState(month);
+  if (month !== prevMonth) {
+    setPrevMonth(month);
     setLoading(true);
+  }
+
+  const loadReport = useCallback(() => {
     fetch(`/api/admin/finance/reports?month=${month}`)
       .then(r => { if (r.status === 403) { router.replace("/admin/finance/login"); return null; } return r.json() as Promise<Report>; })
       .then(d => { if (d) setReport(d); })

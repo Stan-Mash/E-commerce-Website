@@ -1,19 +1,31 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { z } from "zod";
 import { isAuthenticatedAdminRequest } from "@/lib/adminAuth";
 import { recordAudit, getOperator } from "@/lib/audit";
-
-function getAdminClient() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { autoRefreshToken: false, persistSession: false } }
-  );
-}
+import { withApiErrorHandling } from "@/lib/apiErrorHandler";
+import { createAdminSupabaseClient } from "@/lib/supabase/server";
 
 const MISSING_TABLE = /relation .* does not exist|could not find the table/i;
 
-export async function GET(request: NextRequest) {
+const PickupPointPostSchema = z.object({
+  name: z.string().optional(),
+  area: z.string().optional(),
+  address: z.string().optional(),
+  phone: z.string().optional(),
+  fee: z.coerce.number().optional(),
+});
+
+const PickupPointPatchSchema = z.object({
+  id: z.string().optional(),
+  name: z.string().optional(),
+  area: z.string().optional(),
+  address: z.string().nullable().optional(),
+  phone: z.string().nullable().optional(),
+  fee: z.coerce.number().optional(),
+  active: z.boolean().optional(),
+});
+
+export const GET = withApiErrorHandling("admin/pickup-points GET", async (request: NextRequest) => {
   if (!isAuthenticatedAdminRequest(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -21,7 +33,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ points: [], migrated: false });
   }
 
-  const supabase = getAdminClient();
+  const supabase = createAdminSupabaseClient();
   const { data, error } = await supabase
     .from("pickup_points")
     .select("*")
@@ -35,21 +47,29 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
   return NextResponse.json({ points: data ?? [], migrated: true });
-}
+});
 
-export async function POST(request: NextRequest) {
+export const POST = withApiErrorHandling("admin/pickup-points POST", async (request: NextRequest) => {
   if (!isAuthenticatedAdminRequest(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const body = await request.json() as {
-    name?: string; area?: string; address?: string; phone?: string; fee?: number;
-  };
+  let jsonBody: unknown;
+  try {
+    jsonBody = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
+  }
+  const parseResult = PickupPointPostSchema.safeParse(jsonBody);
+  if (!parseResult.success) {
+    return NextResponse.json({ error: "Validation failed", details: parseResult.error.flatten() }, { status: 422 });
+  }
+  const body = parseResult.data;
   if (!body.name?.trim() || !body.area?.trim()) {
     return NextResponse.json({ error: "Name and area are required" }, { status: 422 });
   }
 
-  const supabase = getAdminClient();
+  const supabase = createAdminSupabaseClient();
   const { data, error } = await supabase
     .from("pickup_points")
     .insert({
@@ -75,17 +95,24 @@ export async function POST(request: NextRequest) {
   });
 
   return NextResponse.json({ point: data }, { status: 201 });
-}
+});
 
-export async function PATCH(request: NextRequest) {
+export const PATCH = withApiErrorHandling("admin/pickup-points PATCH", async (request: NextRequest) => {
   if (!isAuthenticatedAdminRequest(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const body = await request.json() as {
-    id?: string; name?: string; area?: string; address?: string | null;
-    phone?: string | null; fee?: number; active?: boolean;
-  };
+  let jsonBody: unknown;
+  try {
+    jsonBody = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
+  }
+  const parseResult = PickupPointPatchSchema.safeParse(jsonBody);
+  if (!parseResult.success) {
+    return NextResponse.json({ error: "Validation failed", details: parseResult.error.flatten() }, { status: 422 });
+  }
+  const body = parseResult.data;
   if (!body.id) {
     return NextResponse.json({ error: "Missing id" }, { status: 400 });
   }
@@ -98,7 +125,7 @@ export async function PATCH(request: NextRequest) {
   if (body.fee !== undefined) patch.fee = Math.max(0, Math.round(body.fee));
   if (body.active !== undefined) patch.active = body.active;
 
-  const supabase = getAdminClient();
+  const supabase = createAdminSupabaseClient();
   const { data, error } = await supabase
     .from("pickup_points")
     .update(patch)
@@ -119,4 +146,4 @@ export async function PATCH(request: NextRequest) {
   });
 
   return NextResponse.json({ point: data });
-}
+});

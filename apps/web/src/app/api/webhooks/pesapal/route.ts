@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminSupabaseClient } from "@/lib/supabase/server";
 import { getTransactionStatus } from "@/lib/pesapal/client";
+import { decidePesapalOutcome } from "@/lib/pesapal/statusDecision";
 
 // Pesapal IPN webhook. Unlike Flutterwave, Pesapal's IPN call carries no
 // signature header and deliberately omits the payment status itself ("for
@@ -70,10 +71,9 @@ async function handle(req: NextRequest) {
     return NextResponse.json(ackShape(orderTrackingId, merchantReference ?? ""));
   }
 
-  const amountOk = Math.round(status.amount) >= Math.round(Number(order.total));
-  const success = status.statusCode === 1 && status.currency === "KES" && amountOk;
+  const outcome = decidePesapalOutcome(status, Number(order.total));
 
-  if (success) {
+  if (outcome === "paid") {
     await supabase
       .from("orders")
       .update({ status: "paid", paid_at: new Date().toISOString(), payment_provider: "pesapal" })
@@ -84,7 +84,7 @@ async function handle(req: NextRequest) {
       job_type: "order_confirmation",
       status: "queued",
     });
-  } else if (status.statusCode === 2 || status.statusCode === 3) {
+  } else if (outcome === "failed") {
     // FAILED or REVERSED — restore reserved stock, same path as M-Pesa/Flutterwave.
     await supabase.from("orders").update({ status: "payment_failed" }).eq("id", order.id);
 

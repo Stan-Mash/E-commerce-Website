@@ -93,23 +93,22 @@ export default function AdminProductsPage() {
   const [bulkSaving, setBulkSaving] = useState(false);
   const [bulkMsg, setBulkMsg] = useState<string | null>(null);
 
-  const loadProducts = useCallback(async () => {
-    setLoading(true);
-    try {
-      const res = await fetch("/api/admin/products");
-      if (res.status === 401) {
-        window.location.href = "/admin/login";
-        return;
-      }
-      if (res.ok) {
-        const json = await res.json() as { products: ProductRow[] };
-        setProducts(json.products ?? []);
-      }
-    } catch {
-      // ignore - show empty
-    } finally {
-      setLoading(false);
-    }
+  const loadProducts = useCallback(() => {
+    fetch("/api/admin/products")
+      .then(async (res) => {
+        if (res.status === 401) {
+          window.location.href = "/admin/login";
+          return;
+        }
+        if (res.ok) {
+          const json = await res.json() as { products: ProductRow[] };
+          setProducts(json.products ?? []);
+        }
+      })
+      .catch(() => {
+        // ignore - show empty
+      })
+      .finally(() => setLoading(false));
   }, []);
 
   useEffect(() => {
@@ -117,9 +116,11 @@ export default function AdminProductsPage() {
   }, [loadProducts]);
 
   // Reset to page 1 when filters change
-  useEffect(() => {
+  const [prevFilters, setPrevFilters] = useState({ search, statusFilter });
+  if (prevFilters.search !== search || prevFilters.statusFilter !== statusFilter) {
+    setPrevFilters({ search, statusFilter });
     setPage(1);
-  }, [search, statusFilter]);
+  }
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();

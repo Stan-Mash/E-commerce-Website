@@ -62,7 +62,12 @@ export default function LoansPage() {
       .finally(() => setLoading(false));
   }
 
-  useEffect(() => { loadLoans(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  // loadLoans is also called manually after saving a loan/payment (see
+  // saveLoan and the payment handler below), not just from this mount
+  // effect — its setLoading(true) is needed to re-show the loading state on
+  // those manual refreshes too, so it isn't a redundant initializer we can
+  // just delete.
+  useEffect(() => { loadLoans(); }, []); // eslint-disable-line react-hooks/exhaustive-deps, react-hooks/set-state-in-effect
 
   async function saveLoan(e: React.FormEvent) {
     e.preventDefault();

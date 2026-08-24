@@ -8,7 +8,7 @@ import { SaleBand }        from "@/components/es/homepage/SaleBand";
 import { Journal }         from "@/components/es/homepage/Journal";
 import { Newsletter }      from "@/components/es/homepage/Newsletter";
 import { createPublicSupabaseClient } from "@/lib/supabase/server";
-import { absoluteUrl } from "@/lib/site";
+import { absoluteUrl, jsonLdString } from "@/lib/site";
 
 export const revalidate = 60;
 
@@ -63,11 +63,11 @@ export default async function HomePage() {
     <div style={{ background: "#ffffff" }}>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
+        dangerouslySetInnerHTML={{ __html: jsonLdString(organizationSchema) }}
       />
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }}
+        dangerouslySetInnerHTML={{ __html: jsonLdString(websiteSchema) }}
       />
       <Hero productCount={productCount} />
       <HousePrinciple />

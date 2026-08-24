@@ -3,8 +3,8 @@
 // returns { url } pointing at the public Supabase Storage object.
 
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
 import { isAuthenticatedAdminRequest } from "@/lib/adminAuth";
+import { createAdminSupabaseClient } from "@/lib/supabase/server";
 
 const BUCKET   = "product-images";
 const MAX_SIZE = 10 * 1024 * 1024; // 10 MB
@@ -12,14 +12,6 @@ const ALLOWED  = ["image/jpeg", "image/png", "image/webp", "image/gif", "image/a
 
 function checkAuth(request: NextRequest): boolean {
   return isAuthenticatedAdminRequest(request);
-}
-
-function getAdminClient() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { autoRefreshToken: false, persistSession: false } }
-  );
 }
 
 export async function POST(request: NextRequest) {
@@ -58,7 +50,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const supabase = getAdminClient();
+  const supabase = createAdminSupabaseClient();
 
   // Derive clean extension
   const extMap: Record<string, string> = {

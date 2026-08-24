@@ -1,16 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { z } from "zod";
 import { isAuthenticatedAdminRequest } from "@/lib/adminAuth";
 import { isB2CConfigured, initiateB2CPayment } from "@/lib/mpesa/daraja";
 import { recordAudit, getOperator } from "@/lib/audit";
+import { createAdminSupabaseClient } from "@/lib/supabase/server";
 
-function getAdminClient() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { autoRefreshToken: false, persistSession: false } }
-  );
-}
+const RefundSchema = z.object({
+  returnId: z.string(),
+});
 
 // POST /api/admin/returns/refund { returnId }
 // Sends the return's refund amount to the customer's phone via M-Pesa B2C.
@@ -25,12 +22,22 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const { returnId } = (await request.json()) as { returnId?: string };
+  let jsonBody: unknown;
+  try {
+    jsonBody = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
+  }
+  const parsed = RefundSchema.safeParse(jsonBody);
+  if (!parsed.success) {
+    return NextResponse.json({ error: "Validation failed", details: parsed.error.flatten() }, { status: 422 });
+  }
+  const { returnId } = parsed.data;
   if (!returnId) {
     return NextResponse.json({ error: "Missing returnId" }, { status: 400 });
   }
 
-  const supabase = getAdminClient();
+  const supabase = createAdminSupabaseClient();
   const { data: ret } = await supabase
     .from("returns")
     .select("id, amount, status, order:orders(order_ref, phone, total)")

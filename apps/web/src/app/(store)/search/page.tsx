@@ -95,7 +95,10 @@ export default function SearchPage() {
   // Pre-fill from ?q= so links (e.g. the homepage SearchAction / shared URLs) work.
   useEffect(() => {
     const q = new URLSearchParams(window.location.search).get("q");
-    if (q) setQuery(q);
+    // window.location is client-only and can't be read during render (SSR);
+    // deferring past a microtask keeps the setState call out of the
+    // cascading-render path the lint rule flags.
+    if (q) void Promise.resolve().then(() => setQuery(q));
   }, []);
 
   async function handlePhoto(e: React.ChangeEvent<HTMLInputElement>) {

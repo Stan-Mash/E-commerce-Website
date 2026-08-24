@@ -66,20 +66,19 @@ export default function StockPage() {
   // Pagination
   const [page, setPage] = useState(1);
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    try {
-      const res = await fetch("/api/admin/stock");
-      if (res.status === 401) { window.location.href = "/admin/login"; return; }
-      if (res.ok) {
-        const json = await res.json() as { skus: SkuRow[] };
-        setSkus(json.skus ?? []);
-      }
-    } catch {
-      // ignore
-    } finally {
-      setLoading(false);
-    }
+  const load = useCallback(() => {
+    fetch("/api/admin/stock")
+      .then(async (res) => {
+        if (res.status === 401) { window.location.href = "/admin/login"; return; }
+        if (res.ok) {
+          const json = await res.json() as { skus: SkuRow[] };
+          setSkus(json.skus ?? []);
+        }
+      })
+      .catch(() => {
+        // ignore
+      })
+      .finally(() => setLoading(false));
   }, []);
 
   useEffect(() => {
@@ -113,9 +112,11 @@ export default function StockPage() {
   }, [skus, search, statusFilter]);
 
   // Reset to page 1 when filters change
-  useEffect(() => {
+  const [prevFilters, setPrevFilters] = useState({ search, statusFilter });
+  if (prevFilters.search !== search || prevFilters.statusFilter !== statusFilter) {
+    setPrevFilters({ search, statusFilter });
     setPage(1);
-  }, [search, statusFilter]);
+  }
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);

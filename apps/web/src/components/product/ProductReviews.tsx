@@ -44,15 +44,16 @@ export function ProductReviews({ productId }: { productId: string }) {
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState("");
 
-  const load = useCallback(async () => {
-    try {
-      const res = await fetch(`/api/reviews?productId=${encodeURIComponent(productId)}`);
-      const data = await res.json();
-      setReviews(data.reviews ?? []);
-      setSummary(data.summary ?? { count: 0, average: 0 });
-    } catch {
-      // ignore
-    }
+  const load = useCallback(() => {
+    fetch(`/api/reviews?productId=${encodeURIComponent(productId)}`)
+      .then((res) => res.json())
+      .then((data) => {
+        setReviews(data.reviews ?? []);
+        setSummary(data.summary ?? { count: 0, average: 0 });
+      })
+      .catch(() => {
+        // ignore
+      });
   }, [productId]);
 
   useEffect(() => { load(); }, [load]);

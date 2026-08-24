@@ -4,6 +4,7 @@ import { useState } from "react";
 
 export default function ReturnRequestForm() {
   const [orderRef, setOrderRef] = useState("");
+  const [phone, setPhone] = useState("");
   const [reason, setReason] = useState("");
   const [notes, setNotes] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -14,8 +15,8 @@ export default function ReturnRequestForm() {
     e.preventDefault();
     setError("");
     setDone("");
-    if (orderRef.trim().length < 3 || reason.trim().length < 5) {
-      setError("Please enter your order reference and a reason (at least a few words).");
+    if (orderRef.trim().length < 3 || phone.trim().length < 9 || reason.trim().length < 5) {
+      setError("Please enter your order reference, phone number, and a reason (at least a few words).");
       return;
     }
     setSubmitting(true);
@@ -23,12 +24,18 @@ export default function ReturnRequestForm() {
       const res = await fetch("/api/returns", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ orderRef: orderRef.trim(), reason: reason.trim(), notes: notes.trim() || undefined }),
+        body: JSON.stringify({
+          orderRef: orderRef.trim(),
+          phone: phone.trim(),
+          reason: reason.trim(),
+          notes: notes.trim() || undefined,
+        }),
       });
       const data = await res.json();
       if (res.ok) {
         setDone(data.message ?? "Return request received. We'll be in touch shortly.");
         setOrderRef("");
+        setPhone("");
         setReason("");
         setNotes("");
       } else {
@@ -58,6 +65,15 @@ export default function ReturnRequestForm() {
           value={orderRef}
           onChange={(e) => setOrderRef(e.target.value.toUpperCase())}
           placeholder="NF-XXXX-XXXX"
+          className="w-full border-b border-es-bone bg-transparent py-2 text-es-ink outline-none focus:border-es-ink"
+        />
+      </div>
+      <div>
+        <label className="block text-[11px] tracking-[.3em] uppercase text-es-mute mb-2">Phone number used at checkout</label>
+        <input
+          value={phone}
+          onChange={(e) => setPhone(e.target.value)}
+          placeholder="07XX XXX XXX"
           className="w-full border-b border-es-bone bg-transparent py-2 text-es-ink outline-none focus:border-es-ink"
         />
       </div>

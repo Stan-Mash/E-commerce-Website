@@ -1,25 +1,49 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { z } from "zod";
 import { isAuthenticatedAdminRequest } from "@/lib/adminAuth";
 import { syncProductImages, resolveImageList, syncProductVideos, resolveVideoList } from "@/lib/productImages";
 import { recordAudit, getOperator } from "@/lib/audit";
-
-function getAdminClient() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { autoRefreshToken: false, persistSession: false } }
-  );
-}
+import { withApiErrorHandling } from "@/lib/apiErrorHandler";
+import { createAdminSupabaseClient } from "@/lib/supabase/server";
 
 function checkAuth(request: NextRequest): boolean {
   return isAuthenticatedAdminRequest(request);
 }
 
-export async function GET(
+const SkuInputSchema = z.object({
+  id: z.string().optional(),
+  sku_code: z.string(),
+  size: z.string(),
+  color: z.string().optional(),
+  color_hex: z.string().optional(),
+  stock_quantity: z.coerce.number().optional(),
+});
+
+const ProductPutSchema = z.object({
+  name: z.string(),
+  slug: z.string(),
+  description: z.string().nullable().optional(),
+  category: z.string(),
+  base_price: z.coerce.number(),
+  compare_price: z.coerce.number().nullable().optional(),
+  material: z.string().nullable().optional(),
+  care_instructions: z.string().nullable().optional(),
+  is_featured: z.boolean().optional(),
+  status: z.string().optional(),
+  skus: z.array(SkuInputSchema).optional(),
+  images: z.array(z.unknown()).optional(),
+  image_url: z.unknown().optional(),
+  videos: z.array(z.unknown()).optional(),
+});
+
+const ProductPatchSchema = z.object({
+  status: z.string(),
+});
+
+export const GET = withApiErrorHandling("admin/products/[id] GET", async (
   request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+  { params: paramsPromise }: { params: Promise<{ id: string }> }
+) => {
   if (!checkAuth(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -28,7 +52,8 @@ export async function GET(
     return NextResponse.json({ error: "Not configured" }, { status: 503 });
   }
 
-  const supabase = getAdminClient();
+  const params = await paramsPromise;
+  const supabase = createAdminSupabaseClient();
   const { data, error } = await supabase
     .from("products")
     .select("*, skus(*), product_images(id, url, alt, sort_order, media_type), product_videos(id, cloudinary_url, sort_order)")
@@ -40,12 +65,12 @@ export async function GET(
   }
 
   return NextResponse.json({ product: data });
-}
+});
 
-export async function PUT(
+export const PUT = withApiErrorHandling("admin/products/[id] PUT", async (
   request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+  { params: paramsPromise }: { params: Promise<{ id: string }> }
+) => {
   if (!checkAuth(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -54,7 +79,18 @@ export async function PUT(
     return NextResponse.json({ error: "Not configured" }, { status: 503 });
   }
 
-  const body = await request.json();
+  const params = await paramsPromise;
+  let jsonBody: unknown;
+  try {
+    jsonBody = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
+  }
+  const parseResult = ProductPutSchema.safeParse(jsonBody);
+  if (!parseResult.success) {
+    return NextResponse.json({ error: "Validation failed", details: parseResult.error.flatten() }, { status: 422 });
+  }
+  const body = parseResult.data;
   const {
     name,
     slug,
@@ -69,8 +105,8 @@ export async function PUT(
     skus: skuList,
   } = body;
 
-  const supabase = getAdminClient();
-  const normalizedCategory = (category as string).toLowerCase();
+  const supabase = createAdminSupabaseClient();
+  const normalizedCategory = category.toLowerCase();
 
   // Resolve the full ordered image list (new `images` array, or legacy single
   // `image_url`). products.image_url stays as the primary for card thumbnails.
@@ -229,13 +265,13 @@ export async function PUT(
   }
 
   return NextResponse.json({ product });
-}
+});
 
 // PATCH — partial update, used for bulk status changes from the products table.
-export async function PATCH(
+export const PATCH = withApiErrorHandling("admin/products/[id] PATCH", async (
   request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+  { params: paramsPromise }: { params: Promise<{ id: string }> }
+) => {
   if (!checkAuth(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -243,13 +279,24 @@ export async function PATCH(
     return NextResponse.json({ error: "Not configured" }, { status: 503 });
   }
 
-  const body = await request.json() as { status?: string };
+  const params = await paramsPromise;
+  let jsonBody: unknown;
+  try {
+    jsonBody = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
+  }
+  const parseResult = ProductPatchSchema.safeParse(jsonBody);
+  if (!parseResult.success) {
+    return NextResponse.json({ error: "Validation failed", details: parseResult.error.flatten() }, { status: 422 });
+  }
+  const body = parseResult.data;
   const VALID = ["active", "draft", "coming_soon", "archived"];
   if (!body.status || !VALID.includes(body.status)) {
     return NextResponse.json({ error: "Invalid status" }, { status: 400 });
   }
 
-  const supabase = getAdminClient();
+  const supabase = createAdminSupabaseClient();
   const { error } = await supabase
     .from("products")
     .update({ status: body.status })
@@ -260,16 +307,16 @@ export async function PATCH(
   }
 
   return NextResponse.json({ ok: true });
-}
+});
 
 // Products are NEVER hard-deleted - doing so would cascade to SKUs and break
 // order_items foreign keys, corrupting historical financial records.
 // Instead we archive: the product is hidden from the storefront (RLS policy
 // only exposes status='active') while all historical order data remains intact.
-export async function DELETE(
+export const DELETE = withApiErrorHandling("admin/products/[id] DELETE", async (
   request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+  { params: paramsPromise }: { params: Promise<{ id: string }> }
+) => {
   if (!checkAuth(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -278,7 +325,8 @@ export async function DELETE(
     return NextResponse.json({ error: "Not configured" }, { status: 503 });
   }
 
-  const supabase = getAdminClient();
+  const params = await paramsPromise;
+  const supabase = createAdminSupabaseClient();
 
   // Soft-delete: set status to 'archived' - never a hard DELETE
   const { error } = await supabase
@@ -298,4 +346,4 @@ export async function DELETE(
   });
 
   return NextResponse.json({ ok: true });
-}
+});

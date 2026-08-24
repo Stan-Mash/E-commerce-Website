@@ -3,8 +3,8 @@
 // bucket (10 MB limit) and adds products.image_url via pg-meta.
 
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
 import { isAuthenticatedAdminRequest } from "@/lib/adminAuth";
+import { createAdminSupabaseClient } from "@/lib/supabase/server";
 
 function checkAuth(request: NextRequest): boolean {
   return isAuthenticatedAdminRequest(request);
@@ -25,9 +25,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Supabase not configured" }, { status: 503 });
   }
 
-  const supabase = createClient(supabaseUrl, serviceKey, {
-    auth: { autoRefreshToken: false, persistSession: false },
-  });
+  const supabase = createAdminSupabaseClient();
 
   const results: Record<string, string> = {};
 

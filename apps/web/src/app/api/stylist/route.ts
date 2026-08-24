@@ -32,7 +32,7 @@ async function buildSystemPrompt(productId?: string): Promise<string> {
 
   try {
     const supabase = createPublicSupabaseClient();
-    let query = supabase
+    const query = supabase
       .from("products")
       .select("name, base_price, category, status, skus(size, stock_quantity)")
       .eq("status", "active")

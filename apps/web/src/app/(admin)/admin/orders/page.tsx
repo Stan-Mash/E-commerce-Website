@@ -71,25 +71,24 @@ export default function AdminOrdersPage() {
   const [rowStatuses, setRowStatuses] = useState<Record<string, string>>({});
   const [rowSaveState, setRowSaveState] = useState<Record<string, RowStatusState>>({});
 
-  const loadOrders = useCallback(async () => {
-    setLoading(true);
-    try {
-      const res = await fetch("/api/admin/orders");
-      if (res.status === 401) { window.location.href = "/admin/login"; return; }
-      if (res.ok) {
-        const json = await res.json() as { orders: OrderRow[] };
-        const fetched = json.orders ?? [];
-        setOrders(fetched);
-        // Initialise per-row status map
-        const initial: Record<string, string> = {};
-        fetched.forEach((o) => { initial[o.id] = o.status; });
-        setRowStatuses(initial);
-      }
-    } catch {
-      // ignore
-    } finally {
-      setLoading(false);
-    }
+  const loadOrders = useCallback(() => {
+    fetch("/api/admin/orders")
+      .then(async (res) => {
+        if (res.status === 401) { window.location.href = "/admin/login"; return; }
+        if (res.ok) {
+          const json = await res.json() as { orders: OrderRow[] };
+          const fetched = json.orders ?? [];
+          setOrders(fetched);
+          // Initialise per-row status map
+          const initial: Record<string, string> = {};
+          fetched.forEach((o) => { initial[o.id] = o.status; });
+          setRowStatuses(initial);
+        }
+      })
+      .catch(() => {
+        // ignore
+      })
+      .finally(() => setLoading(false));
   }, []);
 
   useEffect(() => {
@@ -97,9 +96,11 @@ export default function AdminOrdersPage() {
   }, [loadOrders]);
 
   // Reset to page 1 when tab or search changes
-  useEffect(() => {
+  const [prevFilters, setPrevFilters] = useState({ activeTab, search });
+  if (prevFilters.activeTab !== activeTab || prevFilters.search !== search) {
+    setPrevFilters({ activeTab, search });
     setPage(1);
-  }, [activeTab, search]);
+  }
 
   // Filter by tab then search
   const filtered = useMemo(() => {

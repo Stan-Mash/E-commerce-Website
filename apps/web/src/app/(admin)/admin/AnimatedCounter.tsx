@@ -33,6 +33,13 @@ export default function AnimatedCounter({
 
   useEffect(() => {
     if (value === 0) {
+      // Part of the same effect that drives the rAF animation below (not a
+      // pure "reset on dep change" effect), so the adjust-during-render
+      // pattern doesn't apply. Jumps straight to 0 instead of animating —
+      // needed because `display` isn't 0 whenever `value` transitions back
+      // to 0 from a nonzero value on a later re-run (display's initial
+      // useState(0) only covers the very first mount).
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- see comment above
       setDisplay(0);
       return;
     }

@@ -95,6 +95,22 @@ const DEFAULTS: Settings = {
 
 type SectionKey = "store" | "delivery" | "appearance" | "stock";
 
+function SectionStatus({ status }: { status: { ok: boolean; msg: string } | null }) {
+  if (!status) return null;
+  return (
+    <p
+      style={{
+        fontFamily: "var(--font-inter)",
+        fontSize: 13,
+        color: status.ok ? "#2e7d32" : "#c0392b",
+        margin: "12px 0 0",
+      }}
+    >
+      {status.msg}
+    </p>
+  );
+}
+
 export default function SettingsPage() {
   const [settings, setSettings] = useState<Settings>(DEFAULTS);
   const [loading, setLoading] = useState(true);
@@ -111,20 +127,19 @@ export default function SettingsPage() {
     stock: null,
   });
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    try {
-      const res = await fetch("/api/admin/settings");
-      if (res.status === 401) { window.location.href = "/admin/login"; return; }
-      if (res.ok) {
-        const data = (await res.json()) as Settings;
-        setSettings((prev) => ({ ...prev, ...data }));
-      }
-    } catch {
-      // ignore, use defaults
-    } finally {
-      setLoading(false);
-    }
+  const load = useCallback(() => {
+    fetch("/api/admin/settings")
+      .then(async (res) => {
+        if (res.status === 401) { window.location.href = "/admin/login"; return; }
+        if (res.ok) {
+          const data = (await res.json()) as Settings;
+          setSettings((prev) => ({ ...prev, ...data }));
+        }
+      })
+      .catch(() => {
+        // ignore, use defaults
+      })
+      .finally(() => setLoading(false));
   }, []);
 
   useEffect(() => {
@@ -161,23 +176,6 @@ export default function SettingsPage() {
     } finally {
       setSaving((prev) => ({ ...prev, [section]: false }));
     }
-  }
-
-  function SectionStatus({ section }: { section: SectionKey }) {
-    const s = status[section];
-    if (!s) return null;
-    return (
-      <p
-        style={{
-          fontFamily: "var(--font-inter)",
-          fontSize: 13,
-          color: s.ok ? "#2e7d32" : "#c0392b",
-          margin: "12px 0 0",
-        }}
-      >
-        {s.msg}
-      </p>
-    );
   }
 
   if (loading) {
@@ -307,7 +305,7 @@ export default function SettingsPage() {
             {saving.store ? "Saving…" : "Save Store Settings"}
           </button>
         </div>
-        <SectionStatus section="store" />
+        <SectionStatus status={status.store} />
       </div>
 
       {/* Delivery Section */}
@@ -388,7 +386,7 @@ export default function SettingsPage() {
             {saving.delivery ? "Saving…" : "Save Delivery Settings"}
           </button>
         </div>
-        <SectionStatus section="delivery" />
+        <SectionStatus status={status.delivery} />
       </div>
 
       {/* Appearance Section */}
@@ -452,7 +450,7 @@ export default function SettingsPage() {
             {saving.appearance ? "Saving…" : "Save Appearance Settings"}
           </button>
         </div>
-        <SectionStatus section="appearance" />
+        <SectionStatus status={status.appearance} />
       </div>
 
       {/* Stock Section */}
@@ -483,7 +481,7 @@ export default function SettingsPage() {
             {saving.stock ? "Saving…" : "Save Stock Settings"}
           </button>
         </div>
-        <SectionStatus section="stock" />
+        <SectionStatus status={status.stock} />
       </div>
     </div>
   );

@@ -1,17 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
 import { isAuthenticatedAdminRequest } from "@/lib/adminAuth";
+import { withApiErrorHandling } from "@/lib/apiErrorHandler";
+import { createAdminSupabaseClient } from "@/lib/supabase/server";
 
 const ACTIVE_AGE_FLOOR_MS = 15 * 60 * 1000;
 const EXPIRED_WINDOW_MS = 48 * 60 * 60 * 1000;
-
-function getAdminClient() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { autoRefreshToken: false, persistSession: false } }
-  );
-}
 
 function escapeCsvField(value: string | number | null | undefined): string {
   if (value === null || value === undefined) return "";
@@ -22,7 +15,7 @@ function escapeCsvField(value: string | number | null | undefined): string {
   return str;
 }
 
-export async function GET(request: NextRequest) {
+export const GET = withApiErrorHandling("admin/orders/abandoned/export GET", async (request: NextRequest) => {
   if (!isAuthenticatedAdminRequest(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -31,7 +24,7 @@ export async function GET(request: NextRequest) {
   }
 
   const view = request.nextUrl.searchParams.get("view") === "expired" ? "expired" : "active";
-  const supabase = getAdminClient();
+  const supabase = createAdminSupabaseClient();
 
   let query = supabase
     .from("orders")
@@ -91,4 +84,4 @@ export async function GET(request: NextRequest) {
       "Content-Disposition": `attachment; filename="${filename}"`,
     },
   });
-}
+});

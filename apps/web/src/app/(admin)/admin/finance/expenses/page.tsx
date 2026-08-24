@@ -64,7 +64,11 @@ export default function ExpensesPage() {
       .finally(() => setLoading(false));
   }
 
-  useEffect(() => { loadExpenses(); }, [month]); // eslint-disable-line react-hooks/exhaustive-deps
+  // loadExpenses is also called manually after saving an expense (see
+  // saveExpense below), not just from this month-change effect — its
+  // setLoading(true) is needed to re-show the loading state on that manual
+  // refresh too, so it isn't a redundant initializer we can just delete.
+  useEffect(() => { loadExpenses(); }, [month]); // eslint-disable-line react-hooks/exhaustive-deps, react-hooks/set-state-in-effect
 
   async function saveExpense(e: React.FormEvent) {
     e.preventDefault();

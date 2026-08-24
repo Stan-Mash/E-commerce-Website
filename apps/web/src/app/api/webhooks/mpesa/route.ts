@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { parseSTKCallback, type STKCallbackBody } from "@/lib/mpesa/daraja";
 import { createAdminSupabaseClient } from "@/lib/supabase/server";
+import { isAlreadyProcessed, isAmountMismatch } from "@/lib/mpesa/stkDecision";
 
 // Constant-time string comparison to avoid a timing side-channel on the secret.
 function timingSafeEqual(a: string, b: string): boolean {
@@ -39,7 +40,7 @@ export async function POST(req: NextRequest) {
     .eq("checkout_request_id", parsed.checkoutRequestId)
     .single();
 
-  if (existing && existing.status !== "pending") {
+  if (isAlreadyProcessed(existing)) {
     // Already processed; return 200 so Safaricom stops retrying.
     return NextResponse.json({ ResultCode: 0, ResultDesc: "Accepted" });
   }
@@ -47,14 +48,9 @@ export async function POST(req: NextRequest) {
   // Defence in depth: the callback's amount must cover what the STK push
   // requested. The amount is server-set so a mismatch should never happen —
   // if it does, don't mark the order paid; leave it pending for manual review.
-  if (
-    parsed.success &&
-    existing?.amount != null &&
-    parsed.amount != null &&
-    Math.round(parsed.amount) < Math.round(Number(existing.amount))
-  ) {
+  if (isAmountMismatch(parsed, existing)) {
     console.error(
-      `[mpesa-webhook] Amount mismatch on ${parsed.checkoutRequestId}: callback ${parsed.amount}, expected ${existing.amount}`
+      `[mpesa-webhook] Amount mismatch on ${parsed.checkoutRequestId}: callback ${parsed.amount}, expected ${existing?.amount}`
     );
     return NextResponse.json({ ResultCode: 0, ResultDesc: "Accepted" });
   }

@@ -1,14 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
 import { isAuthenticatedAdminRequest } from "@/lib/adminAuth";
-
-function getAdminClient() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { autoRefreshToken: false, persistSession: false } }
-  );
-}
+import { withApiErrorHandling } from "@/lib/apiErrorHandler";
+import { createAdminSupabaseClient } from "@/lib/supabase/server";
 
 function checkAuth(request: NextRequest): boolean {
   return isAuthenticatedAdminRequest(request);
@@ -32,7 +25,7 @@ function detectCategory(productName: string): string {
   return "Other";
 }
 
-export async function GET(request: NextRequest) {
+export const GET = withApiErrorHandling("admin/reports GET", async (request: NextRequest) => {
   if (!checkAuth(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -56,7 +49,7 @@ export async function GET(request: NextRequest) {
   const fromParam = searchParams.get("from");
   const toParam   = searchParams.get("to");
 
-  const supabase = getAdminClient();
+  const supabase = createAdminSupabaseClient();
 
   const now = new Date();
   const todayStr = now.toISOString().slice(0, 10);
@@ -239,4 +232,4 @@ export async function GET(request: NextRequest) {
     daily_revenue,
     is_weekly_buckets: useWeekly,
   });
-}
+});

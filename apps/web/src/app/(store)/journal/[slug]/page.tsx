@@ -4,7 +4,7 @@ import Image from "next/image";
 import type { Metadata } from "next";
 
 interface Props {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }
 
 const ARTICLES = [
@@ -68,7 +68,8 @@ const ARTICLES = [
   },
 ];
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
+export async function generateMetadata(props: Props): Promise<Metadata> {
+  const params = await props.params;
   const article = ARTICLES.find((a) => a.slug === params.slug);
   if (!article) return { title: "Article Not Found" };
   return {
@@ -78,7 +79,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-export default function JournalArticlePage({ params }: Props) {
+export default async function JournalArticlePage(props: Props) {
+  const params = await props.params;
   const article = ARTICLES.find((a) => a.slug === params.slug);
   if (!article) notFound();
 

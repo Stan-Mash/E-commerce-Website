@@ -8,6 +8,9 @@ export default function CookieConsent() {
   const [show, setShow] = useState(false);
 
   useEffect(() => {
+    // readConsent() is a client-only read of localStorage/cookies — it can't
+    // run during render (would break SSR), so it has to stay in an effect.
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- client-only read of persisted consent state, not derivable during render
     if (readConsent() === null) setShow(true);
   }, []);
 

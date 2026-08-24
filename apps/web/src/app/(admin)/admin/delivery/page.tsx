@@ -30,7 +30,6 @@ export default function AdminDeliveryPage() {
   const [error, setError] = useState("");
 
   const load = useCallback(async () => {
-    setLoading(true);
     try {
       const res = await fetch("/api/admin/pickup-points", { credentials: "include" });
       if (res.status === 401) { window.location.href = "/admin/login"; return; }

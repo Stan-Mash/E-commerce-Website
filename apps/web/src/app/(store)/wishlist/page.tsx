@@ -32,18 +32,26 @@ export default function WishlistPage() {
   const [products, setProducts] = useState<WishProduct[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const load = useCallback(async () => {
+  const load = useCallback(() => {
     const ids = readWishlist();
-    if (ids.length === 0) { setProducts([]); setLoading(false); return; }
-    try {
-      const res = await fetch(`/api/products/by-ids?ids=${encodeURIComponent(ids.join(","))}`);
-      const data = await res.json();
-      // Preserve the saved order, newest first.
-      const byId = new Map<string, WishProduct>((data.products ?? []).map((p: WishProduct) => [p.id, p]));
-      setProducts(ids.map((id) => byId.get(id)).filter(Boolean) as WishProduct[]);
-    } finally {
-      setLoading(false);
+    if (ids.length === 0) {
+      // readWishlist() runs synchronously (no network round trip needed for
+      // the empty-list case) — defer past a microtask so this doesn't call
+      // setState synchronously within the mount effect that invokes load().
+      void Promise.resolve().then(() => {
+        setProducts([]);
+        setLoading(false);
+      });
+      return;
     }
+    fetch(`/api/products/by-ids?ids=${encodeURIComponent(ids.join(","))}`)
+      .then((res) => res.json())
+      .then((data) => {
+        // Preserve the saved order, newest first.
+        const byId = new Map<string, WishProduct>((data.products ?? []).map((p: WishProduct) => [p.id, p]));
+        setProducts(ids.map((id) => byId.get(id)).filter(Boolean) as WishProduct[]);
+      })
+      .finally(() => setLoading(false));
   }, []);
 
   useEffect(() => { void load(); }, [load]);

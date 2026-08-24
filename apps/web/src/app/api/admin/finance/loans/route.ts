@@ -1,8 +1,30 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { createAdminSupabaseClient } from "@/lib/supabase/server";
 import { isAuthenticatedOwnerRequest } from "@/lib/adminAuth";
+import { withApiErrorHandling } from "@/lib/apiErrorHandler";
 
-export async function GET(request: NextRequest) {
+const LoanBodySchema = z.discriminatedUnion("action", [
+  z.object({
+    action: z.literal("add_loan"),
+    lender_name: z.string().optional(),
+    loan_type: z.string().optional(),
+    principal_amount: z.coerce.number().optional(),
+    interest_rate: z.coerce.number().optional(),
+    start_date: z.string().optional(),
+    due_date: z.string().optional(),
+    notes: z.string().optional(),
+  }),
+  z.object({
+    action: z.literal("add_payment"),
+    loan_id: z.string().optional(),
+    amount: z.coerce.number().optional(),
+    payment_date: z.string().optional(),
+    payment_notes: z.string().optional(),
+  }),
+]);
+
+export const GET = withApiErrorHandling("admin/finance/loans GET", async (request: NextRequest) => {
   if (!isAuthenticatedOwnerRequest(request)) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const sb = createAdminSupabaseClient();
@@ -20,28 +42,23 @@ export async function GET(request: NextRequest) {
   });
 
   return NextResponse.json({ loans: enriched });
-}
+});
 
-export async function POST(request: NextRequest) {
+export const POST = withApiErrorHandling("admin/finance/loans POST", async (request: NextRequest) => {
   if (!isAuthenticatedOwnerRequest(request)) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const sb = createAdminSupabaseClient();
-  const body = await request.json() as {
-    action: "add_loan" | "add_payment";
-    // add_loan fields
-    lender_name?:      string;
-    loan_type?:        string;
-    principal_amount?: number;
-    interest_rate?:    number;
-    start_date?:       string;
-    due_date?:         string;
-    notes?:            string;
-    // add_payment fields
-    loan_id?:          string;
-    amount?:           number;
-    payment_date?:     string;
-    payment_notes?:    string;
-  };
+  let jsonBody: unknown;
+  try {
+    jsonBody = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
+  }
+  const parseResult = LoanBodySchema.safeParse(jsonBody);
+  if (!parseResult.success) {
+    return NextResponse.json({ error: "Validation failed", details: parseResult.error.flatten() }, { status: 422 });
+  }
+  const body = parseResult.data;
 
   if (body.action === "add_loan") {
     const { data, error } = await sb.from("loans").insert({
@@ -70,4 +87,4 @@ export async function POST(request: NextRequest) {
   }
 
   return NextResponse.json({ error: "Invalid action" }, { status: 400 });
-}
+});

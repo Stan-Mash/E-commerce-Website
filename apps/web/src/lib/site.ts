@@ -7,3 +7,11 @@ export const SITE_URL =
 export function absoluteUrl(path: string): string {
   return `${SITE_URL}${path.startsWith("/") ? path : `/${path}`}`;
 }
+
+// JSON.stringify doesn't escape "<", so a stored value containing
+// "</script><script>..." could break out of a JSON-LD <script> block when
+// injected via dangerouslySetInnerHTML. Escape it to a JSON-safe unicode
+// sequence that parses back to the same string.
+export function jsonLdString(schema: unknown): string {
+  return JSON.stringify(schema).replace(/</g, "\\u003c");
+}

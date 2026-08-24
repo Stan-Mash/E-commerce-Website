@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, use } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import MultiImageUploader from "@/components/admin/MultiImageUploader";
@@ -94,10 +94,11 @@ interface FormState {
 }
 
 interface Props {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
-export default function EditProductPage({ params }: Props) {
+export default function EditProductPage(props: Props) {
+  const params = use(props.params);
   const router = useRouter();
   const [loading, setLoading]     = useState(true);
   const [notFound, setNotFound]   = useState(false);

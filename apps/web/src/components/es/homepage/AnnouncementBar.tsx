@@ -1,4 +1,4 @@
-import { createClient } from "@supabase/supabase-js";
+import { createAdminSupabaseClient } from "@/lib/supabase/server";
 
 const DEFAULT_TEXT =
   "New arrivals weekly  ·  Pay with M-Pesa, card or Paybill  ·  Shop the latest drops now";
@@ -8,11 +8,7 @@ async function getAnnouncementSettings(): Promise<{ text: string; enabled: boole
     return { text: DEFAULT_TEXT, enabled: true };
   }
   try {
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL,
-      process.env.SUPABASE_SERVICE_ROLE_KEY,
-      { auth: { autoRefreshToken: false, persistSession: false } }
-    );
+    const supabase = createAdminSupabaseClient();
     const { data } = await supabase
       .from("app_settings")
       .select("key, value")

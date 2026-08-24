@@ -3,6 +3,14 @@ import { createPublicSupabaseClient } from "@/lib/supabase/server";
 
 export const revalidate = 0; // always fresh
 
+// Escapes characters that are structurally significant in a PostgREST
+// .or() filter string (comma separates conditions, parentheses group them,
+// backslash is the escape char itself) so user input can't break out of
+// the intended ilike conditions and inject additional filter clauses.
+function escapeOrFilterValue(value: string): string {
+  return value.replace(/\\/g, "\\\\").replace(/,/g, "\\,").replace(/\(/g, "\\(").replace(/\)/g, "\\)");
+}
+
 // Public product search: Postgres full-text (search_vector) with an ilike
 // fallback. Returns only status='active' products.
 export async function GET(req: NextRequest) {
@@ -20,16 +28,18 @@ export async function GET(req: NextRequest) {
 
     // Primary: full-text search on the generated tsvector.
     // websearch_to_tsquery handles natural phrasing ("blue knitted vest").
-    let { data, error } = await supabase
+    const primary = await supabase
       .from("products")
       .select(select)
       .eq("status", "active")
       .textSearch("search_vector", q, { type: "websearch", config: "english" })
       .limit(48);
+    const { error } = primary;
+    let data = primary.data;
 
     // Fallback: if FTS errors or returns nothing, do a fuzzy name/category match.
     if (error || !data || data.length === 0) {
-      const like = `%${q}%`;
+      const like = `%${escapeOrFilterValue(q)}%`;
       const res = await supabase
         .from("products")
         .select(select)

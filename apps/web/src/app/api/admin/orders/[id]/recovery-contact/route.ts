@@ -1,26 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { z } from "zod";
 import { isAuthenticatedAdminRequest } from "@/lib/adminAuth";
 import { recordAudit, getOperator } from "@/lib/audit";
-
-function getAdminClient() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { autoRefreshToken: false, persistSession: false } }
-  );
-}
+import { createAdminSupabaseClient } from "@/lib/supabase/server";
 
 interface Params {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
+
+const RecoveryContactSchema = z.object({
+  channel: z.string().optional(),
+});
 
 // Records that an admin reached out about a stalled checkout — called from
 // the Abandoned Checkouts page when "Recover on WhatsApp" is clicked, so
 // the list can show "already contacted" instead of staying undifferentiated
 // forever. Mirrors the recordAudit() convention already used for
 // order.status / order.fulfilment (api/admin/orders/[id]/route.ts).
-export async function POST(request: NextRequest, { params }: Params) {
+export async function POST(request: NextRequest, props: Params) {
+  const params = await props.params;
   if (!isAuthenticatedAdminRequest(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -30,13 +28,14 @@ export async function POST(request: NextRequest, { params }: Params) {
 
   let channel = "whatsapp";
   try {
-    const body = await request.json();
-    if (typeof body?.channel === "string") channel = body.channel.slice(0, 20);
+    const jsonBody = await request.json();
+    const parsed = RecoveryContactSchema.safeParse(jsonBody);
+    if (parsed.success && parsed.data.channel) channel = parsed.data.channel.slice(0, 20);
   } catch {
     // no body — default channel is fine
   }
 
-  const supabase = getAdminClient();
+  const supabase = createAdminSupabaseClient();
   await recordAudit(supabase, {
     actor: getOperator(request),
     action: "order.recovery_contact",

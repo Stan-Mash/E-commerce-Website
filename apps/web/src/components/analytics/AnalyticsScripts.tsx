@@ -18,6 +18,10 @@ export function AnalyticsScripts() {
   const [consent, setConsent] = useState<ConsentState>(null);
 
   useEffect(() => {
+    // readConsent() is a client-only read of localStorage/cookies (can't run
+    // during render / SSR); this effect also subscribes to consent-change
+    // events below, so it isn't a pure "reset on dep change" effect either.
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- client-only read of persisted consent state, mixed with event subscription
     setConsent(readConsent());
     function onChange(e: Event) {
       setConsent((e as CustomEvent<ConsentState>).detail ?? null);

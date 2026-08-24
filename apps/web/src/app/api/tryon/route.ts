@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { randomUUID } from "node:crypto";
-import { createClient } from "@supabase/supabase-js";
 import { createAdminSupabaseClient } from "@/lib/supabase/server";
 import { getTryOnProvider, isTryOnConfigured, isCategoryEligibleForTryOn } from "@/lib/tryon/provider";
 import { rateLimitDaily, clientIp } from "@/lib/rateLimit";
@@ -12,12 +11,6 @@ const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
 const FREE_ANONYMOUS_TRIES = 2;
 const IP_DAILY_CAP = 10; // defense-in-depth abuse guard, independent of the per-session cap
 const SIGNED_URL_TTL_SECONDS = 600;
-
-function getServiceClient() {
-  return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
-    auth: { autoRefreshToken: false, persistSession: false },
-  });
-}
 
 export async function POST(req: NextRequest) {
   if (!isTryOnConfigured()) {
@@ -111,7 +104,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true, id: cached.id, cached: true, status: "completed", resultUrl: cached.result_path });
   }
 
-  const storage = getServiceClient();
+  const storage = createAdminSupabaseClient();
   const ext = file.type === "image/png" ? "png" : file.type === "image/webp" ? "webp" : "jpg";
   const path = `${sessionId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
   const buffer = Buffer.from(await file.arrayBuffer());

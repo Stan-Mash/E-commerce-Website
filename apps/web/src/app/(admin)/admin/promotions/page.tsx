@@ -139,23 +139,22 @@ export default function AdminPromotionsPage() {
   const [formExpiresAt, setFormExpiresAt] = useState("");
   const [formActive, setFormActive]     = useState(true);
 
-  const loadPromotions = useCallback(async () => {
-    setLoading(true);
-    try {
-      const res = await fetch("/api/admin/promotions");
-      if (res.status === 401) {
-        window.location.href = "/admin/login";
-        return;
-      }
-      if (res.ok) {
-        const json = await res.json() as { promotions: Promotion[] };
-        setPromotions(json.promotions ?? []);
-      }
-    } catch {
-      // ignore
-    } finally {
-      setLoading(false);
-    }
+  const loadPromotions = useCallback(() => {
+    fetch("/api/admin/promotions")
+      .then(async (res) => {
+        if (res.status === 401) {
+          window.location.href = "/admin/login";
+          return;
+        }
+        if (res.ok) {
+          const json = await res.json() as { promotions: Promotion[] };
+          setPromotions(json.promotions ?? []);
+        }
+      })
+      .catch(() => {
+        // ignore
+      })
+      .finally(() => setLoading(false));
   }, []);
 
   useEffect(() => {

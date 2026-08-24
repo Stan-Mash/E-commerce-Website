@@ -34,8 +34,16 @@ export default function FinanceDashboardPage() {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
-  useEffect(() => {
+  // Show the loading state again on every month switch, not just on mount
+  // (useState(true) only covers the first render) — derived during render
+  // instead of inside the effect below, which only performs the fetch.
+  const [prevMonth, setPrevMonth] = useState(month);
+  if (month !== prevMonth) {
+    setPrevMonth(month);
     setLoading(true);
+  }
+
+  useEffect(() => {
     fetch(`/api/admin/finance/reports?month=${month}`)
       .then(r => {
         if (r.status === 403) { router.replace("/admin/finance/login"); return null; }

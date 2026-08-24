@@ -18,7 +18,6 @@ export default function AdminAuditPage() {
   const [migrated, setMigrated] = useState(true);
 
   const load = useCallback(async () => {
-    setLoading(true);
     try {
       const res = await fetch("/api/admin/audit", { credentials: "include" });
       if (res.status === 401) { window.location.href = "/admin/login"; return; }

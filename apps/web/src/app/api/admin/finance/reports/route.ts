@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminSupabaseClient } from "@/lib/supabase/server";
 import { isAuthenticatedOwnerRequest } from "@/lib/adminAuth";
+import { withApiErrorHandling } from "@/lib/apiErrorHandler";
 
 function nextMonth(ym: string): string {
   const parts = ym.split("-").map(Number);
@@ -10,7 +11,7 @@ function nextMonth(ym: string): string {
 }
 
 // GET /api/admin/finance/reports?month=YYYY-MM -> monthly P&L breakdown.
-export async function GET(request: NextRequest) {
+export const GET = withApiErrorHandling("admin/finance/reports GET", async (request: NextRequest) => {
   if (!isAuthenticatedOwnerRequest(request)) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const url   = new URL(request.url);
@@ -93,4 +94,4 @@ export async function GET(request: NextRequest) {
     net_position:      netPosition,
     order_count:       (revRows ?? []).length,
   });
-}
+});

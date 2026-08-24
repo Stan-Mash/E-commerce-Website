@@ -224,7 +224,12 @@ export default function ReportsPage() {
     }
   }, []);
 
+  // load is also called manually from the custom-range "Apply" button below,
+  // not just from this effect — its setLoading(true) is needed to re-show
+  // the loading state on that manual reload too, so it isn't a redundant
+  // initializer we can delete.
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- also invoked from the manual custom-range "Apply" button elsewhere in this component
     void load(effectiveRange.from, effectiveRange.to);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [load, effectiveRange.from, effectiveRange.to]);

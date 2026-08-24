@@ -16,9 +16,11 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
   const [navOpen, setNavOpen] = useState(false);
 
   // Close the drawer whenever the route changes (tapping a nav link navigates).
-  useEffect(() => {
+  const [prevPathname, setPrevPathname] = useState(pathname);
+  if (pathname !== prevPathname) {
+    setPrevPathname(pathname);
     setNavOpen(false);
-  }, [pathname]);
+  }
 
   // Lock body scroll while the drawer is open on mobile, so the page behind
   // it doesn't scroll along with it.

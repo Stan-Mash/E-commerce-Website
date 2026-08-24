@@ -9,12 +9,12 @@ import { ProductReviews } from "@/components/product/ProductReviews";
 import { RecentlyViewed } from "@/components/product/RecentlyViewed";
 import { isTryOnConfigured } from "@/lib/tryon/provider";
 import type { ProductDetail } from "@nairobi-fashion/lib";
-import { absoluteUrl } from "@/lib/site";
+import { absoluteUrl, jsonLdString } from "@/lib/site";
 
 const PRODUCT_QUERY_TIMEOUT_MS = 8_000;
 
 interface Props {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }
 
 async function getReviewSummary(productId: string): Promise<{ count: number; average: number }> {
@@ -74,7 +74,8 @@ async function getProduct(slug: string): Promise<ProductDetail | null> {
   return null;
 }
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
+export async function generateMetadata(props: Props): Promise<Metadata> {
+  const params = await props.params;
   const product = await getProduct(params.slug);
   if (!product) return { title: "Product Not Found" };
 
@@ -97,7 +98,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export const revalidate = 60; // ISR: revalidate product pages every 60s
 
-export default async function ProductPage({ params }: Props) {
+export default async function ProductPage(props: Props) {
+  const params = await props.params;
   const product = await getProduct(params.slug);
   if (!product) notFound();
 
@@ -139,7 +141,7 @@ export default async function ProductPage({ params }: Props) {
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+        dangerouslySetInnerHTML={{ __html: jsonLdString(structuredData) }}
       />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
         <ProductBreadcrumb category={product.category} productName={product.name} />

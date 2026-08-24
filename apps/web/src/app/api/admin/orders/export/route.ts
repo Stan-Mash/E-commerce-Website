@@ -1,14 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
 import { isAuthenticatedAdminRequest } from "@/lib/adminAuth";
-
-function getAdminClient() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { autoRefreshToken: false, persistSession: false } }
-  );
-}
+import { withApiErrorHandling } from "@/lib/apiErrorHandler";
+import { createAdminSupabaseClient } from "@/lib/supabase/server";
 
 function checkAuth(request: NextRequest): boolean {
   return isAuthenticatedAdminRequest(request);
@@ -24,7 +17,7 @@ function escapeCsvField(value: string | number | null | undefined): string {
   return str;
 }
 
-export async function GET(request: NextRequest) {
+export const GET = withApiErrorHandling("admin/orders/export GET", async (request: NextRequest) => {
   if (!checkAuth(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -38,7 +31,7 @@ export async function GET(request: NextRequest) {
   const toParam     = searchParams.get("to");
   const statusParam = searchParams.get("status");
 
-  const supabase = getAdminClient();
+  const supabase = createAdminSupabaseClient();
 
   let query = supabase
     .from("orders")
@@ -147,4 +140,4 @@ export async function GET(request: NextRequest) {
       "Content-Disposition": `attachment; filename="${filename}"`,
     },
   });
-}
+});

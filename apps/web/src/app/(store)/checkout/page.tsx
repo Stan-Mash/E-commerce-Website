@@ -87,10 +87,12 @@ export default function CheckoutPage() {
 
   // A promotion's value can depend on the delivery method/fee, so any change
   // to delivery or pickup point invalidates a previously applied code.
-  useEffect(() => {
+  const [prevDelivery, setPrevDelivery] = useState({ delivery, pickupPointId });
+  if (prevDelivery.delivery !== delivery || prevDelivery.pickupPointId !== pickupPointId) {
+    setPrevDelivery({ delivery, pickupPointId });
     setPromo(null);
     setPromoMsg("");
-  }, [delivery, pickupPointId]);
+  }
 
   async function applyPromo() {
     if (!promoCode.trim() || items.length === 0) return;

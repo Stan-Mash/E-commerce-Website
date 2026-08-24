@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, use } from "react";
 import Link from "next/link";
 
 interface OrderDetail {
@@ -84,7 +84,7 @@ function formatKES(amount: number) {
 }
 
 interface Props {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
 const TRACK_INPUT: React.CSSProperties = {
@@ -97,7 +97,8 @@ const TRACK_INPUT: React.CSSProperties = {
   background: "var(--es-paper)",
 };
 
-export default function OrderDetailPage({ params }: Props) {
+export default function OrderDetailPage(props: Props) {
+  const params = use(props.params);
   const [order, setOrder] = useState<OrderDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);

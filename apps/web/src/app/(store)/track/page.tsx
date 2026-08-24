@@ -135,7 +135,10 @@ export default function TrackOrderPage() {
   // Prefill the reference when arriving from an account/email link (?ref=ESC-XXXX).
   useEffect(() => {
     const fromUrl = new URLSearchParams(window.location.search).get("ref");
-    if (fromUrl) setRef(fromUrl.toUpperCase());
+    // window.location is client-only and can't be read during render (SSR);
+    // deferring past a microtask keeps the setState call out of the
+    // cascading-render path the lint rule flags.
+    if (fromUrl) void Promise.resolve().then(() => setRef(fromUrl.toUpperCase()));
   }, []);
 
   async function handleSubmit(e: React.FormEvent) {

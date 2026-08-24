@@ -1,21 +1,40 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { z } from "zod";
 import { isAuthenticatedAdminRequest } from "@/lib/adminAuth";
 import { syncProductImages, resolveImageList, syncProductVideos, resolveVideoList } from "@/lib/productImages";
-
-function getAdminClient() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { autoRefreshToken: false, persistSession: false } }
-  );
-}
+import { withApiErrorHandling } from "@/lib/apiErrorHandler";
+import { createAdminSupabaseClient } from "@/lib/supabase/server";
 
 function checkAuth(request: NextRequest): boolean {
   return isAuthenticatedAdminRequest(request);
 }
 
-export async function GET(request: NextRequest) {
+const SkuInputSchema = z.object({
+  sku_code: z.string(),
+  size: z.string(),
+  color: z.string().optional(),
+  color_hex: z.string().optional(),
+  stock_quantity: z.coerce.number().optional(),
+});
+
+const ProductSchema = z.object({
+  name: z.string(),
+  slug: z.string(),
+  description: z.string().nullable().optional(),
+  category: z.string(),
+  base_price: z.coerce.number(),
+  compare_price: z.coerce.number().nullable().optional(),
+  material: z.string().nullable().optional(),
+  care_instructions: z.string().nullable().optional(),
+  is_featured: z.boolean().optional(),
+  status: z.string().optional(),
+  skus: z.array(SkuInputSchema).optional(),
+  images: z.array(z.unknown()).optional(),
+  image_url: z.unknown().optional(),
+  videos: z.array(z.unknown()).optional(),
+});
+
+export const GET = withApiErrorHandling("admin/products GET", async (request: NextRequest) => {
   if (!checkAuth(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -24,7 +43,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ products: [] });
   }
 
-  const supabase = getAdminClient();
+  const supabase = createAdminSupabaseClient();
   const { data, error } = await supabase
     .from("products")
     .select("*, skus(*)")
@@ -35,9 +54,9 @@ export async function GET(request: NextRequest) {
   }
 
   return NextResponse.json({ products: data ?? [] });
-}
+});
 
-export async function POST(request: NextRequest) {
+export const POST = withApiErrorHandling("admin/products POST", async (request: NextRequest) => {
   if (!checkAuth(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -46,7 +65,17 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Supabase not configured" }, { status: 503 });
   }
 
-  const body = await request.json();
+  let jsonBody: unknown;
+  try {
+    jsonBody = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
+  }
+  const parseResult = ProductSchema.safeParse(jsonBody);
+  if (!parseResult.success) {
+    return NextResponse.json({ error: "Validation failed", details: parseResult.error.flatten() }, { status: 422 });
+  }
+  const body = parseResult.data;
   const {
     name,
     slug,
@@ -61,10 +90,10 @@ export async function POST(request: NextRequest) {
     skus: skuList,
   } = body;
 
-  const supabase = getAdminClient();
+  const supabase = createAdminSupabaseClient();
 
   // Normalize category to lowercase for DB constraint
-  const normalizedCategory = (category as string).toLowerCase();
+  const normalizedCategory = category.toLowerCase();
 
   // Resolve the full ordered image list; first image is the primary thumbnail.
   const imageList = resolveImageList(body) ?? [];
@@ -169,4 +198,4 @@ export async function POST(request: NextRequest) {
   }
 
   return NextResponse.json({ product }, { status: 201 });
-}
+});

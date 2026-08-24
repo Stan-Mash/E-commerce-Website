@@ -443,12 +443,15 @@ export default function POSPage() {
   }, []);
 
   // Load active shift
-  const loadShift = useCallback(async (locId: string) => {
+  const loadShift = useCallback((locId: string) => {
     if (!locId) return;
-    const r = await adminFetch(`/api/admin/pos/shifts?location_id=${locId}`);
-    const j = await r.json() as { shift: Shift | null };
-    setShift(j.shift ?? null);
-    if (!j.shift) setShowShiftModal(true);
+    adminFetch(`/api/admin/pos/shifts?location_id=${locId}`)
+      .then((r) => r.json())
+      .then((j: { shift: Shift | null }) => {
+        setShift(j.shift ?? null);
+        if (!j.shift) setShowShiftModal(true);
+      })
+      .catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -469,10 +472,15 @@ export default function POSPage() {
     }
   }, []);
 
+  // loadProducts is also called manually after completing a sale and after
+  // clearing the cart (see below), not just from this mount effect — its
+  // setLoading(true) is needed to re-show the loading state on those
+  // refreshes too, so it isn't a redundant initializer we can delete.
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- also invoked from manual refresh call sites elsewhere in this component
   useEffect(() => { void loadProducts(); }, [loadProducts]);
 
   // Keyboard shortcuts
-  const completeSaleRef = useRef<() => Promise<void>>();
+  const completeSaleRef = useRef<() => Promise<void>>(undefined);
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if (showShiftModalRef.current) return;               // modal open, never intercept
@@ -487,6 +495,15 @@ export default function POSPage() {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  async function lookupBarcode(code: string) {
+    for (const product of products) {
+      const sku = product.skus.find(s => s.sku_code === code);
+      if (sku) { addToCart(product, sku); return; }
+    }
+    setSearch(code);
+    searchRef.current?.focus();
+  }
 
   // Barcode scanner
   useEffect(() => {
@@ -505,15 +522,6 @@ export default function POSPage() {
     return () => window.removeEventListener("keydown", onKeyDown);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [products]);
-
-  async function lookupBarcode(code: string) {
-    for (const product of products) {
-      const sku = product.skus.find(s => s.sku_code === code);
-      if (sku) { addToCart(product, sku); return; }
-    }
-    setSearch(code);
-    searchRef.current?.focus();
-  }
 
   // Supabase Realtime for C2B
   useEffect(() => {
@@ -707,8 +715,12 @@ export default function POSPage() {
     }
   }
 
-  // Wire completeSale into ref so keyboard shortcut always calls the latest version
-  completeSaleRef.current = completeSale;
+  // Wire completeSale into ref so keyboard shortcut always calls the latest version.
+  // Written in an effect (not during render) since refs must not be mutated
+  // while rendering; no deps array so it re-syncs after every render.
+  useEffect(() => {
+    completeSaleRef.current = completeSale;
+  });
 
   const locationName = locations.find(l => l.id === locationId)?.name ?? "Store";
 
@@ -814,33 +826,6 @@ export default function POSPage() {
 
   // ShiftModal is now a module-level component (ShiftModalComponent) - see above POSPage.
 
-  // Held carts drawer
-  const HeldDrawer = () => (
-    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)", display: "flex", justifyContent: "flex-end", zIndex: 150 }} onClick={() => setShowHeld(false)}>
-      <div style={{ width: 360, maxWidth: "100%", background: "#fff", height: "100%", overflowY: "auto", padding: 28, boxShadow: "-8px 0 40px rgba(0,0,0,0.12)" }} onClick={e => e.stopPropagation()}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
-          <h3 style={{ fontFamily: FONT, fontSize: 16, fontWeight: 800, color: "#111", margin: 0 }}>
-            Held ({heldCarts.length})
-          </h3>
-          <button onClick={() => setShowHeld(false)} style={{ background: "none", border: "none", fontSize: 22, cursor: "pointer", color: "#888", lineHeight: 1 }}>×</button>
-        </div>
-        {heldCarts.length === 0 ? (
-          <p style={{ fontFamily: FONT, fontSize: 13, color: "#aaa", textAlign: "center", marginTop: 40 }}>No held transactions.</p>
-        ) : heldCarts.map(h => (
-          <div key={h.id} style={{ border: "1px solid #e8e8e8", borderRadius: 8, padding: 16, marginBottom: 12 }}>
-            <p style={{ fontFamily: FONT, fontSize: 13, fontWeight: 700, color: "#111", margin: "0 0 4px" }}>{h.label}</p>
-            <p style={{ fontFamily: FONT, fontSize: 12, color: "#888", margin: "0 0 12px" }}>
-              {h.items.length} item{h.items.length !== 1 ? "s" : ""} · {formatKES(h.items.reduce((s, c) => s + c.unit_price * c.quantity, 0))}
-            </p>
-            <button onClick={() => restoreHeld(h)} style={{ fontFamily: FONT, fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase", background: "#7c3aed", color: "#fff", border: "none", borderRadius: 4, padding: "8px 16px", cursor: "pointer" }}>
-              Restore
-            </button>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-
   // Main render
   return (
     <div>
@@ -855,7 +840,31 @@ export default function POSPage() {
           onCancel={handleCancelShift}
         />
       )}
-      {showHeld && <HeldDrawer />}
+      {showHeld && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)", display: "flex", justifyContent: "flex-end", zIndex: 150 }} onClick={() => setShowHeld(false)}>
+          <div style={{ width: 360, maxWidth: "100%", background: "#fff", height: "100%", overflowY: "auto", padding: 28, boxShadow: "-8px 0 40px rgba(0,0,0,0.12)" }} onClick={e => e.stopPropagation()}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
+              <h3 style={{ fontFamily: FONT, fontSize: 16, fontWeight: 800, color: "#111", margin: 0 }}>
+                Held ({heldCarts.length})
+              </h3>
+              <button onClick={() => setShowHeld(false)} style={{ background: "none", border: "none", fontSize: 22, cursor: "pointer", color: "#888", lineHeight: 1 }}>×</button>
+            </div>
+            {heldCarts.length === 0 ? (
+              <p style={{ fontFamily: FONT, fontSize: 13, color: "#aaa", textAlign: "center", marginTop: 40 }}>No held transactions.</p>
+            ) : heldCarts.map(h => (
+              <div key={h.id} style={{ border: "1px solid #e8e8e8", borderRadius: 8, padding: 16, marginBottom: 12 }}>
+                <p style={{ fontFamily: FONT, fontSize: 13, fontWeight: 700, color: "#111", margin: "0 0 4px" }}>{h.label}</p>
+                <p style={{ fontFamily: FONT, fontSize: 12, color: "#888", margin: "0 0 12px" }}>
+                  {h.items.length} item{h.items.length !== 1 ? "s" : ""} · {formatKES(h.items.reduce((s, c) => s + c.unit_price * c.quantity, 0))}
+                </p>
+                <button onClick={() => restoreHeld(h)} style={{ fontFamily: FONT, fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase", background: "#7c3aed", color: "#fff", border: "none", borderRadius: 4, padding: "8px 16px", cursor: "pointer" }}>
+                  Restore
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Variant Picker Modal */}
       {variantPickerProduct && (
