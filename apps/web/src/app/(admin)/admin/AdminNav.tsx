@@ -7,6 +7,7 @@ import { usePathname } from "next/navigation";
 const NAV_ITEMS = [
   { label: "Dashboard", href: "/admin" },
   { label: "Orders", href: "/admin/orders" },
+  { label: "Pending Payments", href: "/admin/pending-payments", countKey: "pendingPayments" as const },
   { label: "Abandoned Checkouts", href: "/admin/abandoned-checkouts", countKey: "abandoned" as const },
   { label: "Products", href: "/admin/products" },
   { label: "Stock", href: "/admin/stock" },
@@ -45,21 +46,30 @@ const COUNT_POLL_MS = 2 * 60 * 1000; // 2 minutes — a badge, not a live ticker
 export default function AdminNav() {
   const pathname = usePathname();
   const [abandonedCount, setAbandonedCount] = useState<number | null>(null);
+  const [pendingPaymentsCount, setPendingPaymentsCount] = useState<number | null>(null);
 
   useEffect(() => {
     let cancelled = false;
-    async function loadCount() {
+    async function loadCounts() {
       try {
-        const res = await fetch("/api/admin/orders/abandoned/count");
-        if (!res.ok) return;
-        const data = await res.json();
-        if (!cancelled) setAbandonedCount(typeof data.count === "number" ? data.count : null);
+        const [abandonedRes, pendingRes] = await Promise.all([
+          fetch("/api/admin/orders/abandoned/count"),
+          fetch("/api/admin/orders/pending-buy-goods/count"),
+        ]);
+        if (!cancelled && abandonedRes.ok) {
+          const data = await abandonedRes.json();
+          setAbandonedCount(typeof data.count === "number" ? data.count : null);
+        }
+        if (!cancelled && pendingRes.ok) {
+          const data = await pendingRes.json();
+          setPendingPaymentsCount(typeof data.count === "number" ? data.count : null);
+        }
       } catch {
-        // nav badge is best-effort — silently skip on failure
+        // nav badges are best-effort — silently skip on failure
       }
     }
-    void loadCount();
-    const interval = setInterval(loadCount, COUNT_POLL_MS);
+    void loadCounts();
+    const interval = setInterval(loadCounts, COUNT_POLL_MS);
     return () => {
       cancelled = true;
       clearInterval(interval);
@@ -92,23 +102,27 @@ export default function AdminNav() {
                 className="admin-nav-link"
               >
                 {item.label}
-                {"countKey" in item && item.countKey === "abandoned" && !!abandonedCount && (
-                  <span
-                    style={{
-                      marginLeft: 8,
-                      display: "inline-block",
-                      background: "#c0392b",
-                      color: "#fff",
-                      fontSize: 9,
-                      letterSpacing: 0,
-                      borderRadius: 10,
-                      padding: "1px 7px",
-                      verticalAlign: "middle",
-                    }}
-                  >
-                    {abandonedCount}
-                  </span>
-                )}
+                {"countKey" in item && (() => {
+                  const count = item.countKey === "abandoned" ? abandonedCount : pendingPaymentsCount;
+                  if (!count) return null;
+                  return (
+                    <span
+                      style={{
+                        marginLeft: 8,
+                        display: "inline-block",
+                        background: "#c0392b",
+                        color: "#fff",
+                        fontSize: 9,
+                        letterSpacing: 0,
+                        borderRadius: 10,
+                        padding: "1px 7px",
+                        verticalAlign: "middle",
+                      }}
+                    >
+                      {count}
+                    </span>
+                  );
+                })()}
               </Link>
             </li>
           );

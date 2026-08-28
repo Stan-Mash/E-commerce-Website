@@ -9,6 +9,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createAdminSupabaseClient } from "@/lib/supabase/server";
 import { safeEqual } from "@/lib/adminAuth";
 import { decideC2BMatch, type C2BPendingCandidate } from "@/lib/mpesa/c2bMatching";
+import { restoreOrderStock } from "@/lib/orders/restoreStock";
 
 const ACCEPTED  = { ResultCode: 0, ResultDesc: "Accepted" };
 const REJECTED  = { ResultCode: 1, ResultDesc: "Rejected" };
@@ -134,41 +135,7 @@ export async function POST(req: NextRequest) {
       .update({ status: "payment_failed" })
       .eq("id", pending.order_id);
 
-    const { data: orderItems } = await supabase
-      .from("order_items")
-      .select("sku_id, quantity")
-      .eq("order_id", pending.order_id);
-
-    const { data: orderData } = await supabase
-      .from("orders")
-      .select("location_id")
-      .eq("id", pending.order_id)
-      .single();
-
-    if (orderItems) {
-      for (const item of orderItems) {
-        // POS orders restore to their location; web orders (no location_id)
-        // restore via the default-warehouse RPC so the stock isn't lost.
-        if (orderData?.location_id) {
-          await supabase.rpc("increment_location_stock", {
-            p_sku_id:      item.sku_id,
-            p_location_id: orderData.location_id,
-            p_delta:       item.quantity,
-          });
-        } else {
-          await supabase.rpc("increment_sku_stock", {
-            p_sku_id: item.sku_id,
-            p_delta:  item.quantity,
-          });
-        }
-        await supabase.from("inventory_log").insert({
-          sku_id:    item.sku_id,
-          delta:     item.quantity,
-          reason:    "payment_failed",
-          reference: pending.order_id,
-        });
-      }
-    }
+    await restoreOrderStock(supabase, pending.order_id);
   }
 
   return NextResponse.json(ACCEPTED);

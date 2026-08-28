@@ -48,6 +48,7 @@ export default function CheckoutPage() {
   const [submitting, setSubmitting] = useState(false);
   const [waiting, setWaiting] = useState(false);
   const [statusMsg, setStatusMsg] = useState("");
+  const [waitingOrderRef, setWaitingOrderRef] = useState("");
   const [apiError, setApiError] = useState("");
   const [promoCode, setPromoCode] = useState("");
   const [promoChecking, setPromoChecking] = useState(false);
@@ -257,6 +258,7 @@ export default function CheckoutPage() {
         }
         setSubmitting(false);
         setWaiting(true);
+        setWaitingOrderRef(data.orderRef);
         // Buy Goods/Till has no account-number field (that's Paybill-only) and
         // sends no automatic confirmation — this headline used to say the
         // opposite of the correct instructions shown right below it.
@@ -412,7 +414,7 @@ export default function CheckoutPage() {
             {apiError && <div role="alert" style={{ fontSize: 13, color: "#c0392b", background: "#fdf2f2", border: "1px solid #f5c6c6", padding: "12px 16px", marginBottom: 24 }}>{apiError}</div>}
 
             {waiting ? (
-              <WaitingState message={statusMsg} method={method} till={PAYBILL} onCancel={cancelWaiting} />
+              <WaitingState message={statusMsg} method={method} till={PAYBILL} onCancel={cancelWaiting} orderRef={waitingOrderRef} phone={phone} />
             ) : (
               <button type="button" className="es-btn-plum" style={{ width: "100%" }} onClick={handlePay} disabled={submitting || items.length === 0}>
                 {submitting ? "Processing…" : `PAY ${formatKES(total)} →`}
@@ -508,7 +510,7 @@ function Row({ label, value }: { label: string; value: string }) {
   );
 }
 
-function WaitingState({ message, method, till, onCancel }: { message: string; method: PayMethod; till: string; onCancel: () => void }) {
+function WaitingState({ message, method, till, onCancel, orderRef, phone }: { message: string; method: PayMethod; till: string; onCancel: () => void; orderRef: string; phone: string }) {
   const sub =
     method === "paybill"
       ? "This won't confirm on its own — open M-Pesa, go to Lipa na M-Pesa → Buy Goods, enter the Till number and amount shown above, then your PIN. This page updates automatically once we receive it."
@@ -521,11 +523,77 @@ function WaitingState({ message, method, till, onCancel }: { message: string; me
       </p>
       <p style={{ fontSize: 14, color: "var(--es-mute)" }}>{sub}</p>
       {method === "paybill" && till && <CopyTillNumber till={till} />}
+      {method === "paybill" && orderRef && <ReportPaymentForm orderRef={orderRef} phone={phone} />}
       <button type="button" onClick={onCancel} style={{ marginTop: 20, fontSize: 12, color: "var(--es-mute)", textDecoration: "underline", background: "none", border: "none", cursor: "pointer" }}>
         Cancel and choose another payment method
       </button>
       <style>{`@keyframes es-spin { to { transform: rotate(360deg); } }`}</style>
     </div>
+  );
+}
+
+function ReportPaymentForm({ orderRef, phone }: { orderRef: string; phone: string }) {
+  const [code, setCode] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [result, setResult] = useState<{ ok: boolean; message: string } | null>(null);
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!code.trim()) return;
+    setSubmitting(true);
+    setResult(null);
+    try {
+      const res = await fetch("/api/orders/report-payment", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderRef, phone: phone.replace(/\s/g, ""), mpesaCode: code.trim() }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setResult({ ok: true, message: data.message ?? "Thanks — we'll confirm this shortly." });
+        setCode("");
+      } else {
+        setResult({ ok: false, message: data.error ?? "Could not submit your code. Please try again." });
+      }
+    } catch {
+      setResult({ ok: false, message: "Network error. Please try again." });
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  if (result?.ok) {
+    return (
+      <p style={{ marginTop: 20, fontSize: 13, color: "#2e7d32", padding: "10px 14px", background: "#f0f9f1", border: "1px solid #cfe8d3" }}>
+        {result.message}
+      </p>
+    );
+  }
+
+  return (
+    <form onSubmit={(e) => void submit(e)} style={{ marginTop: 20, width: "100%", maxWidth: 320 }}>
+      <p style={{ fontSize: 12, color: "var(--es-mute)", marginBottom: 8 }}>
+        Already paid? Enter your M-Pesa message code so we can confirm faster.
+      </p>
+      <div style={{ display: "flex", gap: 8 }}>
+        <input
+          value={code}
+          onChange={(e) => setCode(e.target.value.toUpperCase())}
+          placeholder="e.g. SFC7XYZ123"
+          maxLength={12}
+          style={{ flex: 1, padding: "10px 12px", border: "1px solid var(--es-bone)", background: "var(--es-white)", fontSize: 13, letterSpacing: "0.05em", textTransform: "uppercase" }}
+        />
+        <button
+          type="submit"
+          disabled={submitting || !code.trim()}
+          className="es-btn-outline-ink"
+          style={{ padding: "0 16px", fontSize: 11, letterSpacing: "0.2em", textTransform: "uppercase", cursor: submitting || !code.trim() ? "not-allowed" : "pointer", opacity: submitting || !code.trim() ? 0.6 : 1 }}
+        >
+          {submitting ? "…" : "Submit"}
+        </button>
+      </div>
+      {result && !result.ok && <p style={{ fontSize: 12, color: "#c0392b", marginTop: 6 }}>{result.message}</p>}
+    </form>
   );
 }
 

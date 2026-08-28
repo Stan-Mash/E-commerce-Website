@@ -703,10 +703,10 @@ export default function POSPage() {
       "Only mark as paid after verifying the customer's M-Pesa payment on their phone.\n\nProceed?"
     );
     if (!confirmed) return;
-    const r = await adminFetch(`/api/admin/orders/${c2bOrderId}`, {
+    const r = await adminFetch(`/api/admin/orders/pending-buy-goods`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status: "paid" }),
+      body: JSON.stringify({ orderId: c2bOrderId, action: "confirm" }),
     });
     if (r.ok) {
       setC2bPaid(true);
