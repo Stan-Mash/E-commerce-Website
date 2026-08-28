@@ -140,6 +140,17 @@ export function SizeGuide({ activeSize }: Props) {
           font-family: var(--font-inter, sans-serif);
           transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1),
                       opacity 0.3s ease;
+          /* Closed state is only faded via opacity below, but the panel stays
+             in the DOM (for the open transition) — without this it sits
+             invisibly on top of the page at all times and swallows clicks
+             meant for whatever's underneath it (e.g. the colour/size/add-to-
+             bag buttons on the product page, which happen to render right
+             where this modal is centred). */
+          pointer-events: none;
+        }
+
+        .sg-panel--open {
+          pointer-events: auto;
         }
 
         /* Mobile: bottom sheet */
