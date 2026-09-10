@@ -1,14 +1,17 @@
 // @ts-check
 const { withSentryConfig } = require("@sentry/nextjs");
-const withPWA = require("next-pwa")({
+// @ducanh2912/next-pwa is the maintained fork of the (abandoned) next-pwa.
+// Its API moves skipWaiting/runtimeCaching under `workboxOptions`.
+const withPWA = require("@ducanh2912/next-pwa").default({
   dest: "public",
   disable: process.env.NODE_ENV === "development",
   register: true,
-  skipWaiting: true,
   fallbacks: {
     document: "/offline",
   },
-  runtimeCaching: [
+  workboxOptions: {
+    skipWaiting: true,
+    runtimeCaching: [
     {
       // Admin routes must NEVER be served from SW cache — always go to network
       // so authentication (cookies, middleware redirects) works correctly.
@@ -50,7 +53,8 @@ const withPWA = require("next-pwa")({
         expiration: { maxEntries: 50, maxAgeSeconds: 60 * 60 },
       },
     },
-  ],
+    ],
+  },
 });
 
 /** @type {import('next').NextConfig} */

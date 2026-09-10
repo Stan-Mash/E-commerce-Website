@@ -8,7 +8,7 @@ Nairobi-made fashion storefront (project name: nairobi-fashion). PWA with M-Pesa
 
 | Layer | Technology |
 |---|---|
-| Frontend | Next.js 14 App Router (TypeScript) + PWA (next-pwa) |
+| Frontend | Next.js 16 App Router (TypeScript) + PWA (@ducanh2912/next-pwa) |
 | Backend API | Next.js Route Handlers |
 | Background Jobs | Vercel Cron → `/api/cron/notifications` |
 | Database | Supabase (PostgreSQL + RLS) |
@@ -92,6 +92,20 @@ npm run dev
 ```
 
 ---
+
+## Build: why `--webpack`
+
+`apps/web` builds with `next build --webpack`, not the Next 16 default (Turbopack).
+
+The PWA plugin (`@ducanh2912/next-pwa`, like `next-pwa` before it) is a **webpack
+plugin**. Under a Turbopack build it silently does nothing: no `sw.js` is emitted,
+no service-worker registration is added to the client bundle, the `/offline`
+fallback is dead, and the `runtimeCaching` rules in `next.config.js` never take
+effect (including the rule that keeps `/admin` and `/api/admin` out of the cache).
+
+There is no warning when this happens - the build just succeeds without a service
+worker. If you switch back to Turbopack, either drop the PWA entirely or migrate
+to a Turbopack-compatible service worker (e.g. `@serwist/next`).
 
 ## Deployment
 

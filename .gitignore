@@ -41,3 +41,12 @@ supabase/.temp
 
 .vercel
 .env*
+
+# next-pwa / workbox generated service-worker artifacts (regenerated each build,
+# hashed filenames change per build - must not be committed)
+apps/web/public/sw.js
+apps/web/public/sw.js.map
+apps/web/public/workbox-*.js
+apps/web/public/workbox-*.js.map
+apps/web/public/fallback-*.js
+apps/web/public/fallback-*.js.map
