@@ -499,7 +499,7 @@ export default function ReportsPage() {
                 {data.is_weekly_buckets ? "Weekly Revenue" : "Daily Revenue"}
                 {effectiveRange.from && effectiveRange.to && (
                   <span style={{ marginLeft: 12, fontWeight: 400, textTransform: "none", letterSpacing: 0, fontSize: 11 }}>
-                    {effectiveRange.from} — {effectiveRange.to}
+                    {effectiveRange.from} to {effectiveRange.to}
                   </span>
                 )}
               </p>

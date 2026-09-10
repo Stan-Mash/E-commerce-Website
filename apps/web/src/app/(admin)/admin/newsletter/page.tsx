@@ -98,7 +98,7 @@ export default function AdminNewsletterPage() {
               <input
                 value={subject}
                 onChange={(e) => setSubject(e.target.value)}
-                placeholder="e.g. New Arrivals this Friday ✨"
+                placeholder="e.g. New Arrivals this Friday"
                 style={{ display: "block", width: "100%", padding: "10px 14px", border: "1px solid var(--es-bone)", borderRadius: 4, fontSize: 14, color: "var(--es-ink)", background: "var(--es-white)", boxSizing: "border-box" }}
               />
             </div>
@@ -183,7 +183,7 @@ export default function AdminNewsletterPage() {
             >
               <span style={{ fontSize: 14, color: "var(--es-ink)" }}>{s.email}</span>
               <span style={{ fontSize: 12, color: "var(--es-mute)", whiteSpace: "nowrap" }}>
-                {s.source ?? "—"} · {new Date(s.created_at).toLocaleDateString("en-KE")}
+                {s.source ?? "-"} · {new Date(s.created_at).toLocaleDateString("en-KE")}
               </span>
             </div>
           ))}

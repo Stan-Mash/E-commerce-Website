@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { LayoutDashboard, Receipt, Landmark, TrendingUp } from "lucide-react";
 
 const FONT = "'Inter','Urbanist',sans-serif";
 
@@ -59,10 +60,10 @@ export default function FinanceDashboardPage() {
   }
 
   const nav = [
-    { href: "/admin/finance", label: "Dashboard", icon: "📊" },
-    { href: "/admin/finance/expenses", label: "Expenses", icon: "🧾" },
-    { href: "/admin/finance/loans", label: "Loans", icon: "🏦" },
-    { href: "/admin/finance/reports", label: "P&L Report", icon: "📈" },
+    { href: "/admin/finance", label: "Dashboard", Icon: LayoutDashboard },
+    { href: "/admin/finance/expenses", label: "Expenses", Icon: Receipt },
+    { href: "/admin/finance/loans", label: "Loans", Icon: Landmark },
+    { href: "/admin/finance/reports", label: "P&L Report", Icon: TrendingUp },
   ];
 
   return (
@@ -73,12 +74,12 @@ export default function FinanceDashboardPage() {
           <div style={{ width: 32, height: 32, background: "#7c3aed", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center" }}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
           </div>
-          <span style={{ fontFamily: FONT, fontSize: 14, fontWeight: 800, color: "#fff", letterSpacing: "-0.01em" }}>Finance — Owner View</span>
+          <span style={{ fontFamily: FONT, fontSize: 14, fontWeight: 800, color: "#fff", letterSpacing: "-0.01em" }}>Finance: Owner View</span>
         </div>
         <div style={{ display: "flex", gap: 20, alignItems: "center" }}>
           {nav.map(n => (
-            <Link key={n.href} href={n.href} style={{ fontFamily: FONT, fontSize: 12, color: "#fff", textDecoration: "none", opacity: 0.75 }}>
-              {n.icon} {n.label}
+            <Link key={n.href} href={n.href} style={{ fontFamily: FONT, fontSize: 12, color: "#fff", textDecoration: "none", opacity: 0.75, display: "inline-flex", alignItems: "center", gap: 6 }}>
+              <n.Icon size={14} aria-hidden="true" /> {n.label}
             </Link>
           ))}
           <button onClick={logout} style={{ fontFamily: FONT, fontSize: 11, color: "#888", background: "none", border: "1px solid #333", borderRadius: 4, padding: "6px 12px", cursor: "pointer", letterSpacing: "0.1em", textTransform: "uppercase" }}>
@@ -125,7 +126,7 @@ export default function FinanceDashboardPage() {
             >
               {/* Summary */}
               <div style={{ background: "#fff", borderRadius: 10, padding: 24, border: "1px solid #e8e8e8" }}>
-                <h2 style={{ fontFamily: FONT, fontSize: 15, fontWeight: 800, color: "#111", margin: "0 0 20px" }}>P&amp;L Summary — {report.month}</h2>
+                <h2 style={{ fontFamily: FONT, fontSize: 15, fontWeight: 800, color: "#111", margin: "0 0 20px" }}>P&amp;L Summary: {report.month}</h2>
                 <PLRow label="Revenue" value={report.revenue} bold />
                 <PLRow label="Total Expenses" value={-report.expenses_total} />
                 <PLRow label="Operating Profit" value={report.operating_profit} bold divider />
@@ -163,13 +164,13 @@ export default function FinanceDashboardPage() {
             {/* Quick links */}
             <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 14 }}>
               {[
-                { href: "/admin/finance/expenses", label: "Log Expense", desc: "Record daily business spend", icon: "🧾" },
-                { href: "/admin/finance/loans", label: "Manage Loans", desc: "Track loans & repayments", icon: "🏦" },
-                { href: "/admin/finance/reports", label: "Full P&L Report", desc: "Export to CSV for accountant", icon: "📈" },
+                { href: "/admin/finance/expenses", label: "Log Expense", desc: "Record daily business spend", Icon: Receipt },
+                { href: "/admin/finance/loans", label: "Manage Loans", desc: "Track loans & repayments", Icon: Landmark },
+                { href: "/admin/finance/reports", label: "Full P&L Report", desc: "Export to CSV for accountant", Icon: TrendingUp },
               ].map(card => (
                 <Link key={card.href} href={card.href} style={{ textDecoration: "none" }}>
                   <div style={{ background: "#fff", border: "1px solid #e8e8e8", borderRadius: 10, padding: "20px 22px", cursor: "pointer" }}>
-                    <div style={{ fontSize: 28, marginBottom: 10 }}>{card.icon}</div>
+                    <div style={{ marginBottom: 10, color: "#111" }}><card.Icon size={26} aria-hidden="true" /></div>
                     <p style={{ fontFamily: FONT, fontSize: 14, fontWeight: 800, color: "#111", margin: "0 0 4px" }}>{card.label}</p>
                     <p style={{ fontFamily: FONT, fontSize: 12, color: "#888", margin: 0 }}>{card.desc}</p>
                   </div>

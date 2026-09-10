@@ -95,7 +95,7 @@ export default function AdminReviewsPage() {
                   <span style={{ color: "#c9a961" }}>{"★".repeat(r.rating)}{"☆".repeat(5 - r.rating)}</span>
                   <strong style={{ fontSize: 14 }}>{r.author_name}</strong>
                   <span style={{ fontSize: 11, color: "var(--es-mute)" }}>
-                    on {r.product?.name ?? "—"} · {new Date(r.created_at).toLocaleDateString("en-KE")}
+                    on {r.product?.name ?? "-"} · {new Date(r.created_at).toLocaleDateString("en-KE")}
                   </span>
                 </div>
                 {r.title && <p style={{ fontSize: 14, fontWeight: 600, margin: "0 0 2px" }}>{r.title}</p>}

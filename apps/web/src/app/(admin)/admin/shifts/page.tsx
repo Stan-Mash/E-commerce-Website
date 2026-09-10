@@ -48,7 +48,7 @@ export default function ShiftsPage() {
 
       <p style={{ fontFamily: "var(--font-inter)", fontSize: 14, color: "var(--es-mute)", marginBottom: 24, lineHeight: 1.6 }}>
         Shifts are opened and closed from the <a href="/admin/pos" style={{ color: "var(--es-plum)" }}>POS Terminal</a>.
-        Each shift tracks opening cash float, cash sales, and closing count — the system calculates the expected float and any variance automatically.
+        Each shift tracks opening cash float, cash sales, and closing count. The system calculates the expected float and any variance automatically.
       </p>
 
       {loading ? (
@@ -85,11 +85,11 @@ export default function ShiftsPage() {
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: 16, marginTop: 20 }}>
                 {[
                   { label: "Opening Float", value: formatKES(s.opening_float) },
-                  { label: "Expected Float", value: s.expected_float != null ? formatKES(s.expected_float) : "—" },
-                  { label: "Closing Count", value: s.closing_float != null ? formatKES(s.closing_float) : "—" },
+                  { label: "Expected Float", value: s.expected_float != null ? formatKES(s.expected_float) : "-" },
+                  { label: "Closing Count", value: s.closing_float != null ? formatKES(s.closing_float) : "-" },
                   {
                     label: "Variance",
-                    value: s.variance != null ? formatKES(s.variance) : "—",
+                    value: s.variance != null ? formatKES(s.variance) : "-",
                     highlight: s.variance != null ? (s.variance < 0 ? "red" : s.variance > 0 ? "orange" : "green") : undefined,
                   },
                 ].map(({ label, value, highlight }) => (

@@ -111,7 +111,7 @@ export default function AdminDeliveryPage() {
       {loading ? (
         <p style={{ color: "var(--es-mute)" }}>Loading…</p>
       ) : points.length === 0 ? (
-        <p style={{ color: "var(--es-mute)" }}>No pickup points yet — add your first above.</p>
+        <p style={{ color: "var(--es-mute)" }}>No pickup points yet. Add your first above.</p>
       ) : (
         <div style={{ border: "1px solid var(--es-bone)", borderRadius: 8, overflow: "hidden", background: "var(--es-white)" }}>
           {points.map((p, i) => (

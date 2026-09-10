@@ -144,7 +144,7 @@ export default function PendingPaymentsPage() {
                   </p>
                 ) : (
                   <p style={{ fontSize: 13, color: "var(--es-mute)", marginBottom: 16 }}>
-                    No code reported yet — check the Safaricom portal manually.
+                    No code reported yet. Check the Safaricom portal manually.
                   </p>
                 )}
 

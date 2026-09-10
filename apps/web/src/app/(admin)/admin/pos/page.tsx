@@ -6,6 +6,7 @@
 // Keyboard: F1=Cash, F2=STK, F3=C2B, Enter=Complete.
 
 import React, { useState, useEffect, useCallback, useRef, memo } from "react";
+import { CheckCircle2, Printer } from "lucide-react";
 import { createClient } from "@supabase/supabase-js";
 
 // Auth helper
@@ -85,12 +86,12 @@ function whatsappLink(params: {
   const pmLabel = params.paymentMethod === "cash" ? "Cash"
     : params.paymentMethod === "mpesa_stk" ? "M-Pesa STK" : "M-Pesa Till";
   const lines = [
-    `*Elite Style Co — Receipt*`,
+    `*Elite Style Co. Receipt*`,
     `Ref: ${params.orderRef}`,
     `Location: ${params.locationName}`,
     ``,
     ...params.items.map(i =>
-      `• ${i.quantity}× ${i.product_name} (${i.size}${i.color ? "/" + i.color : ""}) — ${formatKES(i.unit_price * i.quantity - i.item_discount)}`
+      `• ${i.quantity}× ${i.product_name} (${i.size}${i.color ? "/" + i.color : ""}): ${formatKES(i.unit_price * i.quantity - i.item_discount)}`
     ),
     ``,
     params.discount > 0 ? `Discount: -${formatKES(params.discount)}` : null,
@@ -217,7 +218,7 @@ function browserPrintReceipt(params: ReceiptParams): void {
     <div style="display:flex;justify-content:space-between"><span>Tendered:</span><span>${formatKES(params.amountPaid)}</span></div>
     <div style="display:flex;justify-content:space-between"><span>Change:</span><span>${formatKES(params.changeDue)}</span></div>` : "";
   const ts = new Date().toLocaleString("en-KE", { dateStyle: "short", timeStyle: "short" });
-  const html = `<!DOCTYPE html><html><head><title>Receipt — ${params.orderRef}</title>
+  const html = `<!DOCTYPE html><html><head><title>Receipt ${params.orderRef}</title>
 <style>@page{size:80mm auto;margin:4mm}body{font-family:'Courier New',monospace;font-size:12px;width:72mm;margin:0}hr{border:none;border-top:1px dashed #000;margin:6px 0}.c{text-align:center}@media print{.no-print{display:none}}</style>
 </head><body>
 <div class="c" style="font-size:16px;font-weight:bold">ELITE STYLE CO</div>
@@ -401,7 +402,7 @@ export default function POSPage() {
 
   const connectPrinter = useCallback(async () => {
     if (!("serial" in navigator)) {
-      setErrorMsg("Web Serial not supported — use Chrome or Edge on desktop.");
+      setErrorMsg("Web Serial not supported. Use Chrome or Edge on desktop.");
       return;
     }
     try {
@@ -797,7 +798,7 @@ export default function POSPage() {
     return (
       <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "70vh" }}>
         <div style={{ textAlign: "center", padding: 48, background: "#e8f5e9", border: "2px solid #66bb6a", borderRadius: 12, maxWidth: 480, width: "100%" }}>
-          <div style={{ fontSize: 56, marginBottom: 8 }}>✅</div>
+          <div style={{ marginBottom: 8, color: "#2e7d32" }}><CheckCircle2 size={56} aria-hidden="true" /></div>
           <p style={{ fontFamily: FONT, fontSize: 28, fontWeight: 900, color: "#2e7d32", margin: "0 0 4px" }}>Payment Confirmed</p>
           <p style={{ fontFamily: FONT, fontSize: 15, color: "#2e7d32", fontWeight: 700 }}>{c2bOrderRef}</p>
           <div style={{ display: "flex", gap: 10, justifyContent: "center", marginTop: 24, flexWrap: "wrap" }}>
@@ -962,10 +963,10 @@ export default function POSPage() {
           {/* Printer connect/disconnect */}
           <button
             onClick={() => printerPort ? void disconnectPrinter() : void connectPrinter()}
-            title={printerPort ? "Printer connected — click to disconnect" : "Connect receipt printer"}
+            title={printerPort ? "Printer connected, click to disconnect" : "Connect receipt printer"}
             style={{ fontFamily: FONT, fontSize: 10, letterSpacing: "0.1em", textTransform: "uppercase", background: printerPort ? "#e8f5e9" : "#f5f5f5", color: printerPort ? "#2e7d32" : "#888", border: `1px solid ${printerPort ? "#a5d6a7" : "#ddd"}`, borderRadius: 4, padding: "7px 12px", cursor: "pointer", display: "flex", alignItems: "center", gap: 5 }}
           >
-            <span style={{ fontSize: 14 }}>🖨</span>
+            <Printer size={14} aria-hidden="true" />
             <span>{printerPort ? "Printer On" : "Printer Off"}</span>
           </button>
           {heldCarts.length > 0 && (
@@ -1005,7 +1006,7 @@ export default function POSPage() {
 
       {!shift && (
         <div style={{ background: "#fff8e1", border: "1px solid #f0c040", borderRadius: 6, padding: "10px 16px", marginBottom: 16, fontFamily: FONT, fontSize: 13, color: "#92680a" }}>
-          ⚠️ No open shift — open a shift before processing any sales.
+          No open shift. Open a shift before processing any sales.
         </div>
       )}
 
@@ -1087,7 +1088,7 @@ export default function POSPage() {
                       </p>
                       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 10 }}>
                         <span style={{ fontFamily: FONT, fontSize: 10, color: lowStock ? "#c0392b" : "#aaa", letterSpacing: "0.03em" }}>
-                          {lowStock ? "⚠ Low stock" : `${inStockSkus.length} variant${inStockSkus.length !== 1 ? "s" : ""}`}
+                          {lowStock ? "Low stock" : `${inStockSkus.length} variant${inStockSkus.length !== 1 ? "s" : ""}`}
                         </span>
                         <span style={{ fontFamily: FONT, fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#fff", background: "#7c3aed", padding: "4px 12px", borderRadius: 20 }}>
                           {inStockSkus.length === 1 ? "Add" : "Select"}
@@ -1250,7 +1251,7 @@ export default function POSPage() {
             </div>
             {paymentMethod === "mpesa_stk" && (
               <p style={{ fontFamily: FONT, fontSize: 10, color: "#c0392b", margin: "0 0 10px", letterSpacing: "0.03em" }}>
-                ⚠ STK Push requires a Paybill shortcode. If using a Buy Goods till, use M-Pesa Till instead.
+                STK Push requires a Paybill shortcode. If using a Buy Goods till, use M-Pesa Till instead.
               </p>
             )}
             {paymentMethod !== "mpesa_stk" && <div style={{ marginBottom: 10 }} />}
@@ -1268,7 +1269,7 @@ export default function POSPage() {
                 />
                 {tenderedAmt > 0 && tenderedAmt < displayTotal && (
                   <p style={{ fontFamily: FONT, fontSize: 11, color: "#e74c3c", margin: "-8px 0 4px" }}>
-                    ⚠ Short by {formatKES(displayTotal - tenderedAmt)}
+                    Short by {formatKES(displayTotal - tenderedAmt)}
                   </p>
                 )}
                 {changeDue > 0 && (

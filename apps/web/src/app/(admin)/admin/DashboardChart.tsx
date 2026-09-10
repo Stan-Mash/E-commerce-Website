@@ -51,7 +51,7 @@ export default function DashboardChart({ data, maxRevenue }: DashboardChartProps
       width="100%"
       height={svgHeight}
       style={{ display: "block", overflow: "visible" }}
-      aria-label="Revenue bar chart — last 7 days"
+      aria-label="Revenue bar chart, last 7 days"
     >
       {/* Grid lines + Y-axis labels */}
       {gridFractions.map((frac) => {

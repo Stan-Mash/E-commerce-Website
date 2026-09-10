@@ -54,7 +54,7 @@ function LoginForm() {
           </svg>
         </div>
         <h1 style={{ fontFamily: FONT, fontSize: 20, fontWeight: 900, color: "#111", margin: "0 0 6px" }}>Owner Access</h1>
-        <p style={{ fontFamily: FONT, fontSize: 13, color: "#888", margin: 0 }}>Finance module — restricted to owner only</p>
+        <p style={{ fontFamily: FONT, fontSize: 13, color: "#888", margin: 0 }}>Finance module: restricted to owner only</p>
       </div>
 
       <form onSubmit={handleLogin}>

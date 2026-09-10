@@ -48,7 +48,7 @@ const TYPE_BG: Record<ToastType, string> = {
 const TYPE_ICONS: Record<ToastType, string> = {
   success: '✓',
   error:   '✕',
-  warning: '⚠',
+  warning: '!',
   info:    'ℹ',
 };
 

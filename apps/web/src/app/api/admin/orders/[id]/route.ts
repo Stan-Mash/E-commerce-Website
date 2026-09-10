@@ -110,7 +110,7 @@ export async function PUT(request: NextRequest, props: { params: Promise<{ id: s
   if (body.courier !== undefined) patch.courier = body.courier || null;
   if (body.tracking_url !== undefined) {
     if (body.tracking_url && !isValidHttpUrl(body.tracking_url)) {
-      return NextResponse.json({ error: "Invalid tracking URL — must start with http:// or https://" }, { status: 400 });
+      return NextResponse.json({ error: "Invalid tracking URL. Must start with http:// or https://" }, { status: 400 });
     }
     patch.tracking_url = body.tracking_url || null;
   }

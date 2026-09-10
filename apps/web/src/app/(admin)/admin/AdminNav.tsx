@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { Lock } from "lucide-react";
 
 const NAV_ITEMS = [
   { label: "Dashboard", href: "/admin" },
@@ -163,7 +164,8 @@ export default function AdminNav() {
               }}
               className="admin-nav-link"
             >
-              {item.label} 🔒
+              {item.label}
+              <Lock size={11} aria-hidden="true" style={{ marginLeft: 6, verticalAlign: "middle" }} />
             </Link>
           );
         })}

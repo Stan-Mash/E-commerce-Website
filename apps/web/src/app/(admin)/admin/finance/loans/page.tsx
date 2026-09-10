@@ -266,7 +266,7 @@ export default function LoansPage() {
                       <p style={{ fontFamily: FONT, fontSize: 9, letterSpacing: "0.2em", textTransform: "uppercase", color: "#aaa", margin: "0 0 8px" }}>Payment History</p>
                       {loan.loan_payments.slice().sort((a, b) => b.payment_date.localeCompare(a.payment_date)).map(p => (
                         <div key={p.id} style={{ display: "flex", justifyContent: "space-between", fontFamily: FONT, fontSize: 12, color: "#555", marginBottom: 4 }}>
-                          <span>{p.payment_date}{p.notes ? ` — ${p.notes}` : ""}</span>
+                          <span>{p.payment_date}{p.notes ? `: ${p.notes}` : ""}</span>
                           <span style={{ fontWeight: 700, color: "#2e7d32" }}>{fKES(p.amount)}</span>
                         </div>
                       ))}

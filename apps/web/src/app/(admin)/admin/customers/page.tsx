@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useMemo } from "react";
+import { Star } from "lucide-react";
 
 interface CustomerRow {
   id: string;
@@ -23,7 +24,7 @@ function formatKES(amount: number) {
 }
 
 function formatDate(dateStr: string | null) {
-  if (!dateStr) return "—";
+  if (!dateStr) return "-";
   return new Date(dateStr).toLocaleDateString("en-KE", {
     day: "2-digit",
     month: "short",
@@ -155,7 +156,7 @@ export default function CustomersPage() {
               fontWeight: 400,
             }}
           >
-            {loading ? "—" : customers.length}
+            {loading ? "-" : customers.length}
           </p>
           <p
             style={{
@@ -187,7 +188,7 @@ export default function CustomersPage() {
             }}
           >
             {loading
-              ? "—"
+              ? "-"
               : formatKES(customers.reduce((s, c) => s + c.total_spent, 0))}
           </p>
           <p
@@ -395,10 +396,10 @@ export default function CustomersPage() {
                               style={{ marginRight: 4, fontSize: 13 }}
                               title="Top 3 customer by spend"
                             >
-                              ⭐
+                              <Star size={13} aria-hidden="true" />
                             </span>
                           )}
-                          {customer.name ?? "—"}
+                          {customer.name ?? "-"}
                         </span>
                         {customer.email && (
                           <p
@@ -450,7 +451,7 @@ export default function CustomersPage() {
                           whiteSpace: "nowrap",
                         }}
                       >
-                        {customer.order_count > 0 ? formatKES(avgOrder) : "—"}
+                        {customer.order_count > 0 ? formatKES(avgOrder) : "-"}
                       </span>
                     </td>
 
@@ -639,7 +640,7 @@ export default function CustomersPage() {
               >
                 {topCustomerIds.has(selectedCustomer.id) && (
                   <span style={{ marginRight: 6 }} title="Top 3 customer by spend">
-                    ⭐
+                    <Star size={14} aria-hidden="true" />
                   </span>
                 )}
                 {selectedCustomer.name ?? "Unknown"}
@@ -718,7 +719,7 @@ export default function CustomersPage() {
                         color: "var(--es-ink)",
                       }}
                     >
-                      {selectedCustomer.email ?? "—"}
+                      {selectedCustomer.email ?? "-"}
                     </span>
                   </div>
 
@@ -868,7 +869,7 @@ export default function CustomersPage() {
                   >
                     {selectedCustomer.order_count > 0
                       ? formatKES(selectedCustomer.total_spent / selectedCustomer.order_count)
-                      : "—"}
+                      : "-"}
                   </span>
                 </div>
               </div>

@@ -327,7 +327,7 @@ export default async function AdminDashboardPage() {
                 margin: 0,
               }}
             >
-              Revenue — Last 7 Days
+              Revenue: Last 7 Days
             </p>
             {/* Date range note */}
             <span

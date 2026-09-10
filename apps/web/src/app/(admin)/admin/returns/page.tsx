@@ -18,7 +18,7 @@ const STATUSES = ["requested", "approved", "rejected", "refunded"] as const;
 const RESOLUTIONS = ["refund", "store_credit", "exchange"] as const;
 
 function fmtKES(n: number | null) {
-  if (n == null) return "—";
+  if (n == null) return "-";
   return new Intl.NumberFormat("en-KE", { style: "currency", currency: "KES", minimumFractionDigits: 0 }).format(n);
 }
 
@@ -117,7 +117,7 @@ export default function AdminReturnsPage() {
                     {r.order?.order_ref ?? "Unknown order"}
                   </p>
                   <p style={{ fontSize: 12, color: "var(--es-mute)" }}>
-                    {r.order?.phone ?? "—"} · Order total {fmtKES(r.order?.total ?? null)} · {new Date(r.created_at).toLocaleDateString("en-KE")}
+                    {r.order?.phone ?? "-"} · Order total {fmtKES(r.order?.total ?? null)} · {new Date(r.created_at).toLocaleDateString("en-KE")}
                   </p>
                 </div>
                 <span style={{
@@ -140,7 +140,7 @@ export default function AdminReturnsPage() {
                 </label>
                 <label style={{ fontSize: 12, color: "var(--es-mute)" }}>Resolution
                   <select value={r.resolution ?? ""} onChange={(e) => patch(r.id, { resolution: e.target.value || null })} style={SELECT}>
-                    <option value="">—</option>
+                    <option value="">-</option>
                     {RESOLUTIONS.map((s) => <option key={s} value={s}>{s.replace("_", " ")}</option>)}
                   </select>
                 </label>

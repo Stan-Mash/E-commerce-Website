@@ -134,7 +134,7 @@ export default function ExpensesPage() {
                 </select>
 
                 <label style={lbl}>Description *</label>
-                <input value={desc} onChange={e => setDesc(e.target.value)} placeholder="e.g. Rent for June — CBD store" style={inp} required />
+                <input value={desc} onChange={e => setDesc(e.target.value)} placeholder="e.g. Rent for June, CBD store" style={inp} required />
 
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
                   <div>
@@ -197,7 +197,7 @@ export default function ExpensesPage() {
                 {expenses.map((e, i) => (
                   <tr key={e.id} style={{ borderBottom: i < expenses.length - 1 ? "1px solid #f7f7f7" : "none", background: i % 2 === 0 ? "#fff" : "#fafafa" }}>
                     <td style={{ fontFamily: FONT, fontSize: 12, color: "#888", padding: "12px 16px" }}>{e.expense_date}</td>
-                    <td style={{ fontFamily: FONT, fontSize: 12, color: "#7c3aed", padding: "12px 16px", fontWeight: 600 }}>{e.expense_categories?.name ?? "—"}</td>
+                    <td style={{ fontFamily: FONT, fontSize: 12, color: "#7c3aed", padding: "12px 16px", fontWeight: 600 }}>{e.expense_categories?.name ?? "-"}</td>
                     <td style={{ fontFamily: FONT, fontSize: 13, color: "#111", padding: "12px 16px" }}>
                       {e.description}
                       {e.notes && <span style={{ display: "block", fontSize: 11, color: "#aaa", marginTop: 2 }}>{e.notes}</span>}

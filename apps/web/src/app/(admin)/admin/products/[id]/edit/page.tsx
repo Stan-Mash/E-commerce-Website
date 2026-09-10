@@ -563,7 +563,7 @@ export default function EditProductPage(props: Props) {
                     placeholder="Fills in once you enter a size"
                   />
                   <span style={{ ...HELP_STYLE, maxWidth: 420 }}>
-                    A short code so this size/colour can be told apart from others. Filled in for you — only change it if you want something custom.
+                    A short code so this size/colour can be told apart from others. Filled in for you. Only change it if you want something custom.
                   </span>
                 </div>
               </div>
@@ -583,7 +583,7 @@ export default function EditProductPage(props: Props) {
 
             {saved && (
               <span style={{ fontFamily: "var(--font-inter)", fontSize: 13, color: "#2e7d32", letterSpacing: "0.05em" }}>
-                Saved — redirecting…
+                Saved, redirecting…
               </span>
             )}
 

@@ -326,7 +326,7 @@ export default function OrderDetailPage(props: Props) {
             {(() => {
               const phone = (order.customers?.phone ?? order.phone ?? "").replace(/\D/g, "").replace(/^0/, "254");
               const msg = encodeURIComponent(
-                `Hi${order.customers?.name ? ` ${order.customers.name}` : ""}! Your Elite Style Co. order *${order.order_ref}* is now *${order.status.replace(/_/g, " ")}*. Total: KES ${Number(order.total).toLocaleString("en-KE")}. Thank you for shopping with us! 🛍️`
+                `Hi${order.customers?.name ? ` ${order.customers.name}` : ""}! Your Elite Style Co. order *${order.order_ref}* is now *${order.status.replace(/_/g, " ")}*. Total: KES ${Number(order.total).toLocaleString("en-KE")}. Thank you for shopping with us!`
               );
               return phone ? (
                 <a
@@ -560,7 +560,7 @@ export default function OrderDetailPage(props: Props) {
                               color: "var(--es-mute)",
                             }}
                           >
-                            {item.skus?.size ?? "—"}
+                            {item.skus?.size ?? "-"}
                             {item.skus?.color ? ` / ${item.skus.color}` : ""}
                           </span>
                         </td>

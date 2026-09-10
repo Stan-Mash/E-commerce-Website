@@ -305,7 +305,7 @@ export default function NewProductPage() {
         }}
       >
         Fill in the details below, add photos, then add at least one size with
-        its stock count near the bottom. Nothing here is permanent — you can
+        its stock count near the bottom. Nothing here is permanent. You can
         come back and edit any of it later.
       </p>
 
@@ -705,7 +705,7 @@ export default function NewProductPage() {
                   placeholder="Fills in once you enter a size"
                 />
                 <span style={{ ...HELP_STYLE, maxWidth: 420 }}>
-                  A short code so this size/colour can be told apart from others. Filled in for you — only change it if you want something custom.
+                  A short code so this size/colour can be told apart from others. Filled in for you. Only change it if you want something custom.
                 </span>
               </div>
             </div>

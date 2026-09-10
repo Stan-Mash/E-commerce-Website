@@ -33,7 +33,7 @@ function formatDiscount(p: Promotion): string {
 }
 
 function formatExpiry(expires_at: string | null): string {
-  if (!expires_at) return "—";
+  if (!expires_at) return "-";
   return new Date(expires_at).toLocaleDateString("en-KE", {
     year: "numeric",
     month: "short",

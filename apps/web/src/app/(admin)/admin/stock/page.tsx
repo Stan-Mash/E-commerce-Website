@@ -291,7 +291,7 @@ export default function StockPage() {
             }}
           >
             <strong>{outOfStockCount} SKU{outOfStockCount !== 1 ? "s are" : " is"} out of stock</strong>
-            {" "}— consider restocking.
+            . Consider restocking.
           </p>
         </div>
       )}
@@ -503,7 +503,7 @@ export default function StockPage() {
                             color: "var(--es-ink)",
                           }}
                         >
-                          {sku.products?.name ?? "—"}
+                          {sku.products?.name ?? "-"}
                         </span>
                       </td>
 

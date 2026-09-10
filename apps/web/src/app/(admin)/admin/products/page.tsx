@@ -572,7 +572,7 @@ export default function AdminProductsPage() {
                               }}
                             >
                               {sku.size}
-                              {sku.color ? ` / ${sku.color}` : ""} — {sku.stock_quantity} units
+                              {sku.color ? ` / ${sku.color}` : ""}, {sku.stock_quantity} units
                             </span>
                           ))
                         ) : (

@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "location_id is required" }, { status: 400 });
   }
   if (!shift_id) {
-    return NextResponse.json({ error: "shift_id is required — open a shift before processing sales" }, { status: 400 });
+    return NextResponse.json({ error: "shift_id is required. Open a shift before processing sales" }, { status: 400 });
   }
 
   const supabase = createAdminSupabaseClient();
@@ -67,7 +67,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Shift not found" }, { status: 404 });
   }
   if (shift.status !== "open") {
-    return NextResponse.json({ error: "Shift is closed — reopen or start a new shift before processing sales" }, { status: 409 });
+    return NextResponse.json({ error: "Shift is closed. Reopen or start a new shift before processing sales" }, { status: 409 });
   }
   if (shift.location_id !== location_id) {
     return NextResponse.json({ error: "shift_id does not belong to the specified location_id" }, { status: 422 });
@@ -180,7 +180,7 @@ export async function POST(request: NextRequest) {
         phone:       normalisedPhone,
         amount:      total,
         orderId:     orderRef,
-        description: "Elite Style Co — In-Store",
+        description: "Elite Style Co. In-Store",
       });
     } catch (err) {
       // STK failed - restore stock (webhook won't fire)
@@ -248,7 +248,7 @@ export async function POST(request: NextRequest) {
       // The customer's Till payment has no reference field — tell the
       // cashier to just confirm amount and Till, not ask for a reference
       // that doesn't exist in that payment flow.
-      instruction: `Ask customer to pay KES ${total.toLocaleString()} to our Till. No reference number needed — this page updates once we receive it.`,
+      instruction: `Ask customer to pay KES ${total.toLocaleString()} to our Till. No reference number needed. This page updates once we receive it.`,
     }, { status: 201 });
   }
 

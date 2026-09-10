@@ -62,7 +62,7 @@ export default function ReportsPage() {
     if (!report) return;
     setExporting(true);
     const rows: string[][] = [
-      ["Elite Style Co — Monthly P&L Report"],
+      ["Elite Style Co. Monthly P&L Report"],
       [`Period: ${report.month}`],
       [`Generated: ${new Date().toLocaleDateString("en-KE")}`],
       [],
@@ -130,7 +130,7 @@ export default function ReportsPage() {
             <div style={{ background: "#111", padding: "20px 28px" }}>
               <p style={{ fontFamily: FONT, fontSize: 11, letterSpacing: "0.3em", textTransform: "uppercase", color: "#c9a961", margin: "0 0 4px" }}>Elite Style Co</p>
               <p style={{ fontFamily: FONT, fontSize: 18, fontWeight: 800, color: "#fff", margin: "0 0 2px" }}>
-                Profit &amp; Loss Statement — {report.month}
+                Profit &amp; Loss Statement: {report.month}
               </p>
               <p style={{ fontFamily: FONT, fontSize: 12, color: "#666", margin: 0 }}>
                 Generated {new Date().toLocaleDateString("en-KE", { dateStyle: "long" })}
@@ -156,11 +156,11 @@ export default function ReportsPage() {
               <PLLine label="Total Outstanding Loans" value={-report.total_outstanding} indent={1} note="(balance sheet)" />
 
               <Section title="TAX PROVISIONS" />
-              <PLLine label="Turnover Tax — TOT (1.5%)" value={-report.tax_provisions.tot} indent={1} note="pay to KRA monthly" />
+              <PLLine label="Turnover Tax (TOT, 1.5%)" value={-report.tax_provisions.tot} indent={1} note="pay to KRA monthly" />
               <PLLine label="VAT Collected (16%)" value={report.tax_provisions.vat_collected} indent={1} note="to remit to KRA" />
               <div style={{ marginTop: 4, padding: "8px 12px", background: "#fff8e1", borderRadius: 6, marginBottom: 12 }}>
                 <p style={{ fontFamily: FONT, fontSize: 11, color: "#856404", margin: 0 }}>
-                  ⚠️ PAYE, NSSF (KES 200/employee), and NHIF must be filed separately based on payroll.
+                  PAYE, NSSF (KES 200/employee), and NHIF must be filed separately based on payroll.
                 </p>
               </div>
 
@@ -172,9 +172,9 @@ export default function ReportsPage() {
                 <p style={{ fontFamily: FONT, fontSize: 11, color: "#888", margin: "0 0 4px", fontWeight: 700 }}>Notes to Accountant</p>
                 <ul style={{ fontFamily: FONT, fontSize: 11, color: "#888", margin: 0, paddingLeft: 18, lineHeight: 1.8 }}>
                   <li>Revenue excludes returns/refunds. Confirm refund adjustments separately.</li>
-                  <li>No COGS is tracked yet — cost price per SKU should be added for accurate gross margin.</li>
+                  <li>No COGS is tracked yet. Cost price per SKU should be added for accurate gross margin.</li>
                   <li>VAT figure assumes all sales are VAT-inclusive. Confirm VAT registration status.</li>
-                  <li>Personal/owner drawings are not tracked here — record separately.</li>
+                  <li>Personal/owner drawings are not tracked here. Record separately.</li>
                 </ul>
               </div>
             </div>
