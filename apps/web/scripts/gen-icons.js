@@ -1,86 +1,84 @@
 /**
- * Generates solid-colour PNG placeholder icons for the PWA manifest.
- * Uses only Node.js built-ins (zlib, fs, path) — no extra dependencies.
+ * Generates the PWA icon set, apple-touch-icon and the Open Graph social
+ * preview image from the brand's typographic identity.
+ *
+ * The brand has no logo mark - it is the wordmark "Elite Style Co." set in a
+ * Cormorant-style serif. These assets mirror that: ink background (--es-ink),
+ * champagne accent (--es-champagne), serif letterforms. If a real logo is
+ * commissioned later, swap the SVGs below for it and re-run.
+ *
  * Run: node scripts/gen-icons.js
  */
-const zlib = require("zlib");
+const sharp = require("sharp");
 const fs = require("fs");
 const path = require("path");
 
-// Build CRC-32 lookup table (PNG requires CRC for every chunk)
-const crcTable = new Uint32Array(256);
-for (let n = 0; n < 256; n++) {
-  let c = n;
-  for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
-  crcTable[n] = c;
+const INK = "#0d0d0d";
+const CHAMPAGNE = "#c9b3a0"; // display-only accent: on ink it reads 8.2:1
+const SERIF = "Cormorant Garamond, Georgia, 'Times New Roman', Times, serif";
+
+/**
+ * Square app icon: "ES" monogram over ink.
+ *
+ * Below 48px the champagne rule and the letterforms collide into an unreadable
+ * smudge, so small sizes drop the rule and set the monogram larger. Favicons
+ * are read at a glance in a tab strip; legibility beats decoration there.
+ */
+function iconSvg(size) {
+  const small = size < 48;
+  const fontSize = Math.round(size * (small ? 0.62 : 0.42));
+  const border = small
+    ? ""
+    : (() => {
+        const inset = Math.round(size * 0.085);
+        const rule = Math.max(1, Math.round(size * 0.012));
+        return `<rect x="${inset}" y="${inset}" width="${size - inset * 2}" height="${size - inset * 2}"
+        fill="none" stroke="${CHAMPAGNE}" stroke-width="${rule}" opacity="0.85"/>`;
+      })();
+  return Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+  <rect width="${size}" height="${size}" fill="${INK}"/>
+  ${border}
+  <text x="50%" y="50%" text-anchor="middle" dominant-baseline="central"
+        font-family="${SERIF}" font-size="${fontSize}" font-weight="600"
+        letter-spacing="${size * 0.01}" fill="${CHAMPAGNE}">ES</text>
+</svg>`);
 }
-function crc32(buf) {
-  let crc = 0xffffffff;
-  for (let i = 0; i < buf.length; i++)
-    crc = crcTable[(crc ^ buf[i]) & 0xff] ^ (crc >>> 8);
-  return (crc ^ 0xffffffff) >>> 0;
-}
-function pngChunk(type, data) {
-  const len = Buffer.alloc(4);
-  len.writeUInt32BE(data.length, 0);
-  const tb = Buffer.from(type, "ascii");
-  const crcBuf = Buffer.alloc(4);
-  crcBuf.writeUInt32BE(crc32(Buffer.concat([tb, data])), 0);
-  return Buffer.concat([len, tb, data, crcBuf]);
-}
 
-function createPNG(width, height, r, g, b) {
-  const sig = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
+module.exports = { iconSvg };
 
-  const ihdr = Buffer.alloc(13);
-  ihdr.writeUInt32BE(width, 0);
-  ihdr.writeUInt32BE(height, 4);
-  ihdr[8] = 8; // bit depth
-  ihdr[9] = 2; // colour type: RGB
-  // compression / filter / interlace all 0
-
-  // Raw scanlines: filter-byte(0) + RGB * width, one per row
-  const rowLen = 1 + width * 3;
-  const raw = Buffer.alloc(height * rowLen);
-  for (let y = 0; y < height; y++) {
-    const base = y * rowLen;
-    raw[base] = 0; // filter: None
-    for (let x = 0; x < width; x++) {
-      raw[base + 1 + x * 3] = r;
-      raw[base + 2 + x * 3] = g;
-      raw[base + 3 + x * 3] = b;
-    }
-  }
-
-  return Buffer.concat([
-    sig,
-    pngChunk("IHDR", ihdr),
-    pngChunk("IDAT", zlib.deflateSync(raw, { level: 6 })),
-    pngChunk("IEND", Buffer.alloc(0)),
-  ]);
+/** 1200x630 Open Graph card: wordmark, rule, descriptor. */
+function ogSvg(w, h) {
+  return Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">
+  <rect width="${w}" height="${h}" fill="${INK}"/>
+  <rect x="48" y="48" width="${w - 96}" height="${h - 96}" fill="none" stroke="${CHAMPAGNE}" stroke-width="2" opacity="0.5"/>
+  <text x="50%" y="${h * 0.44}" text-anchor="middle" font-family="${SERIF}"
+        font-size="96" font-weight="600" fill="#ffffff">Elite Style Co.</text>
+  <line x1="${w / 2 - 90}" y1="${h * 0.545}" x2="${w / 2 + 90}" y2="${h * 0.545}" stroke="${CHAMPAGNE}" stroke-width="2"/>
+  <text x="50%" y="${h * 0.66}" text-anchor="middle" font-family="Inter, Helvetica, Arial, sans-serif"
+        font-size="30" letter-spacing="9" fill="${CHAMPAGNE}">NAIROBI</text>
+  <text x="50%" y="${h * 0.775}" text-anchor="middle" font-family="Inter, Helvetica, Arial, sans-serif"
+        font-size="25" letter-spacing="2" fill="#b9b9b9">Dressed for every moment</text>
+</svg>`);
 }
 
 const outDir = path.resolve(__dirname, "../public/icons");
 fs.mkdirSync(outDir, { recursive: true });
 
-// Brand plum #3d1a4a
-const R = 0x3d, G = 0x1a, B = 0x4a;
+const ICONS = [72, 96, 128, 192, 384, 512];
 
-const icons = [
-  { name: "icon-72x72.png",   w: 72,   h: 72   },
-  { name: "icon-96x96.png",   w: 96,   h: 96   },
-  { name: "icon-128x128.png", w: 128,  h: 128  },
-  { name: "icon-192x192.png", w: 192,  h: 192  },
-  { name: "icon-384x384.png", w: 384,  h: 384  },
-  { name: "icon-512x512.png", w: 512,  h: 512  },
-  { name: "apple-touch-icon.png", w: 180, h: 180 },
-  { name: "og-image.png",     w: 1200, h: 630  },
-];
+async function main() {
+  for (const size of ICONS) {
+    const file = path.join(outDir, `icon-${size}x${size}.png`);
+    await sharp(iconSvg(size)).png({ compressionLevel: 9 }).toFile(file);
+    console.log(`icon-${size}x${size}.png`);
+  }
+  await sharp(iconSvg(180)).png({ compressionLevel: 9 }).toFile(path.join(outDir, "apple-touch-icon.png"));
+  console.log("apple-touch-icon.png");
 
-for (const { name, w, h } of icons) {
-  const buf = createPNG(w, h, R, G, B);
-  fs.writeFileSync(path.join(outDir, name), buf);
-  console.log(`✓  ${name}  (${w}×${h}, ${(buf.length / 1024).toFixed(1)} KB)`);
+  await sharp(ogSvg(1200, 630)).png({ compressionLevel: 9 }).toFile(path.join(outDir, "og-image.png"));
+  console.log("og-image.png");
 }
 
-console.log("\nAll icons written to public/icons/");
+// Only generate when run directly, so `require()`ing iconSvg (e.g. to build
+// favicon.ico) doesn't rewrite the whole icon set as a side effect.
+if (require.main === module) main();
