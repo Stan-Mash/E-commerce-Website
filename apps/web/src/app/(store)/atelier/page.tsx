@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { SUPPORT_EMAIL } from "@/lib/supportConfig";
 
 export const metadata: Metadata = { title: "About Us", alternates: { canonical: "/atelier" } };
 
@@ -53,18 +54,18 @@ export default function AboutPage() {
           <div className="space-y-5 text-[15px] leading-relaxed text-es-mute">
             <p>
               Elite Style Co. was born from a simple idea: Nairobi deserves access to the same
-              quality fashion that people in London, Dubai, and Shanghai take for granted — at
+              quality fashion that people in London, Dubai, and Shanghai take for granted, at
               prices that make sense in Kenya.
             </p>
             <p>
               We source our pieces from carefully vetted suppliers around the world, selecting
-              styles that work for the Nairobi lifestyle — the office, the weekend, the school
+              styles that work for the Nairobi lifestyle: the office, the weekend, the school
               run, the event. Everything is priced in Kenyan shillings, with no hidden forex
               fees or import surprises.
             </p>
             <p>
               We are not manufacturers. We are curators. Our job is to find great clothes, bring
-              them to you, and make the whole experience — from browsing to delivery — as smooth
+              them to you, and make the whole experience, from browsing to delivery, as smooth
               as possible.
             </p>
           </div>
@@ -95,7 +96,7 @@ export default function AboutPage() {
                 numeral: "02",
                 label: "PAY WITH M-PESA",
                 description:
-                  "At checkout, enter your Safaricom number. You'll get an M-Pesa push in seconds. Confirm your PIN — payment done. No card needed.",
+                  "At checkout, enter your Safaricom number. You'll get an M-Pesa push in seconds. Confirm your PIN and payment is done. No card needed.",
               },
               {
                 numeral: "03",
@@ -139,7 +140,7 @@ export default function AboutPage() {
             Shop Now
           </Link>
           <p className="mt-10 text-[11px] tracking-[.32em] uppercase text-es-mute">
-            Questions? Reach us on WhatsApp or at hello@elitestyle.co.ke
+            Questions? Reach us on WhatsApp or at {SUPPORT_EMAIL}
           </p>
         </div>
       </section>

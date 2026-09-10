@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { SUPPORT_PHONE, SUPPORT_EMAIL } from "@/lib/supportConfig";
 
-export const metadata: Metadata = { title: "Privacy, Terms & Cookies", alternates: { canonical: "/legal" } };
+export const metadata: Metadata = { title: "Privacy, Terms, Cookies & Refunds", alternates: { canonical: "/legal" } };
 
 const SECTION_STYLE: React.CSSProperties = {
   marginBottom: 48,
@@ -34,11 +34,11 @@ export default function LegalPage() {
           LEGAL
         </p>
         <h1 style={{ fontFamily: "var(--font-bodoni)", fontSize: "clamp(32px, 5vw, 52px)", fontWeight: 700, lineHeight: 1.1, color: "var(--es-ink)", marginBottom: 8 }}>
-          Privacy, Terms &amp; Cookies
+          Privacy, Terms, Cookies &amp; Refunds
         </h1>
         <p style={{ ...P_STYLE, marginBottom: 48 }}>
-          Last updated: June 2026. For questions, contact us at{" "}
-          <a href="mailto:hello@elitestyle.co.ke" style={{ color: "var(--es-ink)" }}>hello@elitestyle.co.ke</a>.
+          Last updated: September 2026. For questions, contact us at{" "}
+          <a href={`mailto:${SUPPORT_EMAIL}`} style={{ color: "var(--es-ink)" }}>{SUPPORT_EMAIL}</a>.
         </p>
 
         {/* Privacy Policy */}
@@ -73,7 +73,7 @@ export default function LegalPage() {
           <p style={P_STYLE}>
             <strong>What&apos;s processed:</strong> Your photo is sent to a third-party AI image
             provider to generate the preview. It is stored temporarily in a private, access-controlled
-            location — never in the same place as our public product photos.
+            location, never in the same place as our public product photos.
           </p>
           <p style={P_STYLE}>
             <strong>Retention:</strong> Uploaded photos and generated results are automatically
@@ -83,7 +83,7 @@ export default function LegalPage() {
           <p style={P_STYLE}>
             <strong>What we don&apos;t do:</strong> We never use your try-on photos for marketing,
             model training, or any purpose beyond generating your requested preview. Results are
-            labelled &ldquo;AI preview — style visualisation, not an exact fit guarantee.&rdquo;
+            labelled &ldquo;AI preview: style visualisation, not an exact fit guarantee.&rdquo;
           </p>
           <p style={P_STYLE}>
             This processing is carried out under the Kenya Data Protection Act, 2019. You may
@@ -113,7 +113,7 @@ export default function LegalPage() {
             <Link href="/returns" style={{ color: "var(--es-ink)" }}>Returns &amp; Exchanges</Link> page for full details.
           </p>
           <p style={P_STYLE}>
-            <strong>Intellectual property:</strong> All content on this website — including images, copy, branding, and design — is owned by or licensed to Elite Style Co. and may not be reproduced without written permission.
+            <strong>Intellectual property:</strong> All content on this website, including images, copy, branding, and design, is owned by or licensed to Elite Style Co. and may not be reproduced without written permission.
           </p>
           <p style={P_STYLE}>
             <strong>Governing law:</strong> These terms are governed by the laws of the Republic of Kenya. Any disputes shall be resolved in the courts of Nairobi, Kenya.
@@ -137,6 +137,27 @@ export default function LegalPage() {
           </p>
           <p style={P_STYLE}>
             You can disable cookies in your browser settings, but this may affect your ability to use the shopping bag and checkout.
+          </p>
+        </section>
+
+        {/* Refund Policy */}
+        <section style={SECTION_STYLE}>
+          <h2 style={H2_STYLE}>Refund Policy</h2>
+          <p style={P_STYLE}>
+            <strong>Eligibility:</strong> You may request a return within 14 days of delivery. Items must be unworn, unwashed, and in their original condition with tags attached. For hygiene reasons, earrings and other pierced jewellery cannot be returned unless they arrive faulty.
+          </p>
+          <p style={P_STYLE}>
+            <strong>How refunds are paid:</strong> All refunds are sent to the M-Pesa number used at checkout. We do not issue store credits, cheques, or bank transfers.
+          </p>
+          <p style={P_STYLE}>
+            <strong>Timing:</strong> Once we receive and inspect the returned item, your refund is processed within 3 to 5 business days. You will receive a confirmation SMS when it is sent.
+          </p>
+          <p style={P_STYLE}>
+            <strong>Faulty or incorrect items:</strong> If an item arrives damaged or is not what you ordered, contact us and we will arrange collection and a full refund, including any delivery fee paid.
+          </p>
+          <p style={P_STYLE}>
+            Full details, including how to start a return, are on our{" "}
+            <Link href="/returns" style={{ color: "var(--es-ink)" }}>Delivery &amp; Returns</Link> page.
           </p>
         </section>
 
