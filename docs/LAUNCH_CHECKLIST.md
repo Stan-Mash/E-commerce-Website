@@ -26,6 +26,46 @@ below — these are the account/config steps only a human can do.
       newsletter welcome-discount email and Equinox notification actually
       send (the code is still shown on-screen either way).
 
+## Known gaps from the pre-launch audit (2026-09-10)
+
+Open items that code changes alone could not close.
+
+- [ ] **Category page photography.** `/woman`, `/man` and `/children` still
+      render `ElitePlate`, a gradient placeholder component, instead of real
+      images. Deliberately left as-is pending real photography. Replace the
+      `<ElitePlate ... />` usage in each page with `next/image`.
+- [ ] **Icons and OG image are generated, not designed.** `scripts/gen-icons.js`
+      now produces a real typographic mark (ink ground, champagne "ES"
+      monogram, wordmark OG card) instead of the previous blank purple squares.
+      If a logo is commissioned, replace the SVGs in that script and re-run
+      `node scripts/gen-icons.js`, then rebuild `src/app/favicon.ico`.
+- [ ] **Verify the Facebook link points at your page.** `facebook.com/EliteStyle`
+      resolves, but the handle is generic compared to the Instagram/TikTok ones.
+      Confirm it is actually your page.
+- [ ] **`@vercel/analytics` loads without cookie consent.** Every marketing pixel
+      is gated behind the consent banner; Vercel Analytics is not (it is
+      cookieless, so this is defensible). Decide whether to gate it too for
+      consistency with the banner's promise.
+- [ ] **Residual advisories.** `npm audit --omit=dev` reports:
+      - `serialize-javascript` (high) via `workbox` -> `@rollup/plugin-terser`.
+        Build-time only; it never reaches a browser, and the inputs are this
+        repo's own config rather than attacker data. An npm `overrides` pin was
+        attempted and reverted because it broke resolution. Revisit when workbox
+        updates.
+      - `cookie` (low) via `@supabase/ssr@0.3.0`. Fixing needs a major bump to
+        `@supabase/ssr` 0.12.x, which touches auth cookie handling - not worth
+        the risk immediately pre-launch.
+- [ ] **`/api/admin/setup-images` is a one-time bootstrap endpoint** that stays
+      exposed (admin-authenticated, hardcoded DDL, not injectable). Consider
+      deleting it once the bucket and column exist.
+- [ ] **Newsletter still mints a discount code per submission.** Honeypot plus a
+      5/min per-IP limit now guard it, but there is no email verification, so a
+      distributed bot could still farm codes. Consider double opt-in if abused.
+- [ ] **15 admin pages use `window.location.href = "/admin/login"` on 401.**
+      Flagged by `@next/next/no-location-assign-relative-destination`. Not a
+      security issue (the destination is a hardcoded literal, so it is not an
+      open redirect); a full reload also usefully clears stale client state.
+
 ## Custom domain (elitestyle.co.ke)
 
 - [ ] Register the domain (confirmed not yet registered).
