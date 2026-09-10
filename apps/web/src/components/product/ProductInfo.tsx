@@ -279,7 +279,7 @@ export function ProductInfo({ product, tryOnEnabled = false }: Props) {
                   )}
                   style={
                     selectedSize === size
-                      ? { backgroundColor: "#f1e9f5" }
+                      ? { backgroundColor: "#f0ece8" }
                       : undefined
                   }
                 >
@@ -343,7 +343,7 @@ export function ProductInfo({ product, tryOnEnabled = false }: Props) {
           onClick={() => setTryOnOpen(true)}
           className="inline-flex items-center justify-center gap-2 es-btn-outline-ink w-full"
         >
-          See it on you ✨
+          See it on you
         </button>
       )}
       {tryOnOpen && (

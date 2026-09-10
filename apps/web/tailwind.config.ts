@@ -20,16 +20,16 @@ const config: Config = {
           ink:               "#0d0d0d",
           char:              "#1a1a1a",
           mute:              "#6b6b6b",
-          faint:             "#a8a8a8",
+          faint:             "#767676",
 
           // Borders
           hair:              "rgba(13,13,13,0.08)",
           rule:              "rgba(13,13,13,0.12)",
 
           // Accent — Antique Champagne (dry, muted bronze; not gold)
-          champagne:         "#b5a090",
+          champagne:         "#8c715d",
           "champagne-lt":    "#f0ece8",
-          "champagne-dk":    "#8c7262",
+          "champagne-dk":    "#8b7162",
         },
         // ── Semantic aliases (used by existing utility classes) ────────
         ink: {

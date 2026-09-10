@@ -8,7 +8,7 @@ import { createPublicSupabaseClient } from "@/lib/supabase/server";
 export const metadata: Metadata = {
   title: "Children's Fashion Nairobi",
   description:
-    "Shop curated children's fashion in Nairobi — mini co-ords and everyday styles in KES pricing with M-Pesa checkout and free Nairobi CBD delivery.",
+    "Shop curated children's fashion in Nairobi: mini co-ords and everyday styles in KES pricing with M-Pesa checkout and free Nairobi CBD delivery.",
   alternates: { canonical: "/children" },
 };
 
@@ -24,7 +24,7 @@ interface ProductRow {
 }
 
 const GRADIENTS = [
-  "from-[#e8dff0] to-[#c9a96130]",
+  "from-[#eeece8] to-[#c9b3a030]",
   "from-[#e6e0d8] to-[#d4b88030]",
   "from-[#dce8e0] to-[#8fbfaa30]",
   "from-[#e8e0d0] to-[#c9a96120]",

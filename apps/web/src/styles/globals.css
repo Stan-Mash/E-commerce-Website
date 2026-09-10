@@ -10,12 +10,12 @@
     --es-ink:            #0d0d0d;
     --es-char:           #1a1a1a;
     --es-mute:           #6b6b6b;
-    --es-faint:          #a8a8a8;
+    --es-faint:          #767676;
     --es-hair:           rgba(13,13,13,0.08);
     --es-rule:           rgba(13,13,13,0.12);
-    --es-champagne:      #b5a090;
+    --es-champagne:      #8c715d;
     --es-champagne-lt:   #f0ece8;
-    --es-champagne-dk:   #8c7262;
+    --es-champagne-dk:   #8b7162;
 
     /* Compatibility aliases - plum references resolve to ink while component migration continues */
     --es-plum:           var(--es-ink);
@@ -167,5 +167,23 @@
   }
   .es-nav-link--active {
     @apply border-b-2 border-[#111] text-[#111];
+  }
+}
+
+/* Respect the OS "reduce motion" setting (WCAG 2.3.3). Sits outside @layer so
+   it overrides component-level animations, including the hero's Ken Burns
+   loop and the entrance fade-ups. Spinners still render, just without spin. */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }

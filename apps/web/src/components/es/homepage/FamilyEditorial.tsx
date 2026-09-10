@@ -8,7 +8,7 @@ const CATEGORIES = [
     label: "Women",
     sub: "New arrivals",
     href: "/woman",
-    bg: "#1a0a24",
+    bg: "#1f1a17",
     accent: "#c9a961",
   },
   {

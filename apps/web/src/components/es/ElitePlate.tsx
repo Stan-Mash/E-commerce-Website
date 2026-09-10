@@ -18,7 +18,7 @@ interface Props {
 const TONES: Record<ToneKey, { bg: string; mid: string; accent: string; text: "light" | "dark" }> = {
   warm:  { bg: "#c9a47a", mid: "#b07a52", accent: "#8c5a35",  text: "dark"  },
   smoke: { bg: "#c4c8d0", mid: "#9ba0aa", accent: "#6b717d",  text: "dark"  },
-  plum:  { bg: "#7b4d8c", mid: "#4e2460", accent: "#2a1135",  text: "light" },
+  plum:  { bg: "#6b5a52", mid: "#463a34", accent: "#241d19",  text: "light" },
   bone:  { bg: "#ede8df", mid: "#d8d0c2", accent: "#c2b8a6",  text: "dark"  },
   sage:  { bg: "#b4bfb0", mid: "#8a9885", accent: "#5f6e5a",  text: "dark"  },
   sand:  { bg: "#d4c4a8", mid: "#b8a484", accent: "#967e60",  text: "dark"  },

@@ -8,7 +8,7 @@ import { createPublicSupabaseClient } from "@/lib/supabase/server";
 export const metadata: Metadata = {
   title: "Men's Fashion Nairobi",
   description:
-    "Shop curated men's fashion in Nairobi — sharp tailoring and everyday essentials in KES pricing with M-Pesa checkout and free Nairobi CBD delivery.",
+    "Shop curated men's fashion in Nairobi: sharp tailoring and everyday essentials in KES pricing with M-Pesa checkout and free Nairobi CBD delivery.",
   alternates: { canonical: "/man" },
 };
 
@@ -24,7 +24,7 @@ interface ProductRow {
 }
 
 const GRADIENTS = [
-  "from-[#e8dff0] to-[#c9a96130]",
+  "from-[#eeece8] to-[#c9b3a030]",
   "from-[#e6e0d8] to-[#d4b88030]",
   "from-[#dce8e0] to-[#8fbfaa30]",
   "from-[#e8e0d0] to-[#c9a96120]",
@@ -106,7 +106,7 @@ export default async function ManPage() {
               New arrivals coming soon.
             </p>
             <p className="text-es-mute text-[15px] leading-relaxed max-w-md" style={{ fontFamily: "var(--font-cormorant)", fontStyle: "italic", fontSize: 18 }}>
-              We&apos;re curating the finest menswear for Nairobi. Drop by again soon — or see what&apos;s landing next.
+              We&apos;re curating the finest menswear for Nairobi. Drop by again soon, or see what&apos;s landing next.
             </p>
             <Link href="/coming-soon" className="es-btn-outline-ink px-8 py-3 text-[11px] tracking-[.38em] uppercase">
               See Coming Soon →

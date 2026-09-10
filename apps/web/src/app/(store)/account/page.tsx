@@ -21,8 +21,8 @@ function formatKES(n: number) {
 const STATUS_COLOR: Record<string, string> = {
   paid: "#2e7d32",
   processing: "#1565c0",
-  shipped: "#6a1b9a",
-  ready_for_pickup: "#6a1b9a",
+  shipped: "#8b7162",
+  ready_for_pickup: "#8b7162",
   delivered: "#2e7d32",
   payment_failed: "#c0392b",
   cancelled: "#c0392b",

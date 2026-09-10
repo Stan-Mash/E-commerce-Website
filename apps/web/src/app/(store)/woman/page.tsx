@@ -8,7 +8,7 @@ import { createPublicSupabaseClient } from "@/lib/supabase/server";
 export const metadata: Metadata = {
   title: "Women's Fashion Nairobi",
   description:
-    "Shop curated women's fashion in Nairobi — tailored dresses, co-ords, and blazers in KES pricing with M-Pesa checkout and free Nairobi CBD delivery.",
+    "Shop curated women's fashion in Nairobi: tailored dresses, co-ords, and blazers in KES pricing with M-Pesa checkout and free Nairobi CBD delivery.",
   alternates: { canonical: "/woman" },
 };
 
@@ -24,7 +24,7 @@ interface ProductRow {
 }
 
 const GRADIENTS = [
-  "from-[#e8dff0] to-[#c9a96130]",
+  "from-[#eeece8] to-[#c9b3a030]",
   "from-[#e6e0d8] to-[#d4b88030]",
   "from-[#dce8e0] to-[#8fbfaa30]",
   "from-[#e8e0d0] to-[#c9a96120]",

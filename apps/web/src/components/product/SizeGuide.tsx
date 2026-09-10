@@ -241,7 +241,7 @@ export function SizeGuide({ activeSize }: Props) {
 
         .sg-tab--active {
           color: #171717;
-          border-bottom-color: #6b2d6b;
+          border-bottom-color: #7e6659;
         }
 
         .sg-note {
@@ -298,11 +298,11 @@ export function SizeGuide({ activeSize }: Props) {
         }
 
         .sg-row--active td {
-          background: #f1e9f5 !important;
+          background: #f0ece8 !important;
         }
 
         .sg-row--active .sg-size-cell {
-          color: #6b2d6b;
+          color: #7e6659;
         }
 
         .sg-footer-note {

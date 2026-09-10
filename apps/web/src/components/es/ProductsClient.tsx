@@ -38,7 +38,7 @@ function formatKES(amount: number) {
 }
 
 const PLACEHOLDER_GRADIENTS = [
-  "from-[#e8dff0] to-[#c9a96130]",
+  "from-[#eeece8] to-[#c9b3a030]",
   "from-[#e6e0d8] to-[#d4b88030]",
   "from-[#dce8e0] to-[#8fbfaa30]",
   "from-[#e8e0d0] to-[#c9a96120]",
@@ -327,7 +327,7 @@ export function ProductsClient({ products, activeCategory }: ProductsClientProps
         }
         .es-sort-select:hover,
         .es-sort-select:focus {
-          border-color: var(--color-es-ink, #3d2b4a);
+          border-color: var(--color-es-ink, #0d0d0d);
         }
 
         /* Count badge */
@@ -360,7 +360,7 @@ export function ProductsClient({ products, activeCategory }: ProductsClientProps
           cursor: pointer;
           transition: border-color .2s;
         }
-        .es-filter-toggle:hover { border-color: var(--color-es-ink, #3d2b4a); }
+        .es-filter-toggle:hover { border-color: var(--color-es-ink, #0d0d0d); }
         .es-filter-panel {
           display: flex;
           flex-wrap: wrap;
@@ -389,11 +389,11 @@ export function ProductsClient({ products, activeCategory }: ProductsClientProps
           cursor: pointer;
           transition: all .15s;
         }
-        .es-chip:hover { border-color: var(--color-es-ink, #3d2b4a); }
+        .es-chip:hover { border-color: var(--color-es-ink, #0d0d0d); }
         .es-chip-on {
-          background: var(--color-es-ink, #3d2b4a);
+          background: var(--color-es-ink, #0d0d0d);
           color: #fff;
-          border-color: var(--color-es-ink, #3d2b4a);
+          border-color: var(--color-es-ink, #0d0d0d);
         }
         .es-checkbox {
           display: flex; align-items: center; gap: 8px;
@@ -401,7 +401,7 @@ export function ProductsClient({ products, activeCategory }: ProductsClientProps
         }
         .es-filter-clear {
           font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase;
-          color: var(--color-es-ink, #3d2b4a); background: transparent;
+          color: var(--color-es-ink, #0d0d0d); background: transparent;
           border: none; cursor: pointer; text-decoration: underline; padding: 0;
         }
 
@@ -471,7 +471,7 @@ export function ProductsClient({ products, activeCategory }: ProductsClientProps
             <input type="range" min={0} max={priceCeiling || 10000} step={100} aria-label="Maximum price"
               value={maxPrice ?? (priceCeiling || 10000)}
               onChange={(e) => setMaxPrice(Number(e.target.value))}
-              style={{ width: "100%", maxWidth: 240, accentColor: "var(--color-es-ink, #3d2b4a)" }} />
+              style={{ width: "100%", maxWidth: 240, accentColor: "var(--color-es-ink, #0d0d0d)" }} />
           </div>
           <div className="es-filter-group">
             <label className="es-checkbox">

@@ -100,7 +100,7 @@ export default function WishlistPage() {
                       {img ? (
                         <Image src={img.url} alt={product.name} fill sizes="(max-width: 640px) 50vw, 25vw" className="object-cover transition-transform duration-500 group-hover:scale-[1.03]" />
                       ) : (
-                        <div className="absolute inset-0 bg-gradient-to-br from-[#e8dff0] to-[#c9a96130]" />
+                        <div className="absolute inset-0 bg-gradient-to-br from-[#eeece8] to-[#c9b3a030]" />
                       )}
                     </div>
                     <p className="text-[10px] tracking-[.4em] uppercase text-es-mute">{product.category}</p>

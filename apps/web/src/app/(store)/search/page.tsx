@@ -278,7 +278,7 @@ export default function SearchPage() {
                             className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
                           />
                         ) : (
-                          <div className="absolute inset-0 bg-gradient-to-br from-[#e8dff0] to-[#c9a96130]" />
+                          <div className="absolute inset-0 bg-gradient-to-br from-[#eeece8] to-[#c9b3a030]" />
                         )}
                       </div>
 

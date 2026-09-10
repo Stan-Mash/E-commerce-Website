@@ -73,7 +73,7 @@ const DELIVERY_LABELS: Record<string, string> = {
 };
 
 function itemsSummary(items: OrderItem[]): string {
-  if (items.length === 0) return "—";
+  if (items.length === 0) return "-";
   const names = items.map((i) => {
     const sku = one(i.skus);
     const product = sku ? one(sku.products) : null;
@@ -89,7 +89,7 @@ function recoveryWhatsAppLink(order: OrderRow): string | null {
   if (!phone) return null;
   const name = order.customers?.name ? ` ${order.customers.name}` : "";
   const msg = encodeURIComponent(
-    `Hi${name}! We noticed your Elite Style Co. order *${order.order_ref}* (${formatKES(Number(order.total))}) wasn't completed — your items are still reserved. Would you like us to resend the M-Pesa payment prompt, or is there anything we can help with?`
+    `Hi${name}! We noticed your Elite Style Co. order *${order.order_ref}* (${formatKES(Number(order.total))}) wasn't completed. Your items are still reserved. Would you like us to resend the M-Pesa payment prompt, or is there anything we can help with?`
   );
   return `https://wa.me/${phone}?text=${msg}`;
 }
@@ -171,7 +171,7 @@ export default function AbandonedCheckoutsPage() {
             Abandoned Checkouts
           </h1>
           <p style={{ fontFamily: "var(--font-inter)", fontSize: 13, color: "var(--es-mute)", marginTop: 8, maxWidth: 620 }}>
-            Reaching out is manual — nothing here sends automatically. This list refreshes itself
+            Reaching out is manual. Nothing here sends automatically. This list refreshes itself
             every 45 seconds; use Refresh for an immediate update.
           </p>
         </div>
@@ -305,18 +305,18 @@ export default function AbandonedCheckoutsPage() {
                       {itemsSummary(order.order_items)}
                     </td>
                     <td style={{ padding: "14px 18px", fontSize: 12, color: "var(--es-mute)", whiteSpace: "nowrap" }}>
-                      {DELIVERY_LABELS[order.delivery_type ?? ""] ?? order.delivery_type ?? "—"}
+                      {DELIVERY_LABELS[order.delivery_type ?? ""] ?? order.delivery_type ?? "-"}
                     </td>
                     <td style={{ padding: "14px 18px", fontSize: 14, fontWeight: 600, color: "var(--es-ink)", whiteSpace: "nowrap" }}>
                       {formatKES(Number(order.total))}
                       {promo?.code && (
-                        <div style={{ fontSize: 10, fontWeight: 400, color: "var(--es-champagne-dk, #8c7262)" }}>
+                        <div style={{ fontSize: 10, fontWeight: 400, color: "var(--es-champagne-dk, #8b7162)" }}>
                           Code {promo.code}
                         </div>
                       )}
                     </td>
                     <td style={{ padding: "14px 18px", fontSize: 11, color: order.lastContact ? "#2e7d32" : "var(--es-mute)", whiteSpace: "nowrap" }}>
-                      {order.lastContact ? `✓ ${ageLabel(order.lastContact.at)}` : "—"}
+                      {order.lastContact ? `✓ ${ageLabel(order.lastContact.at)}` : "-"}
                     </td>
                     <td style={{ padding: "14px 18px" }}>
                       {waLink ? (
