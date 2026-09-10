@@ -1,15 +1,32 @@
 import Link from "next/link";
+import Image from "next/image";
 import type { Metadata } from "next";
 import { createPublicSupabaseClient } from "@/lib/supabase/server";
 import { formatKES } from "@/lib/utils";
 
 export const metadata: Metadata = {
   title: "Coming Soon",
-  description: "New arrivals landing soon at Elite Style Co. — bags, shoes, coats and more.",
+  description: "New arrivals landing soon at Elite Style Co. Bags, shoes, coats and more.",
   alternates: { canonical: "/coming-soon" },
 };
 
 export const revalidate = 60;
+
+// Mirrors next.config.js images.remotePatterns. next/image throws on hosts that
+// aren't allowed there, which would take down the whole page, so callers fall
+// back to a plain <img> for anything unrecognised.
+const OPTIMISABLE_HOSTS = ["res.cloudinary.com", "images.unsplash.com"];
+
+function isOptimisable(url: string): boolean {
+  if (url.startsWith("/")) return true; // local file in public/
+  try {
+    const { hostname } = new URL(url);
+    return OPTIMISABLE_HOSTS.includes(hostname) || hostname.endsWith(".supabase.co");
+  } catch {
+    return false;
+  }
+}
+
 
 interface Row {
   id: string;
@@ -51,7 +68,7 @@ export default async function ComingSoonPage() {
             Coming Soon
           </h1>
           <p className="mx-auto max-w-xl text-es-mute" style={{ fontFamily: "var(--font-cormorant)", fontStyle: "italic", fontSize: 18 }}>
-            A first look at what&rsquo;s landing next. Save your favourites — these
+            A first look at what&rsquo;s landing next. Save your favourites. These
             drop soon.
           </p>
         </header>
@@ -71,11 +88,27 @@ export default async function ComingSoonPage() {
                   <div className="relative w-full overflow-hidden bg-es-bone mb-3">
                     <div style={{ paddingBottom: "125%" }} />
                     {img ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={img.url} alt={img.alt ?? product.name}
-                        className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]" />
+                      // next/image optimises these (WebP/AVIF + correct srcset).
+                      // These are the heaviest images on the site: several are
+                      // 400-560 KB PNGs that previously shipped raw.
+                      // Hosts outside next.config.js remotePatterns would throw,
+                      // so anything not local or an allowed host keeps a plain
+                      // <img> rather than breaking the page.
+                      isOptimisable(img.url) ? (
+                        <Image
+                          src={img.url}
+                          alt={img.alt ?? product.name}
+                          fill
+                          sizes="(max-width: 640px) 50vw, (max-width: 1280px) 33vw, 25vw"
+                          className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+                        />
+                      ) : (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={img.url} alt={img.alt ?? product.name}
+                          className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]" />
+                      )
                     ) : (
-                      <div className="absolute inset-0 bg-gradient-to-br from-[#e8dff0] to-[#c9a96130]" />
+                      <div className="absolute inset-0 bg-gradient-to-br from-[#eeece8] to-[#c9b3a030]" />
                     )}
                     <span
                       style={{
