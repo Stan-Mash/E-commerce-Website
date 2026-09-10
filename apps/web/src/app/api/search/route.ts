@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createPublicSupabaseClient } from "@/lib/supabase/server";
+import { rateLimit, clientIp } from "@/lib/rateLimit";
 
 export const revalidate = 0; // always fresh
 
@@ -17,6 +18,12 @@ export async function GET(req: NextRequest) {
   const q = (req.nextUrl.searchParams.get("q") ?? "").trim();
   if (q.length < 2) {
     return NextResponse.json({ results: [] });
+  }
+
+  // Uncached (revalidate = 0), so every call runs a full-text query against
+  // Postgres. Cap per-IP so search can't be used to hammer the database.
+  if (!(await rateLimit(`search:${clientIp(req)}`, 30))) {
+    return NextResponse.json({ results: [], error: "Too many requests." }, { status: 429 });
   }
 
   try {

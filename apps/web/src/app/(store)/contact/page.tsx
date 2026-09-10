@@ -16,9 +16,11 @@ type FormState = {
   phone: string;
   subject: string;
   message: string;
+  /** Honeypot - always empty for real users. See lib/spam.ts. */
+  website: string;
 };
 
-const INITIAL: FormState = { name: "", email: "", phone: "", subject: "", message: "" };
+const INITIAL: FormState = { name: "", email: "", phone: "", subject: "", message: "", website: "" };
 
 const STORE_ADDRESS = "Shop 35, 4th Floor, Wing B\nStanbank House, Moi Avenue Street\nNairobi, Kenya";
 const MAPS_URL = "https://www.google.com/maps/search/?api=1&query=Stanbank+House+Moi+Avenue+Nairobi";
@@ -79,7 +81,7 @@ export default function ContactPage() {
             Get in Touch
           </h1>
           <p className="mt-6 text-[15px] max-w-md" style={{ opacity: 0.7, fontFamily: "var(--font-inter)" }}>
-            Visit us in CBD, call, WhatsApp, or send a message — we&apos;re always here.
+            Visit us in CBD, call, WhatsApp, or send a message. We&apos;re always here.
           </p>
         </section>
 
@@ -158,6 +160,17 @@ export default function ContactPage() {
                   </h2>
 
                   <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+                    {/* Honeypot: hidden from people and assistive tech, visible
+                        to naive bots. A filled value is silently discarded
+                        server-side (see lib/spam.ts). Not display:none, which
+                        some bots skip. */}
+                    <div aria-hidden="true" style={{ position: "absolute", left: "-9999px", width: 1, height: 1, overflow: "hidden" }}>
+                      <label htmlFor="website">Website</label>
+                      <input
+                        id="website" type="text" name="website" tabIndex={-1} autoComplete="off"
+                        value={form.website} onChange={handleChange}
+                      />
+                    </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                       <div className="flex flex-col gap-1.5">
                         <label className="text-[11px] tracking-[.1em] uppercase text-es-mute font-semibold">

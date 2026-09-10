@@ -4,6 +4,7 @@ import { createAdminSupabaseClient } from "@/lib/supabase/server";
 import { sendEmail, isEmailConfigured } from "@/lib/email/client";
 import { SUPPORT_EMAIL } from "@/lib/supportConfig";
 import { rateLimit, clientIp } from "@/lib/rateLimit";
+import { isHoneypotTripped } from "@/lib/spam";
 
 const ContactSchema = z.object({
   name: z.string().trim().min(2).max(80),
@@ -37,6 +38,12 @@ export async function POST(req: NextRequest) {
     body = await req.json();
   } catch {
     return NextResponse.json({ ok: false, error: "Invalid request body" }, { status: 400 });
+  }
+
+  // Silently accept-and-drop honeypot hits: no DB row, no email, no signal
+  // to the bot that anything was rejected.
+  if (isHoneypotTripped(body)) {
+    return NextResponse.json({ ok: true });
   }
 
   const parsed = ContactSchema.safeParse(body);

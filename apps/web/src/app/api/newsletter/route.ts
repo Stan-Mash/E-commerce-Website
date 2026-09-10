@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createAdminSupabaseClient } from "@/lib/supabase/server";
 import { rateLimit, clientIp } from "@/lib/rateLimit";
 import { sendEmail } from "@/lib/email/client";
+import { isHoneypotTripped } from "@/lib/spam";
 
 const WELCOME_DISCOUNT_PERCENT = 10;
 
@@ -42,6 +43,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: false, error: "Too many requests." }, { status: 429 });
     }
     const body = await req.json();
+
+    // Honeypot: pretend it worked, mint nothing. Without this, a bot can farm
+    // single-use discount codes and bloat the promotions table.
+    if (isHoneypotTripped(body)) {
+      return NextResponse.json({ ok: true, code: null });
+    }
+
     const email = (body?.email ?? "").toString().trim().toLowerCase();
     const source = (body?.source ?? "footer").toString().slice(0, 40);
 
@@ -80,7 +88,7 @@ export async function POST(req: NextRequest) {
         await sendEmail({
           to: email,
           subject: "Your 10% off Elite Style Co. code",
-          html: `<p>Welcome to Elite Style Co. Use code <strong>${discountCode}</strong> for ${WELCOME_DISCOUNT_PERCENT}% off your first order.</p><p>This code is single-use — enter it at checkout.</p>`,
+          html: `<p>Welcome to Elite Style Co. Use code <strong>${discountCode}</strong> for ${WELCOME_DISCOUNT_PERCENT}% off your first order.</p><p>This code is single-use. Enter it at checkout.</p>`,
         }).catch(() => undefined); // best-effort; code is also returned in the response
       }
     }

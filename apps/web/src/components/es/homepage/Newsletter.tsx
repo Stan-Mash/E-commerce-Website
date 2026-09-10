@@ -8,6 +8,8 @@ const FONT = "'Inter','Urbanist',sans-serif";
 
 export function Newsletter() {
   const [email, setEmail] = useState("");
+  // Honeypot - always empty for real users. See lib/spam.ts.
+  const [website, setWebsite] = useState("");
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [code, setCode] = useState<string | null>(null);
@@ -24,7 +26,7 @@ export function Newsletter() {
       const res = await fetch("/api/newsletter", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email, website }),
       });
       const data = await res.json();
       if (data.ok) {
@@ -75,7 +77,7 @@ export function Newsletter() {
             lineHeight: 1.65,
           }}>
             Join 5,000+ Kenyans who get first access to new drops, private sales,
-            and styling tips every week — plus a one-time welcome discount.
+            and styling tips every week, plus a one-time welcome discount.
           </p>
 
           {submitted ? (
@@ -102,7 +104,7 @@ export function Newsletter() {
                   <p style={{
                     fontFamily: FONT, fontSize: 12, color: "rgba(255,255,255,0.55)", margin: 0,
                   }}>
-                    10% off your first order — enter this at checkout. We&apos;ve also emailed it to you.
+                    10% off your first order. Enter this at checkout. We&apos;ve also emailed it to you.
                   </p>
                 </>
               )}
@@ -119,6 +121,21 @@ export function Newsletter() {
                   transition: "opacity 0.2s",
                 }}
               >
+                {/* Honeypot: off-screen and hidden from assistive tech, but
+                    present in the DOM for naive bots. Filled values are
+                    silently dropped server-side (see lib/spam.ts). */}
+                <div aria-hidden="true" style={{ position: "absolute", left: "-9999px", width: 1, height: 1, overflow: "hidden" }}>
+                  <label htmlFor="nl-website">Website</label>
+                  <input
+                    id="nl-website"
+                    type="text"
+                    name="website"
+                    tabIndex={-1}
+                    autoComplete="off"
+                    value={website}
+                    onChange={(e) => setWebsite(e.target.value)}
+                  />
+                </div>
                 <input
                   type="email"
                   placeholder="Enter your email address"

@@ -1,10 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createPublicSupabaseClient } from "@/lib/supabase/server";
+import { rateLimit, clientIp } from "@/lib/rateLimit";
 
 // GET /api/products/by-ids?ids=a,b,c — public product cards for the wishlist.
 export async function GET(req: NextRequest) {
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
     return NextResponse.json({ products: [] });
+  }
+
+  if (!(await rateLimit(`by-ids:${clientIp(req)}`, 60))) {
+    return NextResponse.json({ products: [], error: "Too many requests." }, { status: 429 });
   }
 
   const idsParam = req.nextUrl.searchParams.get("ids") ?? "";
