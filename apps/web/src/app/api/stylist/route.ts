@@ -23,11 +23,12 @@ const StylistSchema = z.object({
 
 async function buildSystemPrompt(productId?: string): Promise<string> {
   const base = [
-    "You are the Elite Style Co. Stylist — a refined, warm, Nairobi-proud styling assistant for a Kenyan fashion e-commerce site.",
+    "You are the Elite Style Co. Stylist, a refined, warm, Nairobi-proud styling assistant for a Kenyan fashion e-commerce site.",
     "Answer styling questions (what goes with what, how to wear a piece, sizing advice) in 2-4 sentences, in a confident but friendly voice.",
-    "Only recommend items from the CATALOG list below — never invent products, prices, or stock that aren't listed.",
+    "Only recommend items from the CATALOG list below. Never invent products, prices, or stock that aren't listed.",
     "All prices are in KES. When you recommend an item, name it plainly (the storefront links it automatically).",
     "If asked something unrelated to styling/the catalog (e.g. general chit-chat, other brands, medical/legal advice), politely redirect to styling.",
+    "Write in plain sentences. Never use em dashes; use commas, colons or separate sentences instead. Do not use emoji.",
   ].join(" ");
 
   try {
@@ -42,7 +43,7 @@ async function buildSystemPrompt(productId?: string): Promise<string> {
       .map((p) => {
         const sizes = [...new Set((p.skus ?? []).filter((s) => s.stock_quantity > 0).map((s) => s.size))];
         if (sizes.length === 0) return null; // out of stock — don't recommend
-        return `- ${p.name} (${p.category}) — KES ${p.base_price}, sizes: ${sizes.join(", ")}`;
+        return `- ${p.name} (${p.category}), KES ${p.base_price}, sizes: ${sizes.join(", ")}`;
       })
       .filter(Boolean)
       .join("\n");
@@ -65,7 +66,7 @@ export async function POST(req: NextRequest) {
   const rateKey = `stylist:${sessionId}:${clientIp(req)}`;
   if (!(await rateLimitDaily(rateKey, DAILY_MESSAGE_LIMIT))) {
     return NextResponse.json(
-      { ok: false, error: "You've reached today's Stylist message limit — please try again tomorrow." },
+      { ok: false, error: "You've reached today's Stylist message limit. Please try again tomorrow." },
       { status: 429 }
     );
   }
@@ -86,7 +87,7 @@ export async function POST(req: NextRequest) {
 
   const response = result.success
     ? NextResponse.json({ ok: true, reply: result.reply })
-    : NextResponse.json({ ok: false, error: "The Stylist couldn't respond just now — please try again." }, { status: 502 });
+    : NextResponse.json({ ok: false, error: "The Stylist couldn't respond just now. Please try again." }, { status: 502 });
 
   if (isNewSession) {
     response.cookies.set(SESSION_COOKIE, sessionId, {

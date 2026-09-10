@@ -55,7 +55,7 @@ export function SiteHeader() {
       <div className="hidden md:flex items-center justify-between px-10 h-16 max-w-[1400px] mx-auto w-full">
 
         {/* Wordmark */}
-        <Link href="/" className="flex-shrink-0 no-underline" aria-label="Elite Style Co. — home">
+        <Link href="/" className="flex-shrink-0 no-underline" aria-label="Elite Style Co. home">
           <span className="font-cormorant text-[22px] font-semibold text-es-ink tracking-[-0.02em]">
             Elite Style Co.
           </span>
@@ -94,7 +94,7 @@ export function SiteHeader() {
           <button
             onClick={openCart}
             suppressHydrationWarning
-            aria-label={`Bag — ${itemCount} item${itemCount !== 1 ? "s" : ""}`}
+            aria-label={`Bag, ${itemCount} item${itemCount !== 1 ? "s" : ""}`}
             className="relative flex items-center justify-center w-10 h-10 bg-transparent border-0 cursor-pointer text-es-char hover:text-es-ink hover:bg-es-paper transition-colors duration-150"
           >
             <ShoppingBag size={18} strokeWidth={1.75} />
@@ -117,7 +117,7 @@ export function SiteHeader() {
           {mobileOpen ? <X size={22} strokeWidth={1.75} /> : <Menu size={22} strokeWidth={1.75} />}
         </button>
 
-        <Link href="/" className="no-underline" aria-label="Elite Style Co. — home">
+        <Link href="/" className="no-underline" aria-label="Elite Style Co. home">
           <span className="font-cormorant text-[20px] font-semibold text-es-ink tracking-[-0.02em]">
             Elite Style Co.
           </span>

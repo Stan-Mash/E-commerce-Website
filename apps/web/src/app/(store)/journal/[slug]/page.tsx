@@ -16,10 +16,10 @@ const ARTICLES = [
     readTime: "4 min read",
     image: "/products/tweed-set-black-white.jpg",
     body: [
-      "When the long rains arrive in Nairobi, dressing well is an act of defiance. The city transforms — rivers run down Uhuru Highway, the air smells of red earth, and umbrellas become the city's most traded commodity.",
+      "When the long rains arrive in Nairobi, dressing well is an act of defiance. The city transforms: rivers run down Uhuru Highway, the air smells of red earth, and umbrellas become the city's most traded commodity.",
       "The instinct is to retreat into waterproofs and practicality. But the most elegant Nairobians know something the weather forecasts don't: that dressing for rain is about fabric, not function. A well-woven cotton blend dries in minutes. A linen coat loses nothing to a light shower. A good knit wicks moisture while holding its form.",
-      "The key is layering with intention. Start with a base that moves — something fitted, something breathable. Add a mid layer that gives you warmth without weight. Finish with a coat that has presence. The umbrella is optional. The coat is not.",
-      "This season, we've been watching how Nairobi women navigate the rains on their own terms — a printed wrap doubled as a shawl, a linen co-ord that transitions from the office to the long commute home. There is no wrong way to be dressed in the rain, as long as you are dressed with care.",
+      "The key is layering with intention. Start with a base that moves, something fitted and breathable. Add a mid layer that gives you warmth without weight. Finish with a coat that has presence. The umbrella is optional. The coat is not.",
+      "This season, we've been watching how Nairobi women navigate the rains on their own terms: a printed wrap doubled as a shawl, a linen co-ord that transitions from the office to the long commute home. There is no wrong way to be dressed in the rain, as long as you are dressed with care.",
     ],
   },
   {
@@ -30,11 +30,11 @@ const ARTICLES = [
     readTime: "5 min read",
     image: "/products/tweed-set-pink-black.jpg",
     body: [
-      "Nairobi's fashion scene moves fast. In a city where the weekend includes a rooftop in Westlands, a Sunday in Karen, and a Monday morning in the CBD, versatility isn't a nice-to-have — it's a requirement. Here are the five looks that are everywhere right now.",
-      "First: the oversized blazer. Worn open over a fitted top, belted as a dress, or thrown over tailored trousers, the oversized blazer has become the defining piece of the 2026 Nairobi wardrobe. The trick is fit in the shoulders — everything else can be big.",
+      "Nairobi's fashion scene moves fast. In a city where the weekend includes a rooftop in Westlands, a Sunday in Karen, and a Monday morning in the CBD, versatility isn't a nice-to-have. It's a requirement. Here are the five looks that are everywhere right now.",
+      "First: the oversized blazer. Worn open over a fitted top, belted as a dress, or thrown over tailored trousers, the oversized blazer has become the defining piece of the 2026 Nairobi wardrobe. The trick is fit in the shoulders. Everything else can be big.",
       "Second: bold co-ords. Matching sets are still going strong, but the shift this season is toward louder prints and more relaxed silhouettes. A wide-leg trouser with a matching boxy shirt, in an eye-catching pattern, reads effortlessly put-together.",
-      "Third: the midi skirt comeback. After years of minis, the midi is back — and the Nairobi version comes in wrap styles, pleated cotton, and printed fabrics. It works with trainers or heels, which is exactly what this city needs.",
-      "Fourth: menswear-inspired cuts for women. Straight-leg trousers, structured shirts, and wide-shouldered jackets — borrowed from menswear and made entirely for women. Fifth: children's co-ords that mirror adult styles. The family matching moment is real.",
+      "Third: the midi skirt comeback. After years of minis, the midi is back, and the Nairobi version comes in wrap styles, pleated cotton, and printed fabrics. It works with trainers or heels, which is exactly what this city needs.",
+      "Fourth: menswear-inspired cuts for women. Straight-leg trousers, structured shirts, and wide-shouldered jackets, borrowed from menswear and made entirely for women. Fifth: children's co-ords that mirror adult styles. The family matching moment is real.",
     ],
   },
   {
@@ -45,11 +45,11 @@ const ARTICLES = [
     readTime: "6 min read",
     image: "/products/knitted-vest-blue.png",
     body: [
-      "A capsule wardrobe is not about owning less. It is about owning the right things — pieces that work together, that cover most situations, and that you actually want to wear. The good news is that it doesn't require a large budget.",
-      "Start with your base layers. Two or three fitted tops in neutral tones — white, black, camel — are the foundation of almost every outfit. They go under blazers, over trousers, and tuck into skirts. Spend moderately here: these are the pieces that see the most wear.",
-      "Add one great pair of trousers. Not the cheap ones you bought in a hurry, but a pair that fits properly through the waist and hip. Straight-leg or wide-leg both work well and have real longevity. In Nairobi's climate, a mid-weight fabric in a versatile colour — navy, camel, black — is ideal.",
+      "A capsule wardrobe is not about owning less. It is about owning the right things: pieces that work together, that cover most situations, and that you actually want to wear. The good news is that it doesn't require a large budget.",
+      "Start with your base layers. Two or three fitted tops in neutral tones (white, black, camel) are the foundation of almost every outfit. They go under blazers, over trousers, and tuck into skirts. Spend moderately here: these are the pieces that see the most wear.",
+      "Add one great pair of trousers. Not the cheap ones you bought in a hurry, but a pair that fits properly through the waist and hip. Straight-leg or wide-leg both work well and have real longevity. In Nairobi's climate, a mid-weight fabric in a versatile colour (navy, camel, black) is ideal.",
       "Then a blazer. One well-cut blazer in a neutral colour will transform everything underneath it. Wear it to the office, over a dress for evening, or with jeans at the weekend. It is the single highest-leverage piece in any wardrobe.",
-      "Round out with one or two dresses that feel genuinely you — not occasion-specific, but wearable in multiple contexts. Everything else — prints, colour, accessories — builds on top of this foundation. Shop the foundation first. Everything else comes after.",
+      "Round out with one or two dresses that feel genuinely you, not occasion-specific, but wearable in multiple contexts. Everything else (prints, colour, accessories) builds on top of this foundation. Shop the foundation first. Everything else comes after.",
     ],
   },
   {
@@ -60,9 +60,9 @@ const ARTICLES = [
     readTime: "3 min read",
     image: "/products/tweed-set-white-gold.jpg",
     body: [
-      "The case for linen in a city that never really gets cold is almost too easy to make. Nairobi sits at 1,700 metres. The sun is direct. The seasons are a negotiation rather than a declaration. In this climate, linen is not a seasonal choice — it is a permanent one.",
-      "Good linen is heavier than you might expect — more structural, slower to wrinkle in the way that becomes character rather than flaw. Stonewashed, it softens immediately. Raw, it stiffens pleasingly with wear.",
-      "The linen co-ord was designed for the city's rhythms — the morning meeting, the afternoon errand, the evening gathering that runs later than planned. It does not demand to be ironed. It asks only that you wear it.",
+      "The case for linen in a city that never really gets cold is almost too easy to make. Nairobi sits at 1,700 metres. The sun is direct. The seasons are a negotiation rather than a declaration. In this climate, linen is not a seasonal choice. It is a permanent one.",
+      "Good linen is heavier than you might expect: more structural, slower to wrinkle in the way that becomes character rather than flaw. Stonewashed, it softens immediately. Raw, it stiffens pleasingly with wear.",
+      "The linen co-ord was designed for the city's rhythms: the morning meeting, the afternoon errand, the evening gathering that runs later than planned. It does not demand to be ironed. It asks only that you wear it.",
       "Linen is patient. It improves with age and washing. In a city that moves as fast as Nairobi, there is something to be said for clothing that slows you down just enough to notice how well you are dressed.",
     ],
   },

@@ -1,5 +1,5 @@
 const steps = [
-  { n: "01", label: "Enter your number",   detail: "Type your Safaricom number at checkout — no card details, no account needed." },
+  { n: "01", label: "Enter your number",   detail: "Type your Safaricom number at checkout. No card details, no account needed." },
   { n: "02", label: "M-Pesa push arrives", detail: "A prompt lands on your phone within seconds. The amount is pre-filled." },
   { n: "03", label: "Confirm with PIN",    detail: "Enter your M-Pesa PIN. Payment clears instantly. Your order is confirmed." },
 ];
@@ -22,7 +22,7 @@ export function MpesaMoment() {
 
           <p className="font-sans text-[16px] leading-relaxed text-white/60 max-w-[440px] mb-10">
             No credit card. No foreign gateway fees. Your Safaricom number is
-            all you need — the same way Kenyans have paid for everything
+            all you need, the same way Kenyans have paid for everything
             for fifteen years.
           </p>
 

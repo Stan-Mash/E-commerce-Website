@@ -8,7 +8,7 @@ import { createPublicSupabaseClient } from "@/lib/supabase/server";
 export const metadata: Metadata = {
   title: "New Arrivals",
   description:
-    "Browse the full Elite Style Co. collection — new arrivals across Women, Men, and Children in KES pricing with M-Pesa checkout and free Nairobi CBD delivery.",
+    "Browse the full Elite Style Co. collection: new arrivals across Women, Men, and Children in KES pricing with M-Pesa checkout and free Nairobi CBD delivery.",
   alternates: { canonical: "/products" },
 };
 

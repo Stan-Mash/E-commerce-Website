@@ -97,7 +97,7 @@ export default function ReturnsPage() {
           <div className="space-y-5 text-[15px] leading-relaxed text-es-mute">
             <p>
               We want you to love every piece you buy from Elite Style Co. If something
-              doesn&apos;t work — the fit, the colour, a change of mind — we make
+              doesn&apos;t work (the fit, the colour, a change of mind), we make
               returning it straightforward.
             </p>
             <p>
@@ -251,7 +251,7 @@ export default function ReturnsPage() {
             style={{ opacity: 0.8, fontFamily: "var(--font-inter)" }}
           >
             All refunds are sent back to the M-Pesa number used at checkout.
-            We do not issue store credits, cheques, or bank transfers — only
+            We do not issue store credits, cheques, or bank transfers, only
             direct M-Pesa refunds.
           </p>
           <p

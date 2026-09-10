@@ -5,7 +5,7 @@ const POSTS = [
   {
     tag: "Style Notes",
     title: "Dressing for the boardroom you haven't seen yet.",
-    desc: "A four-piece capsule that works from 8am meetings to evening dinners — and why less is always more.",
+    desc: "A four-piece capsule that works from 8am meetings to evening dinners, and why less is always more.",
     readTime: "4 min read",
     image: "/products/tweed-set-white-black.jpg",
   },
@@ -19,7 +19,7 @@ const POSTS = [
   {
     tag: "New Arrivals",
     title: "The pieces our buyers picked first this season.",
-    desc: "From the tweed co-ord to the everyday tote — our lead buyer breaks down what sold out in 48 hours.",
+    desc: "From the tweed co-ord to the everyday tote: our lead buyer breaks down what sold out in 48 hours.",
     readTime: "5 min read",
     image: "/products/shoulder-bag-fuschia.jpg",
   },

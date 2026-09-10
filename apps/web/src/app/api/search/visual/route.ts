@@ -48,7 +48,7 @@ export async function POST(req: NextRequest) {
 
     if (error) {
       console.error("[visual-search] match RPC error:", error.message);
-      return NextResponse.json({ error: "Visual search isn't ready — apply migration 016." }, { status: 503 });
+      return NextResponse.json({ error: "Visual search isn't ready. Apply migration 016." }, { status: 503 });
     }
 
     const rows = (matches ?? []) as Array<{ product_id: string; distance: number }>;

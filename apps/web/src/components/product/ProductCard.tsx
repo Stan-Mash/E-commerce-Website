@@ -54,7 +54,7 @@ export function ProductCard({ product, priority = false }: Props) {
         {secondaryImage && (
           <Image
             src={secondaryImage.url}
-            alt={`${product.name} — alternate view`}
+            alt={`${product.name}, alternate view`}
             fill
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
             className="object-cover object-top opacity-0 transition-opacity duration-500 group-hover:opacity-100"

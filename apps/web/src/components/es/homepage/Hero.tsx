@@ -51,7 +51,7 @@ export function Hero({ productCount }: HeroProps = {}) {
           {/* LCP element: priority disables lazy-loading and preloads it */}
           <Image
             src="/products/tweed-set-black-white.jpg"
-            alt="New season — Tweed Jacket & Skirt Set"
+            alt="New season Tweed Jacket and Skirt Set"
             fill
             priority
             sizes="(max-width: 768px) 100vw, 50vw"
@@ -91,7 +91,7 @@ export function Hero({ productCount }: HeroProps = {}) {
           </h1>
 
           <p className="hero-sub font-sans text-[15px] text-es-mute leading-relaxed max-w-sm mb-10">
-            Curated fashion for the whole family — KES pricing,
+            Curated fashion for the whole family. KES pricing,
             M-Pesa &amp; card checkout, fast delivery across Kenya.
           </p>
 

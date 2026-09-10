@@ -8,7 +8,7 @@ import Link from "next/link";
 
 function OrderConfirmedContent() {
   const searchParams = useSearchParams();
-  const ref = searchParams.get("ref") ?? "—";
+  const ref = searchParams.get("ref") ?? "-";
   const { items, subtotal, clearCart } = useCart();
 
   useEffect(() => {

@@ -77,7 +77,7 @@ export function AskStylist({ productId }: { productId: string }) {
           <div ref={listRef} className="flex-1 overflow-y-auto px-4 py-3 flex flex-col gap-3" style={{ minHeight: 120 }}>
             {messages.length === 0 && (
               <p className="text-[13px] text-es-mute font-cormorant italic">
-                Ask what to pair this with, how it fits, or styling tips — I only recommend real,
+                Ask what to pair this with, how it fits, or styling tips. I only recommend real,
                 in-stock pieces from the collection.
               </p>
             )}

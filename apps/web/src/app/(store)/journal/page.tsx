@@ -16,7 +16,7 @@ const ARTICLES = [
     category: "STYLE",
     date: "May 2026",
     excerpt:
-      "When the long rains arrive, dressing well is an act of defiance — a refusal to let the weather dictate your elegance.",
+      "When the long rains arrive, dressing well is an act of defiance, a refusal to let the weather dictate your elegance.",
     image: "/products/tweed-set-black-white.jpg",
   },
   {
@@ -25,7 +25,7 @@ const ARTICLES = [
     category: "TRENDS",
     date: "April 2026",
     excerpt:
-      "From oversized blazers to bold co-ords — the looks dominating Nairobi streets right now, and exactly where to get them.",
+      "From oversized blazers to bold co-ords: the looks dominating Nairobi streets right now, and exactly where to get them.",
     image: "/products/tweed-set-pink-black.jpg",
   },
   {
@@ -43,7 +43,7 @@ const ARTICLES = [
     category: "STYLE",
     date: "February 2026",
     excerpt:
-      "The case for linen in a city that never really gets cold — why breathable, natural fabrics belong in every wardrobe year-round.",
+      "The case for linen in a city that never really gets cold: why breathable, natural fabrics belong in every wardrobe year-round.",
     image: "/products/tweed-set-white-gold.jpg",
   },
 ];

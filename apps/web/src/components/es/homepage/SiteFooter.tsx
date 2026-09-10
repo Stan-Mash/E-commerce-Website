@@ -73,7 +73,7 @@ export function SiteFooter() {
               lineHeight: 1.6,
             }}
           >
-            Nairobi&apos;s go-to online fashion store — curated styles for the whole
+            Nairobi&apos;s go-to online fashion store, curated styles for the whole
             family, fast delivery across Kenya.
           </p>
           {/* Store address */}

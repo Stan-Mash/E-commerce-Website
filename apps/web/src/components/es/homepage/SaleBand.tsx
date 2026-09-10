@@ -43,7 +43,7 @@ export function SaleBand() {
           </span>
           <div>
             <span className="font-cormorant text-[22px] md:text-[28px] font-semibold text-es-ink leading-tight tracking-[-0.02em] block">
-              The Equinox Edit —{" "}
+              The Equinox Edit:{" "}
               <span className="text-es-champagne-dk italic">10 days only, by invitation.</span>
             </span>
             <span className="font-sans text-[13px] text-es-mute block mt-1.5 max-w-xl">
@@ -64,7 +64,7 @@ export function SaleBand() {
         <div className="mt-6 max-w-md">
           {done ? (
             <p className="font-sans text-[13px] text-es-champagne-dk font-semibold">
-              You&apos;re on the list — we&apos;ll email you the moment the Equinox Edit opens.
+              You&apos;re on the list. We&apos;ll email you the moment the Equinox Edit opens.
             </p>
           ) : (
             <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3">

@@ -64,7 +64,7 @@ export default function SizingGuidePage() {
           Sizing Guide
         </h1>
         <p style={{ fontFamily: "var(--font-inter)", fontSize: 15, lineHeight: 1.7, color: "var(--es-mute)", marginBottom: 48, maxWidth: 560 }}>
-          All measurements are body measurements in centimetres — not garment measurements. For the best fit, size up if you are between sizes.
+          All measurements are body measurements in centimetres, not garment measurements. For the best fit, size up if you are between sizes.
         </p>
 
         {/* Adult sizes */}
@@ -87,7 +87,7 @@ export default function SizingGuidePage() {
           <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 14 }}>
             {[
               { label: "Chest", desc: "Measure around the fullest part of your chest, keeping the tape parallel to the floor." },
-              { label: "Waist", desc: "Measure around your natural waist — the narrowest part of your torso, usually just above the belly button." },
+              { label: "Waist", desc: "Measure around your natural waist, the narrowest part of your torso, usually just above the belly button." },
               { label: "Hips", desc: "Measure around the fullest part of your hips and bottom, keeping the tape level." },
               { label: "Height", desc: "Stand against a wall without shoes. Measure from the floor to the top of your head." },
             ].map(({ label, desc }) => (

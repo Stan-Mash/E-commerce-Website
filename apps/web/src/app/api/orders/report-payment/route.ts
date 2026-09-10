@@ -71,5 +71,5 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Could not submit your code. Please try again." }, { status: 500 });
   }
 
-  return NextResponse.json({ ok: true, message: "Thanks — we'll confirm this shortly." }, { status: 200 });
+  return NextResponse.json({ ok: true, message: "Thanks, we'll confirm this shortly." }, { status: 200 });
 }

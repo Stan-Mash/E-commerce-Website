@@ -179,7 +179,7 @@ export function TryOnModal({ productId, productName, onClose }: { productId: str
                 </div>
               )}
               <p className="text-[13px] text-es-mute font-cormorant italic text-center">
-                {stage === "uploading" ? "Uploading your photo…" : "Creating your preview — usually takes 5–17 seconds…"}
+                {stage === "uploading" ? "Uploading your photo…" : "Creating your preview, usually takes 5–17 seconds…"}
               </p>
             </div>
           )}
@@ -204,7 +204,7 @@ export function TryOnModal({ productId, productName, onClose }: { productId: str
                 />
               </div>
               <p className="text-[11px] text-es-mute text-center mb-4">
-                AI preview — style visualisation, not an exact fit guarantee.
+                AI preview: style visualisation, not an exact fit guarantee.
               </p>
               <div className="flex gap-2 mb-3">
                 <button onClick={() => setShowBefore((v) => !v)} className="es-btn-outline-ink flex-1">
@@ -213,7 +213,7 @@ export function TryOnModal({ productId, productName, onClose }: { productId: str
                 <button
                   onClick={() => {
                     if (navigator.share) {
-                      void navigator.share({ title: `${productName} — Elite Style Co.`, url: resultUrl });
+                      void navigator.share({ title: `${productName} | Elite Style Co.`, url: resultUrl });
                     }
                   }}
                   className="es-btn-outline-ink flex-1"

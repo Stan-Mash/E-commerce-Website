@@ -172,7 +172,7 @@ export default function CheckoutPage() {
         clearInterval(pollRef.current!);
         setWaiting(false);
         setApiError(
-          "We haven't received your payment yet. If you completed it, your order will still be confirmed — check 'Track Order'. Otherwise please try again."
+          "We haven't received your payment yet. If you completed it, your order will still be confirmed. Check 'Track Order'. Otherwise please try again."
         );
       }
     }, INTERVAL);
@@ -369,10 +369,10 @@ export default function CheckoutPage() {
                   disabled={waiting}
                   style={{ width: "100%", fontSize: 15, fontFamily: "var(--font-inter)", padding: "12px", border: "1px solid var(--es-bone)", background: "var(--es-white)", color: "var(--es-ink)", outline: "none" }}
                 >
-                  <option value="">Store pickup — Stanbank House, Moi Avenue (free)</option>
+                  <option value="">Store pickup: Stanbank House, Moi Avenue (free)</option>
                   {pickupPoints.map((p) => (
                     <option key={p.id} value={p.id}>
-                      {p.area} — {p.name}{p.fee > 0 ? ` (+${formatKES(p.fee)})` : " (free)"}
+                      {p.area}: {p.name}{p.fee > 0 ? ` (+${formatKES(p.fee)})` : " (free)"}
                     </option>
                   ))}
                 </select>
@@ -513,7 +513,7 @@ function Row({ label, value }: { label: string; value: string }) {
 function WaitingState({ message, method, till, onCancel, orderRef, phone }: { message: string; method: PayMethod; till: string; onCancel: () => void; orderRef: string; phone: string }) {
   const sub =
     method === "paybill"
-      ? "This won't confirm on its own — open M-Pesa, go to Lipa na M-Pesa → Buy Goods, enter the Till number and amount shown above, then your PIN. This page updates automatically once we receive it."
+      ? "This won't confirm on its own. Open M-Pesa, go to Lipa na M-Pesa → Buy Goods, enter the Till number and amount shown above, then your PIN. This page updates automatically once we receive it."
       : "Check your phone and enter your M-Pesa PIN. This page updates automatically.";
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "32px 24px", background: "var(--es-white)", border: "1px solid var(--es-bone)", textAlign: "center" }}>
@@ -550,7 +550,7 @@ function ReportPaymentForm({ orderRef, phone }: { orderRef: string; phone: strin
       });
       const data = await res.json();
       if (res.ok) {
-        setResult({ ok: true, message: data.message ?? "Thanks — we'll confirm this shortly." });
+        setResult({ ok: true, message: data.message ?? "Thanks, we'll confirm this shortly." });
         setCode("");
       } else {
         setResult({ ok: false, message: data.error ?? "Could not submit your code. Please try again." });
@@ -631,7 +631,7 @@ function TrustStrip() {
           <rect x="3" y="11" width="18" height="10" rx="2" />
           <path d="M7 11V7a5 5 0 0 1 10 0v4" />
         </svg>
-        Secure checkout — your details are never stored unencrypted.
+        Secure checkout. Your details are never stored unencrypted.
       </div>
       <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12, color: "var(--es-mute)" }}>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
@@ -646,7 +646,7 @@ function TrustStrip() {
           <path d="M21 10c0 7-9 12-9 12s-9-5-9-12a9 9 0 0 1 18 0z" />
           <circle cx="12" cy="10" r="3" />
         </svg>
-        Visit us — Shop 35, Stanbank House, Moi Avenue, Nairobi CBD
+        Visit us at Shop 35, Stanbank House, Moi Avenue, Nairobi CBD
       </div>
     </div>
   );

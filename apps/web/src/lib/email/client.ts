@@ -55,7 +55,7 @@ function shell(title: string, body: string): string {
 
 export function orderConfirmationEmail(orderRef: string, total: number): { subject: string; html: string } {
   return {
-    subject: `Order ${orderRef} confirmed — Elite Style Co.`,
+    subject: `Order ${orderRef} confirmed | Elite Style Co.`,
     html: shell(
       "Thank you for your order",
       `<p>We've received your payment and your order is confirmed.</p>
@@ -83,6 +83,6 @@ export function orderShippedEmail(orderRef: string, courier: string | null, trac
     : "";
   return {
     subject: `Your order ${orderRef} is on its way`,
-    html: shell("Your order has shipped", `<p>Good news — order <strong>${orderRef}</strong> is on its way.</p>${track}`),
+    html: shell("Your order has shipped", `<p>Good news, order <strong>${orderRef}</strong> is on its way.</p>${track}`),
   };
 }
