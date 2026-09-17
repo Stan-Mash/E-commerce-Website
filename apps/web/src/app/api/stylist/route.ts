@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import { createPublicSupabaseClient } from "@/lib/supabase/server";
-import { askStylist, isStylistConfigured, type StylistMessage } from "@/lib/anthropic/client";
+import { askStylist, isStylistConfigured, type StylistMessage } from "@/lib/stylist/provider";
 import { rateLimitDaily, clientIp } from "@/lib/rateLimit";
 
 const SESSION_COOKIE = "es_stylist_session";
