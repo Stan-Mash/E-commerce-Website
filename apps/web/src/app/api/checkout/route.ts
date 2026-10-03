@@ -107,7 +107,14 @@ async function _handlePost(req: NextRequest) {
 
   const parsed = CheckoutSchema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json({ error: "Validation failed", details: parsed.error.flatten() }, { status: 422 });
+    const flat = parsed.error.flatten();
+    // Surface the first readable field error so the UI can show something actionable.
+    const firstField = Object.entries(flat.fieldErrors).find(([, errs]) => errs && errs.length > 0);
+    const humanError = firstField
+      ? `${firstField[0]}: ${firstField[1]![0]}`
+      : flat.formErrors[0] ?? "Validation failed";
+    console.error("[checkout] Zod validation failed:", JSON.stringify(flat));
+    return NextResponse.json({ error: humanError, details: flat }, { status: 422 });
   }
 
   const { phone, items, notes, promoCode, email, pickupPointId } = parsed.data;
