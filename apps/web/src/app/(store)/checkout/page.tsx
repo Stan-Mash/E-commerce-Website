@@ -195,8 +195,8 @@ export default function CheckoutPage() {
       setApiError("One or more items in your bag couldn't be loaded. Please remove them and try again.");
       return;
     }
-    if (items.some((i) => !Number.isInteger(i.quantity) || i.quantity < 1 || i.quantity > 10)) {
-      setApiError("One or more items has an invalid quantity (max 10 per item). Please update your cart.");
+    if (items.some((i) => !Number.isInteger(i.quantity) || i.quantity < 1 || i.quantity > 100)) {
+      setApiError("One or more items has an invalid quantity. Please update your cart.");
       return;
     }
     setApiError("");

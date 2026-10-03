@@ -45,11 +45,11 @@ const CheckoutSchema = z
       .array(
         z.object({
           skuId: z.string().uuid(),
-          quantity: z.number().int().positive().max(10),
+          quantity: z.number().int().positive().max(100),
         })
       )
       .min(1)
-      .max(20),
+      .max(50),
     // "door" accepted for backwards compatibility; normalised to "outside_cbd".
     deliveryType: z.enum(["pickup", "cbd", "outside_cbd", "door"]),
     deliveryAddress: z.string().min(10).max(300).optional(),
