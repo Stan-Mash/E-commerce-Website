@@ -334,6 +334,26 @@ export default function ContactPage() {
                 </div>
               </div>
 
+              {/* Business Inquiries */}
+              <div className="p-6 flex gap-4 items-start" style={{ background: "#f7f7f7" }}>
+                <div className="flex-shrink-0 w-10 h-10 flex items-center justify-center" style={{ background: "var(--es-ink)", color: "#fff" }}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <rect x="2" y="7" width="20" height="14" rx="2" />
+                    <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2" />
+                    <line x1="12" y1="12" x2="12" y2="12.01" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="mb-1 text-[11px] tracking-[.12em] uppercase font-semibold text-es-mute">Business Inquiries</p>
+                  <a href="mailto:stanely.macharia@elitestyle.co.ke"
+                    className="text-[15px] font-semibold text-es-ink hover:opacity-70 transition-opacity"
+                    style={{ fontFamily: "var(--font-inter)" }}>
+                    stanely.macharia@elitestyle.co.ke
+                  </a>
+                  <p className="mt-1 text-[13px] text-es-mute">Partnerships &amp; business matters</p>
+                </div>
+              </div>
+
               {/* Social media */}
               <div className="p-6" style={{ background: "#f7f7f7" }}>
                 <p className="mb-4 text-[11px] tracking-[.12em] uppercase font-semibold text-es-mute">Follow Us</p>
