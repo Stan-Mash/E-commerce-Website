@@ -403,6 +403,7 @@ export default function NewProductPage() {
               <option value="men">Men</option>
               <option value="children">Children</option>
               <option value="accessories">Accessories</option>
+              <option value="thrifted">Thrifted (Pre-owned)</option>
             </select>
           </div>
           <div>

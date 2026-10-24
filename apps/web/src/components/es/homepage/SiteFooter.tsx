@@ -20,6 +20,7 @@ const COLS: FooterCol[] = [
       { label: "Woman",        href: "/woman" },
       { label: "Man",          href: "/man" },
       { label: "Children",     href: "/children" },
+      { label: "Thrifted",     href: "/thrifted" },
       { label: "New Arrivals", href: "/products" },
     ],
   },

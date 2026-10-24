@@ -5,6 +5,7 @@ import { ProductGallery } from "@/components/product/ProductGallery";
 import { ProductInfo } from "@/components/product/ProductInfo";
 import { ProductBreadcrumb } from "@/components/product/ProductBreadcrumb";
 import { RelatedProducts } from "@/components/product/RelatedProducts";
+import { CompleteTheLook } from "@/components/product/CompleteTheLook";
 import { ProductReviews } from "@/components/product/ProductReviews";
 import { RecentlyViewed } from "@/components/product/RecentlyViewed";
 import { isTryOnConfigured } from "@/lib/tryon/provider";
@@ -158,6 +159,12 @@ export default async function ProductPage(props: Props) {
             <ProductReviews productId={product.id} />
           </Suspense>
         )}
+        <Suspense fallback={null}>
+          <CompleteTheLook
+            category={product.category}
+            currentProductId={product.id}
+          />
+        </Suspense>
         <Suspense fallback={null}>
           <RelatedProducts
             category={product.category}

@@ -10,9 +10,10 @@ const NAV = [
   { label: "Women",       href: "/woman" },
   { label: "Men",         href: "/man" },
   { label: "Children",    href: "/children" },
+  { label: "Thrifted",    href: "/thrifted" },
   { label: "New In",      href: "/products" },
   { label: "Coming Soon", href: "/coming-soon" },
-  { label: "Journal",     href: "/journal" },
+  { label: "Find My Style", href: "/style-finder" },
 ] as const;
 
 // Desktop shows these as icon-only buttons in the header; the mobile drawer

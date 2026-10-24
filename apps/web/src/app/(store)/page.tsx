@@ -3,7 +3,8 @@ import { HousePrinciple }  from "@/components/es/homepage/HousePrinciple";
 import { FeaturedGrid }    from "@/components/es/homepage/FeaturedGrid";
 import { MpesaMoment }     from "@/components/es/homepage/MpesaMoment";
 import { FamilyEditorial } from "@/components/es/homepage/FamilyEditorial";
-import { AtelierBanner }   from "@/components/es/homepage/AtelierBanner";
+import { AtelierBanner }      from "@/components/es/homepage/AtelierBanner";
+import { StyleFinderBanner } from "@/components/es/homepage/StyleFinderBanner";
 import { SaleBand }        from "@/components/es/homepage/SaleBand";
 import { Journal }         from "@/components/es/homepage/Journal";
 import { Newsletter }      from "@/components/es/homepage/Newsletter";
@@ -74,6 +75,7 @@ export default async function HomePage() {
       <FeaturedGrid />
       <MpesaMoment />
       <FamilyEditorial />
+      <StyleFinderBanner />
       <AtelierBanner />
       <SaleBand />
       <Journal />
