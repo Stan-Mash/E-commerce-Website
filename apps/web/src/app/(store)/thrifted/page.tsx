@@ -42,7 +42,7 @@ async function getThriftedProducts(): Promise<ProductRow[]> {
          skus(size, stock_quantity)`
       )
       .eq("status", "active")
-      .in("category", ["thrifted", "Thrifted", "THRIFTED"])
+      .in("category", ["thrifted", "Thrifted", "THRIFTED", "thrift-plus", "thrift-standard"])
       .order("created_at", { ascending: false });
 
     if (error || !data) return [];
@@ -93,12 +93,29 @@ export default async function ThriftedPage() {
             Pre-owned pieces, curated for a second life. Quality you can trust,
             prices that make sense.
           </p>
-          <Link
-            href="#products"
-            className="px-8 py-3 bg-white/10 border border-white/30 text-white text-[11px] tracking-[.38em] uppercase hover:bg-white/20 transition-colors"
-          >
-            Shop Thrifted
-          </Link>
+          {/* Two entry paths */}
+          <div className="flex flex-wrap gap-3 justify-center">
+            <Link
+              href="/thrifted/plus-size"
+              className="px-7 py-3 text-[10px] tracking-[.38em] uppercase font-medium no-underline transition-colors"
+              style={{ background: "#c9a961", color: "#1a1209" }}
+            >
+              Plus Size
+            </Link>
+            <Link
+              href="/thrifted/standard"
+              className="px-7 py-3 text-[10px] tracking-[.38em] uppercase font-medium no-underline transition-colors border"
+              style={{ borderColor: "rgba(201,169,97,.5)", color: "#c9a961" }}
+            >
+              Standard
+            </Link>
+            <Link
+              href="#products"
+              className="px-7 py-3 bg-white/10 border border-white/30 text-white text-[11px] tracking-[.38em] uppercase hover:bg-white/20 transition-colors"
+            >
+              View All
+            </Link>
+          </div>
         </div>
       </div>
 

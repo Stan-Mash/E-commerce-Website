@@ -15,13 +15,21 @@ const COLS: FooterCol[] = [
     ],
   },
   {
-    h: "DEPARTMENTS",
+    h: "NEW COLLECTION",
     items: [
-      { label: "Woman",        href: "/woman" },
-      { label: "Man",          href: "/man" },
+      { label: "Women",        href: "/woman" },
+      { label: "Men",          href: "/man" },
       { label: "Children",     href: "/children" },
-      { label: "Thrifted",     href: "/thrifted" },
       { label: "New Arrivals", href: "/products" },
+      { label: "Find My Style", href: "/style-finder" },
+    ],
+  },
+  {
+    h: "THRIFT STORE",
+    items: [
+      { label: "All Thrifted",  href: "/thrifted" },
+      { label: "Plus Size",     href: "/thrifted/plus-size" },
+      { label: "Standard",      href: "/thrifted/standard" },
     ],
   },
   {
@@ -53,11 +61,11 @@ export function SiteFooter() {
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "1.4fr repeat(4, 1fr)",
-          gap: 56,
+          gridTemplateColumns: "1.4fr repeat(5, 1fr)",
+          gap: 48,
           alignItems: "start",
         }}
-        className="!grid-cols-2 lg:!grid-cols-[1.4fr_repeat(4,1fr)]"
+        className="!grid-cols-2 lg:!grid-cols-[1.4fr_repeat(5,1fr)]"
       >
         {/* Brand */}
         <div>

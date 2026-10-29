@@ -397,13 +397,18 @@ export default function EditProductPage(props: Props) {
           {/* Category + Status */}
           <div style={FIELD_ROW_STYLE}>
             <div>
-              <label style={LABEL_STYLE}>Category</label>
+              <label style={LABEL_STYLE}>Shop &amp; Category</label>
               <select style={INPUT_STYLE} value={form.category} onChange={(e) => set("category", e.target.value)}>
-                <option value="women">Women</option>
-                <option value="men">Men</option>
-                <option value="children">Children</option>
-                <option value="accessories">Accessories</option>
-                <option value="thrifted">Thrifted (Pre-owned)</option>
+                <optgroup label="── New Collection ──">
+                  <option value="women">Women</option>
+                  <option value="men">Men</option>
+                  <option value="children">Children</option>
+                  <option value="accessories">Accessories</option>
+                </optgroup>
+                <optgroup label="── Thrift Store ──">
+                  <option value="thrift-standard">Thrift · Standard (XS–XL)</option>
+                  <option value="thrift-plus">Thrift · Plus Size (16+)</option>
+                </optgroup>
               </select>
             </div>
             <div>

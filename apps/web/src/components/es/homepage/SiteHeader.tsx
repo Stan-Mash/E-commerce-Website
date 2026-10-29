@@ -6,38 +6,45 @@ import Link from "next/link";
 import { ShoppingBag, Search, User, Heart, Menu, X } from "lucide-react";
 import { useCart } from "@/components/checkout/CartProvider";
 
-const NAV = [
-  { label: "Women",       href: "/woman" },
-  { label: "Men",         href: "/man" },
-  { label: "Children",    href: "/children" },
-  { label: "Thrifted",    href: "/thrifted" },
-  { label: "New In",      href: "/products" },
-  { label: "Coming Soon", href: "/coming-soon" },
-  { label: "Find My Style", href: "/style-finder" },
+// ── Navigation structure ──────────────────────────────────────────────────────
+// Two distinct shops, each with their own links. The header renders them as
+// two labelled groups separated by a divider on desktop, and as two headed
+// sections inside the mobile drawer.
+
+const NEW_COLLECTION_NAV = [
+  { label: "Women",    href: "/woman" },
+  { label: "Men",      href: "/man" },
+  { label: "Children", href: "/children" },
+  { label: "New In",   href: "/products" },
 ] as const;
 
-// Desktop shows these as icon-only buttons in the header; the mobile drawer
-// previously had no equivalent, so Account/Wishlist were unreachable on
-// mobile unless a customer scrolled all the way to the footer.
+const THRIFT_NAV = [
+  { label: "Plus Size", href: "/thrifted/plus-size" },
+  { label: "Standard",  href: "/thrifted/standard" },
+] as const;
+
+const TOOLS_NAV = [
+  { label: "Find My Style", href: "/style-finder" },
+  { label: "Coming Soon",   href: "/coming-soon" },
+] as const;
+
 const MOBILE_ACCOUNT_LINKS = [
   { label: "Search",   href: "/search",   icon: Search },
-  { label: "Wishlist", href: "/wishlist", icon: Heart },
-  { label: "Account",  href: "/account",  icon: User },
+  { label: "Wishlist", href: "/wishlist",  icon: Heart },
+  { label: "Account",  href: "/account",   icon: User },
 ] as const;
+
+// ── Component ─────────────────────────────────────────────────────────────────
 
 export function SiteHeader() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const { itemCount, openCart } = useCart();
   const pathname = usePathname();
-  // Classic hydration-guard flag: must run post-mount (not derivable from a
-  // prop/dep change, so the adjust-during-render pattern doesn't fit) to
-  // avoid an SSR/CSR markup mismatch on `itemCount`/cart state below.
-  // eslint-disable-next-line react-hooks/set-state-in-effect -- mount-only hydration guard, not a dep-change reset
+
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- mount-only hydration guard
   useEffect(() => { setMounted(true); }, []);
 
-  // Close the drawer whenever the route changes, and lock page scroll while
-  // it's open — matches the pattern used by the admin mobile nav.
   const [prevPathname, setPrevPathname] = useState(pathname);
   if (pathname !== prevPathname) {
     setPrevPathname(pathname);
@@ -48,27 +55,90 @@ export function SiteHeader() {
     return () => { document.body.style.overflow = ""; };
   }, [mobileOpen]);
 
+  const isThriftPage = pathname?.startsWith("/thrifted");
+
   return (
     <>
     <header className="bg-white border-b border-es-hair sticky top-0 z-50">
 
-      {/* Desktop */}
-      <div className="hidden md:flex items-center justify-between px-10 h-16 max-w-[1400px] mx-auto w-full">
+      {/* ── Desktop ── */}
+      <div className="hidden lg:flex items-center justify-between px-8 h-16 max-w-[1440px] mx-auto w-full gap-6">
 
         {/* Wordmark */}
         <Link href="/" className="flex-shrink-0 no-underline" aria-label="Elite Style Co. home">
-          <span className="font-cormorant text-[22px] font-semibold text-es-ink tracking-[-0.02em]">
+          <span className="font-cormorant text-[22px] font-semibold text-es-ink tracking-[-0.02em] whitespace-nowrap">
             Elite Style Co.
           </span>
         </Link>
 
-        {/* Nav */}
-        <nav className="flex gap-8 items-center">
-          {NAV.map((item) => (
+        {/* Two-shop nav */}
+        <nav className="flex items-center gap-0 flex-1 justify-center">
+
+          {/* NEW COLLECTION group */}
+          <div className="flex items-center gap-1">
+            <span className="text-[9px] tracking-[.42em] uppercase text-es-champagne-dk font-medium mr-2 whitespace-nowrap">
+              New
+            </span>
+            {NEW_COLLECTION_NAV.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={[
+                  "font-sans text-[13px] font-medium px-3 py-1 transition-colors duration-150 no-underline whitespace-nowrap",
+                  pathname === item.href
+                    ? "text-es-ink bg-es-paper rounded"
+                    : "text-es-char hover:text-es-ink",
+                ].join(" ")}
+              >
+                {item.label}
+              </Link>
+            ))}
+          </div>
+
+          {/* Divider */}
+          <div className="w-px h-5 bg-es-rule mx-4 flex-shrink-0" />
+
+          {/* THRIFT STORE group */}
+          <div className="flex items-center gap-1">
+            <span className="text-[9px] tracking-[.42em] uppercase font-medium mr-2 whitespace-nowrap" style={{ color: "#8a6840" }}>
+              Thrift
+            </span>
+            {THRIFT_NAV.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={[
+                  "font-sans text-[13px] font-medium px-3 py-1 transition-colors duration-150 no-underline whitespace-nowrap",
+                  pathname === item.href
+                    ? "text-es-ink bg-es-paper rounded"
+                    : "text-es-char hover:text-es-ink",
+                ].join(" ")}
+              >
+                {item.label}
+              </Link>
+            ))}
             <Link
-              key={item.label}
+              href="/thrifted"
+              className={[
+                "font-sans text-[11px] font-medium px-2 py-0.5 border transition-colors duration-150 no-underline whitespace-nowrap ml-1",
+                isThriftPage
+                  ? "border-es-char text-es-ink bg-es-paper"
+                  : "border-es-rule text-es-mute hover:border-es-char hover:text-es-ink",
+              ].join(" ")}
+            >
+              All Thrift
+            </Link>
+          </div>
+
+          {/* Divider */}
+          <div className="w-px h-5 bg-es-rule mx-4 flex-shrink-0" />
+
+          {/* Tools */}
+          {TOOLS_NAV.map((item) => (
+            <Link
+              key={item.href}
               href={item.href}
-              className="font-sans text-[13px] font-medium text-es-char hover:text-es-champagne-dk transition-colors duration-150 no-underline"
+              className="font-sans text-[13px] font-medium text-es-char hover:text-es-champagne-dk transition-colors duration-150 no-underline px-3 py-1 whitespace-nowrap"
             >
               {item.label}
             </Link>
@@ -76,7 +146,7 @@ export function SiteHeader() {
         </nav>
 
         {/* Actions */}
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1 flex-shrink-0">
           {[
             { href: "/search",   icon: <Search size={18} strokeWidth={1.75} />,  label: "Search" },
             { href: "/wishlist", icon: <Heart  size={18} strokeWidth={1.75} />,  label: "Wishlist" },
@@ -86,12 +156,11 @@ export function SiteHeader() {
               key={a.href}
               href={a.href}
               aria-label={a.label}
-              className="flex items-center justify-center w-10 h-10 text-es-char hover:text-es-ink hover:bg-es-paper rounded-none transition-colors duration-150"
+              className="flex items-center justify-center w-10 h-10 text-es-char hover:text-es-ink hover:bg-es-paper transition-colors duration-150"
             >
               {a.icon}
             </Link>
           ))}
-
           <button
             onClick={openCart}
             suppressHydrationWarning
@@ -108,8 +177,8 @@ export function SiteHeader() {
         </div>
       </div>
 
-      {/* Mobile bar */}
-      <div className="flex md:hidden items-center justify-between px-4 h-14">
+      {/* ── Mobile bar ── */}
+      <div className="flex lg:hidden items-center justify-between px-4 h-14">
         <button
           onClick={() => setMobileOpen(!mobileOpen)}
           className="bg-transparent border-0 cursor-pointer p-2 text-es-ink"
@@ -118,7 +187,7 @@ export function SiteHeader() {
           {mobileOpen ? <X size={22} strokeWidth={1.75} /> : <Menu size={22} strokeWidth={1.75} />}
         </button>
 
-        <Link href="/" className="no-underline" aria-label="Elite Style Co. home">
+        <Link href="/" className="no-underline absolute left-1/2 -translate-x-1/2" aria-label="Elite Style Co. home">
           <span className="font-cormorant text-[20px] font-semibold text-es-ink tracking-[-0.02em]">
             Elite Style Co.
           </span>
@@ -144,48 +213,87 @@ export function SiteHeader() {
       </div>
     </header>
 
-    {/* Mobile menu: full-screen overlay, rendered as a sibling of <header>
-        (not nested inside it) so its z-index isn't capped by the header's
-        own `sticky` stacking context — nested here, it rendered underneath
-        the cookie-consent banner despite a higher z-index, since a
-        `position: sticky` ancestor with its own z-index creates a new
-        stacking context that traps descendants inside it. Not an in-flow
-        panel that pushes page content down, so it reads as a deliberate
-        navigation moment and doesn't lose the customer's scroll position. */}
+    {/* ── Mobile drawer ── */}
     {mobileOpen && (
-      <div className="fixed inset-0 z-[100] flex md:hidden flex-col bg-white">
-        <div className="flex items-center justify-between px-4 h-14 border-b border-es-hair flex-shrink-0">
+      <div className="fixed inset-0 z-[100] flex lg:hidden flex-col bg-white">
+        {/* Drawer header */}
+        <div className="flex items-center justify-between px-5 h-14 border-b border-es-hair flex-shrink-0">
           <span className="font-cormorant text-[20px] font-semibold text-es-ink tracking-[-0.02em]">
             Elite Style Co.
           </span>
-          <button
-            onClick={() => setMobileOpen(false)}
-            className="bg-transparent border-0 cursor-pointer p-2 text-es-ink"
-            aria-label="Close menu"
-          >
+          <button onClick={() => setMobileOpen(false)} className="bg-transparent border-0 cursor-pointer p-2 text-es-ink" aria-label="Close menu">
             <X size={22} strokeWidth={1.75} />
           </button>
         </div>
 
         <nav className="flex-1 overflow-y-auto">
-          {NAV.map((item) => (
-            <Link
-              key={item.label}
-              href={item.href}
-              onClick={() => setMobileOpen(false)}
-              className="block font-sans text-[17px] font-medium text-es-ink no-underline px-5 py-4 border-b border-es-hair/50 hover:bg-es-paper transition-colors duration-150"
-            >
-              {item.label}
-            </Link>
-          ))}
 
-          <div className="mt-2 border-t border-es-hair">
+          {/* NEW COLLECTION section */}
+          <div className="px-5 pt-6 pb-2">
+            <p className="text-[10px] tracking-[.48em] uppercase text-es-champagne-dk font-medium mb-3">
+              New Collection
+            </p>
+            {NEW_COLLECTION_NAV.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={() => setMobileOpen(false)}
+                className="block font-sans text-[18px] font-medium text-es-ink no-underline py-3 border-b border-es-hair/40 hover:text-es-champagne-dk transition-colors"
+              >
+                {item.label}
+              </Link>
+            ))}
+          </div>
+
+          {/* THRIFT STORE section */}
+          <div className="px-5 pt-6 pb-2">
+            <p className="text-[10px] tracking-[.48em] uppercase font-medium mb-3" style={{ color: "#8a6840" }}>
+              Thrift Store
+            </p>
+            <Link
+              href="/thrifted"
+              onClick={() => setMobileOpen(false)}
+              className="block font-sans text-[18px] font-medium text-es-ink no-underline py-3 border-b border-es-hair/40 hover:text-es-champagne-dk transition-colors"
+            >
+              All Thrifted
+            </Link>
+            {THRIFT_NAV.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={() => setMobileOpen(false)}
+                className="block font-sans text-[18px] font-medium text-es-ink no-underline py-3 border-b border-es-hair/40 hover:text-es-champagne-dk transition-colors"
+              >
+                {item.label}
+              </Link>
+            ))}
+          </div>
+
+          {/* Tools section */}
+          <div className="px-5 pt-6 pb-2">
+            <p className="text-[10px] tracking-[.48em] uppercase text-es-mute font-medium mb-3">
+              Discover
+            </p>
+            {TOOLS_NAV.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={() => setMobileOpen(false)}
+                className="block font-sans text-[17px] font-medium text-es-char no-underline py-3 border-b border-es-hair/40 hover:text-es-ink transition-colors"
+              >
+                {item.label}
+              </Link>
+            ))}
+          </div>
+
+          {/* Account links */}
+          <div className="mt-4 border-t border-es-hair px-5 pt-4 pb-8">
             {MOBILE_ACCOUNT_LINKS.map(({ label, href, icon: Icon }) => (
               <Link
                 key={label}
                 href={href}
                 onClick={() => setMobileOpen(false)}
-                className="flex items-center gap-3 font-sans text-[15px] font-medium text-es-char no-underline px-5 py-4 border-b border-es-hair/50 hover:bg-es-paper transition-colors duration-150"
+                className="flex items-center gap-3 font-sans text-[15px] font-medium text-es-char no-underline py-3 border-b border-es-hair/40 hover:text-es-ink transition-colors"
               >
                 <Icon size={18} strokeWidth={1.75} />
                 {label}

@@ -85,6 +85,7 @@ export default function AdminProductsPage() {
   const [deleting, setDeleting] = useState(false);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "draft" | "archived" | "coming_soon">("all");
+  const [shopFilter, setShopFilter] = useState<"all" | "new" | "thrift">("all");
   const [page, setPage] = useState(1);
 
   // Bulk select state
@@ -115,10 +116,13 @@ export default function AdminProductsPage() {
     void loadProducts();
   }, [loadProducts]);
 
+  const NEW_CATEGORIES = new Set(["women", "men", "children", "accessories"]);
+  const THRIFT_CATEGORIES = new Set(["thrift-plus", "thrift-standard", "thrifted", "Thrifted", "THRIFTED"]);
+
   // Reset to page 1 when filters change
-  const [prevFilters, setPrevFilters] = useState({ search, statusFilter });
-  if (prevFilters.search !== search || prevFilters.statusFilter !== statusFilter) {
-    setPrevFilters({ search, statusFilter });
+  const [prevFilters, setPrevFilters] = useState({ search, statusFilter, shopFilter });
+  if (prevFilters.search !== search || prevFilters.statusFilter !== statusFilter || prevFilters.shopFilter !== shopFilter) {
+    setPrevFilters({ search, statusFilter, shopFilter });
     setPage(1);
   }
 
@@ -131,9 +135,14 @@ export default function AdminProductsPage() {
         p.category.toLowerCase().includes(q);
       const matchesStatus =
         statusFilter === "all" || p.status === statusFilter;
-      return matchesSearch && matchesStatus;
+      const matchesShop =
+        shopFilter === "all" ||
+        (shopFilter === "new" && NEW_CATEGORIES.has(p.category)) ||
+        (shopFilter === "thrift" && THRIFT_CATEGORIES.has(p.category));
+      return matchesSearch && matchesStatus && matchesShop;
     });
-  }, [products, search, statusFilter]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [products, search, statusFilter, shopFilter]);
 
   const pageIds = useMemo(
     () => new Set(filtered.slice((Math.min(page, Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))) - 1) * PAGE_SIZE, Math.min(page, Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))) * PAGE_SIZE).map((p) => p.id)),
@@ -328,6 +337,34 @@ export default function AdminProductsPage() {
             </button>
           )}
         </div>
+
+        {/* Shop filter */}
+        <select
+          value={shopFilter}
+          onChange={(e) => setShopFilter(e.target.value as typeof shopFilter)}
+          style={{
+            fontFamily: "var(--font-inter)",
+            fontSize: 12,
+            letterSpacing: "0.1em",
+            textTransform: "uppercase",
+            color: "var(--es-ink)",
+            background: "var(--es-white)",
+            border: "1px solid var(--es-bone)",
+            borderRadius: 4,
+            padding: "8px 32px 8px 14px",
+            cursor: "pointer",
+            appearance: "none",
+            backgroundImage:
+              "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23666'/%3E%3C/svg%3E\")",
+            backgroundRepeat: "no-repeat",
+            backgroundPosition: "right 10px center",
+            minWidth: 160,
+          }}
+        >
+          <option value="all">All Shops</option>
+          <option value="new">New Collection</option>
+          <option value="thrift">Thrift Store</option>
+        </select>
 
         {/* Status filter */}
         <select
