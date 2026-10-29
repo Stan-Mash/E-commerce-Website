@@ -1,12 +1,28 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { Suspense } from "react";
+import { Suspense, useState } from "react";
+
+function EyeIcon({ open }: { open: boolean }) {
+  return open ? (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+      <circle cx="12" cy="12" r="3"/>
+    </svg>
+  ) : (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
+      <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
+      <line x1="1" y1="1" x2="23" y2="23"/>
+    </svg>
+  );
+}
 
 function LoginForm() {
   const searchParams = useSearchParams();
   const from  = searchParams.get("from")  ?? "/admin";
   const error = searchParams.get("error") === "1";
+  const [showPw, setShowPw] = useState(false);
 
   return (
     <div
@@ -84,9 +100,9 @@ function LoginForm() {
             />
           </div>
 
-          <div style={{ marginBottom: 32 }}>
+          <div style={{ marginBottom: 32, position: "relative" }}>
             <input
-              type="password"
+              type={showPw ? "text" : "password"}
               name="password"
               placeholder="Enter admin password"
               required
@@ -94,7 +110,7 @@ function LoginForm() {
               style={{
                 display: "block",
                 width: "100%",
-                padding: "12px 0",
+                padding: "12px 36px 12px 0",
                 border: "none",
                 borderBottom: "1px solid #333",
                 background: "transparent",
@@ -105,6 +121,26 @@ function LoginForm() {
                 boxSizing: "border-box",
               }}
             />
+            <button
+              type="button"
+              onClick={() => setShowPw((v) => !v)}
+              aria-label={showPw ? "Hide password" : "Show password"}
+              style={{
+                position: "absolute",
+                right: 0,
+                top: "50%",
+                transform: "translateY(-50%)",
+                background: "transparent",
+                border: "none",
+                cursor: "pointer",
+                color: "#666",
+                padding: 4,
+                display: "flex",
+                alignItems: "center",
+              }}
+            >
+              <EyeIcon open={showPw} />
+            </button>
           </div>
 
           {error && (
