@@ -13,6 +13,7 @@ import { AskStylist } from "@/components/product/AskStylist";
 import { TryOnModal } from "@/components/product/TryOnModal";
 import { isCategoryEligibleForTryOn } from "@/lib/tryon/provider";
 import type { ProductDetail } from "@nairobi-fashion/lib";
+import { WhatsAppOrderCard } from "@/components/product/WhatsAppOrderCard";
 
 const LOW_STOCK_THRESHOLD = 5;
 
@@ -336,6 +337,13 @@ export function ProductInfo({ product, tryOnEnabled = false }: Props) {
           {copied ? <Check size={20} /> : <Share2 size={20} />}
         </button>
       </div>
+
+      <WhatsAppOrderCard
+        product={product}
+        selectedSize={selectedSize}
+        selectedSku={selectedSku}
+        inStock={inStock}
+      />
 
       {tryOnEnabled && isCategoryEligibleForTryOn(product.category) && (
         <button
