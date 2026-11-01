@@ -341,7 +341,7 @@ export function ProductInfo({ product, tryOnEnabled = false }: Props) {
       <WhatsAppOrderCard
         product={product}
         selectedSize={selectedSize}
-        selectedSku={selectedSku}
+        {...(selectedSku ? { selectedSku } : {})}
         inStock={inStock}
       />
 

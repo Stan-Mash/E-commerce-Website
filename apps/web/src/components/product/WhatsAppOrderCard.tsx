@@ -31,7 +31,7 @@ function saveCustomer(name: string, phone: string) {
 interface Props {
   product: ProductDetail;
   selectedSize: string | null;
-  selectedSku?: SKU | null;
+  selectedSku?: SKU;
   inStock: boolean;
 }
 
