@@ -117,7 +117,7 @@ export default function AdminProductsPage() {
   }, [loadProducts]);
 
   const NEW_CATEGORIES = new Set(["women", "men", "children", "accessories"]);
-  const THRIFT_CATEGORIES = new Set(["thrift-plus", "thrift-standard", "thrifted", "Thrifted", "THRIFTED"]);
+  const THRIFT_CATEGORIES = new Set(["thrift-women", "thrift-men", "thrift-children", "thrift-plus-women", "thrift-plus-men", "thrift-plus", "thrift-standard", "thrifted", "Thrifted", "THRIFTED"]);
 
   // Reset to page 1 when filters change
   const [prevFilters, setPrevFilters] = useState({ search, statusFilter, shopFilter });
@@ -134,7 +134,9 @@ export default function AdminProductsPage() {
         p.name.toLowerCase().includes(q) ||
         p.category.toLowerCase().includes(q);
       const matchesStatus =
-        statusFilter === "all" || p.status === statusFilter;
+        statusFilter === "all"
+          ? p.status !== "archived"
+          : p.status === statusFilter;
       const matchesShop =
         shopFilter === "all" ||
         (shopFilter === "new" && NEW_CATEGORIES.has(p.category)) ||
@@ -389,7 +391,7 @@ export default function AdminProductsPage() {
             minWidth: 140,
           }}
         >
-          <option value="all">All Status</option>
+          <option value="all">All (excl. archived)</option>
           <option value="active">Active</option>
           <option value="draft">Draft</option>
           <option value="coming_soon">Coming Soon</option>

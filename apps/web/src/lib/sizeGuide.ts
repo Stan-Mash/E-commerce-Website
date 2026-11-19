@@ -51,6 +51,36 @@ export function compareSizes(a: string, b: string): number {
   return ai - bi;
 }
 
+export interface FootwearRow {
+  eu: string;
+  uk: string;
+  cm: string;
+}
+
+export const ADULT_FOOTWEAR: FootwearRow[] = [
+  { eu: "36", uk: "3",   cm: "23.0" },
+  { eu: "37", uk: "4",   cm: "23.5" },
+  { eu: "38", uk: "5",   cm: "24.0" },
+  { eu: "39", uk: "6",   cm: "24.5" },
+  { eu: "40", uk: "6.5", cm: "25.0" },
+  { eu: "41", uk: "7",   cm: "25.5" },
+  { eu: "42", uk: "8",   cm: "26.5" },
+  { eu: "43", uk: "9",   cm: "27.5" },
+  { eu: "44", uk: "10",  cm: "28.0" },
+];
+
+export const KIDS_FOOTWEAR: FootwearRow[] = [
+  { eu: "28", uk: "10",  cm: "17.0" },
+  { eu: "29", uk: "11",  cm: "17.5" },
+  { eu: "30", uk: "12",  cm: "18.5" },
+  { eu: "31", uk: "13",  cm: "19.5" },
+  { eu: "32", uk: "1",   cm: "20.0" },
+  { eu: "33", uk: "1.5", cm: "21.0" },
+  { eu: "34", uk: "2",   cm: "21.5" },
+  { eu: "35", uk: "2.5", cm: "22.0" },
+  { eu: "36", uk: "3",   cm: "23.0" },
+];
+
 // Suggestions for the admin product form's size field (a <datalist>, not a
 // closed dropdown — staff can still type anything custom). Consistent
 // spelling here means the storefront's size filter doesn't end up with

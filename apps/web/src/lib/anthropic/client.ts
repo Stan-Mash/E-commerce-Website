@@ -5,7 +5,7 @@
 
 const API_URL = "https://api.anthropic.com/v1/messages";
 const ANTHROPIC_VERSION = "2023-06-01";
-const DEFAULT_MODEL = "claude-sonnet-5";
+const DEFAULT_MODEL = "claude-3-5-haiku-20241022";
 const MAX_TOKENS = 500;
 
 export function isStylistConfigured(): boolean {

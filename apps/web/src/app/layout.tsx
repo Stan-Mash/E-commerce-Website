@@ -23,22 +23,30 @@ const cormorant = Cormorant_Garamond({
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: "Elite Style Co. | Dressed, generation to generation",
-    template: "%s | Elite Style Co.",
+    default: "Elite Style Co. | Online Fashion & Thrift Store in Nairobi, Kenya",
+    template: "%s | Elite Style Co. Nairobi",
   },
   description:
-    "A maison built in Nairobi, for the woman, the man, and the children who follow. Atelier-led cuts, honest fabrics, KES pricing. Free delivery within Nairobi CBD.",
-  keywords: ["Elite Style", "Nairobi fashion", "premium clothing Kenya", "curated fashion Nairobi", "M-Pesa fashion"],
+    "Shop women's, men's & children's fashion online in Nairobi. New collection + thrift store. KES pricing, M-Pesa checkout, 24-hour delivery across Kenya. Shop 35, Stanbank House, Moi Avenue.",
+  keywords: [
+    "online fashion store Nairobi", "clothing shop Kenya", "women fashion Nairobi",
+    "men fashion Kenya", "thrift store Nairobi", "buy clothes online Kenya",
+    "M-Pesa fashion", "Elite Style Co", "Stanbank House boutique", "Nairobi CBD fashion",
+  ],
   authors: [{ name: "Elite Style Co." }],
   creator: "Elite Style Co.",
-  alternates: { canonical: "/" },
+  verification: { google: "OOxaMqiQ_GiXwfRiTJoMdu6EM9QsTHU_qiwHTKCmP5E" },
+  // No root canonical — each page sets its own via metadata.alternates.canonical
   openGraph: {
     type: "website",
     locale: "en_KE",
     siteName: "Elite Style Co.",
-    images: [{ url: "/icons/og-image.png", width: 1200, height: 630 }],
+    title: "Elite Style Co. | Dressed, generation to generation",
+    description: "A maison built in Nairobi, for the woman, the man, and the children who follow. Atelier-led cuts, honest fabrics, KES pricing. M-Pesa checkout.",
+    url: "/",
+    images: [{ url: "/icons/og-image.png", width: 1200, height: 630, alt: "Elite Style Co. — Nairobi fashion" }],
   },
-  twitter: { card: "summary_large_image", images: ["/icons/og-image.png"] },
+  twitter: { card: "summary_large_image", title: "Elite Style Co. | Dressed, generation to generation", images: ["/icons/og-image.png"] },
   manifest: "/manifest.json",
   icons: {
     icon: "/icons/icon-192x192.png",

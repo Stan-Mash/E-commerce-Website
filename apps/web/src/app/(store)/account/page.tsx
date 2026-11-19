@@ -57,7 +57,9 @@ export default function AccountPage() {
   }
 
   return (
-    <main className="min-h-screen bg-es-paper">
+    <>
+      <meta name="robots" content="noindex, follow" />
+      <div className="min-h-screen bg-es-paper">
       <div className="mx-auto w-full max-w-[860px] px-6 py-12 sm:py-20">
         <p className="mb-3 text-[11px] tracking-[.48em] uppercase text-es-gold">My Account</p>
         <h1 className="mb-10 text-4xl sm:text-5xl font-bold leading-none tracking-tight text-es-ink" style={{ fontFamily: "var(--font-bodoni)" }}>
@@ -76,7 +78,7 @@ export default function AccountPage() {
             </div>
             <div>
               <label className="block text-[11px] tracking-[.3em] uppercase text-es-mute mb-2">An order reference</label>
-              <input value={ref} onChange={(e) => setRef(e.target.value.toUpperCase())} placeholder="NF-XXXX-XXXX"
+              <input value={ref} onChange={(e) => setRef(e.target.value.toUpperCase())} placeholder="ES-XXXXX-XXXXX"
                 className="w-full border-b border-es-bone bg-transparent py-2 text-es-ink outline-none focus:border-es-ink" />
             </div>
             {error && <p className="text-[13px]" style={{ color: "#c0392b" }}>{error}</p>}
@@ -121,7 +123,8 @@ export default function AccountPage() {
 
         <PrivacySettings />
       </div>
-    </main>
+    </div>
+    </>
   );
 }
 

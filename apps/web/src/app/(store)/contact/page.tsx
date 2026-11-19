@@ -22,7 +22,7 @@ type FormState = {
 
 const INITIAL: FormState = { name: "", email: "", phone: "", subject: "", message: "", website: "" };
 
-const STORE_ADDRESS = "Shop 35, 4th Floor, Wing B\nStanbank House, Moi Avenue Street\nNairobi, Kenya";
+const STORE_ADDRESS = "Shop 35, 4th Floor, Wing B\nStanbank House, Moi Avenue\nNairobi, Kenya";
 const MAPS_URL = "https://www.google.com/maps/search/?api=1&query=Stanbank+House+Moi+Avenue+Nairobi";
 
 export default function ContactPage() {
@@ -59,8 +59,10 @@ export default function ContactPage() {
   return (
     <>
       <title>Contact Us | Elite Style Co.</title>
+      <link rel="canonical" href="https://elitestyle.co.ke/contact" />
+      <meta name="description" content="Visit Elite Style Co. at Stanbank House, Moi Avenue Nairobi. Call, WhatsApp, or send us a message." />
 
-      <main className="min-h-screen bg-white">
+      <div className="min-h-screen bg-white">
         {/* Hero */}
         <section
           className="relative flex flex-col items-center justify-center text-center px-6"
@@ -99,7 +101,7 @@ export default function ContactPage() {
               <div className="text-center sm:text-left">
                 <p className="text-[10px] tracking-[.4em] uppercase text-white/70 mb-1">Our Physical Store</p>
                 <p className="text-white font-bold text-xl" style={{ fontFamily: "var(--font-bodoni)" }}>
-                  Stanbank House, Moi Avenue Street
+                  Stanbank House, Moi Avenue
                 </p>
                 <p className="text-white/90 text-[14px] mt-1">
                   Shop 35 · 4th Floor · Wing B · Nairobi CBD
@@ -263,7 +265,7 @@ export default function ContactPage() {
                     Shop 35, 4th Floor, Wing B
                   </p>
                   <p className="text-[14px] text-es-ink" style={{ fontFamily: "var(--font-inter)" }}>
-                    Stanbank House, Moi Avenue Street
+                    Stanbank House, Moi Avenue
                   </p>
                   <p className="text-[14px] text-es-mute" style={{ fontFamily: "var(--font-inter)" }}>
                     Nairobi CBD, Kenya
@@ -446,7 +448,7 @@ export default function ContactPage() {
             </div>
           </div>
         </section>
-      </main>
+      </div>
     </>
   );
 }

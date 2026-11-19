@@ -85,7 +85,7 @@ export default async function JournalArticlePage(props: Props) {
   if (!article) notFound();
 
   return (
-    <main style={{ background: "var(--es-white)", minHeight: "100vh" }}>
+    <div style={{ background: "var(--es-white)", minHeight: "100vh" }}>
       {/* Hero */}
       <div
         style={{
@@ -250,6 +250,6 @@ export default async function JournalArticlePage(props: Props) {
           </Link>
         </div>
       </div>
-    </main>
+    </div>
   );
 }

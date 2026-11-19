@@ -8,7 +8,7 @@ import { createPublicSupabaseClient } from "@/lib/supabase/server";
 export const metadata: Metadata = {
   title: "New Arrivals",
   description:
-    "Browse the full Elite Style Co. collection: new arrivals across Women, Men, and Children in KES pricing with M-Pesa checkout and free Nairobi CBD delivery.",
+    "Browse the full Elite Style Co. collection: new arrivals across Women, Men, and Children in KES pricing with M-Pesa checkout. Delivered within 24 hours.",
   alternates: { canonical: "/products" },
 };
 
@@ -41,6 +41,7 @@ async function getProducts(): Promise<ProductRow[]> {
          skus(size, color, color_hex, stock_quantity)`
       )
       .in("status", ["active", "coming_soon"])
+      .in("category", ["women", "men", "children", "accessories"])
       .order("created_at", { ascending: false });
 
     if (error || !data) return [];
@@ -65,7 +66,7 @@ export default async function ProductsPage(props: PageProps) {
   const products = await getProducts();
 
   return (
-    <main className="min-h-screen bg-es-paper">
+    <div className="min-h-screen bg-es-paper">
       <div className="mx-auto w-full max-w-[1280px] px-4 sm:px-8 lg:px-16 py-10 sm:py-20">
         <Breadcrumb items={[{ label: "Home", href: "/" }, { label: "New Arrivals" }]} />
         {/* Page header */}
@@ -111,6 +112,6 @@ export default async function ProductsPage(props: PageProps) {
           <ProductsClient products={products} activeCategory={activeCategory} />
         </Suspense>
       </div>
-    </main>
+    </div>
   );
 }

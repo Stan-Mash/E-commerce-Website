@@ -107,7 +107,7 @@ export function Hero({ productCount }: HeroProps = {}) {
           <div className="hero-stats flex gap-8 mt-12 pt-8 border-t border-es-hair">
             {[
               { num: stylesValue, label: "Styles available" },
-              { num: "CBD",       label: "Free delivery zone" },
+              { num: "24h",       label: "Nairobi delivery" },
               { num: "M-Pesa",    label: "Accepted" },
             ].map((s) => (
               <div key={s.label}>

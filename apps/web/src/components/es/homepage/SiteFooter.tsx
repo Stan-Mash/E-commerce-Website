@@ -30,6 +30,8 @@ const COLS: FooterCol[] = [
       { label: "All Thrifted",  href: "/thrifted" },
       { label: "Plus Size",     href: "/thrifted/plus-size" },
       { label: "Standard",      href: "/thrifted/standard" },
+      { label: "New In",        href: "/thrifted" },
+      { label: "Find My Style", href: "/style-finder" },
     ],
   },
   {

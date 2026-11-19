@@ -84,6 +84,7 @@ export async function POST(req: NextRequest) {
 
   const systemPrompt = await buildSystemPrompt(parsed.data.productId);
   const result = await askStylist(parsed.data.messages as StylistMessage[], systemPrompt);
+  if (!result.success) console.error("[stylist] provider error:", result.error);
 
   const response = result.success
     ? NextResponse.json({ ok: true, reply: result.reply })

@@ -107,35 +107,94 @@ export default async function ProductPage(props: Props) {
   const reviewSummary = await getReviewSummary(product.id);
   const productUrl = absoluteUrl(`/products/${product.slug}`);
 
+  const inStock = product.skus?.some((s) => s.stock_quantity > 0);
+
+  const localBusiness = {
+    "@type": "ClothingStore",
+    "@id": absoluteUrl("/#store"),
+    name: "Elite Style Co.",
+    url: absoluteUrl("/"),
+    telephone: "+254142424802",
+    address: {
+      "@type": "PostalAddress",
+      streetAddress: "Shop 35, 4th Floor Wing B, Stanbank House, Moi Avenue",
+      addressLocality: "Nairobi",
+      addressRegion: "Nairobi County",
+      postalCode: "00100",
+      addressCountry: "KE",
+    },
+    geo: { "@type": "GeoCoordinates", latitude: -1.2833, longitude: 36.8211 },
+    openingHoursSpecification: [{
+      "@type": "OpeningHoursSpecification",
+      dayOfWeek: ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"],
+      opens: "09:00",
+      closes: "18:00",
+    }],
+    priceRange: "KES 800 – KES 15000",
+    currenciesAccepted: "KES",
+    paymentAccepted: "M-Pesa, Cash",
+  };
+
+  const shippingDetails = {
+    "@type": "OfferShippingDetails",
+    shippingRate: { "@type": "MonetaryAmount", value: 0, currency: "KES" },
+    shippingDestination: {
+      "@type": "DefinedRegion",
+      addressCountry: "KE",
+      addressRegion: "Nairobi",
+    },
+    deliveryTime: {
+      "@type": "ShippingDeliveryTime",
+      handlingTime: { "@type": "QuantitativeValue", minValue: 0, maxValue: 1, unitCode: "d" },
+      transitTime:  { "@type": "QuantitativeValue", minValue: 0, maxValue: 1, unitCode: "d" },
+    },
+    doesNotShip: false,
+  };
+
+  const returnPolicy = {
+    "@type": "MerchantReturnPolicy",
+    applicableCountry: "KE",
+    returnPolicyCategory: "https://schema.org/MerchantReturnFiniteReturnWindow",
+    merchantReturnDays: 14,
+    returnMethod: "https://schema.org/ReturnInStore",
+    returnFees: "https://schema.org/FreeReturn",
+  };
+
   const structuredData = {
     "@context": "https://schema.org",
-    "@type": "Product",
-    name: product.name,
-    description: product.description,
-    image: product.product_images
-      ?.sort((a, b) => a.sort_order - b.sort_order)
-      .map((i) => i.url),
-    brand: { "@type": "Brand", name: "Elite Style Co." },
-    ...(reviewSummary.count > 0
-      ? {
-          aggregateRating: {
-            "@type": "AggregateRating",
-            ratingValue: reviewSummary.average,
-            reviewCount: reviewSummary.count,
-          },
-        }
-      : {}),
-    offers: {
-      "@type": "Offer",
-      url: productUrl,
-      priceCurrency: "KES",
-      price: product.base_price,
-      itemCondition: "https://schema.org/NewCondition",
-      availability:
-        product.skus?.some((s) => s.stock_quantity > 0)
-          ? "https://schema.org/InStock"
-          : "https://schema.org/OutOfStock",
-    },
+    "@graph": [
+      localBusiness,
+      {
+        "@type": "Product",
+        name: product.name,
+        description: product.description,
+        image: product.product_images
+          ?.sort((a, b) => a.sort_order - b.sort_order)
+          .map((i) => i.url),
+        brand: { "@type": "Brand", name: "Elite Style Co." },
+        sku: product.skus?.[0]?.sku_code ?? product.id,
+        ...(reviewSummary.count > 0
+          ? {
+              aggregateRating: {
+                "@type": "AggregateRating",
+                ratingValue: reviewSummary.average,
+                reviewCount: reviewSummary.count,
+              },
+            }
+          : {}),
+        offers: {
+          "@type": "Offer",
+          url: productUrl,
+          priceCurrency: "KES",
+          price: product.base_price,
+          itemCondition: "https://schema.org/NewCondition",
+          availability: inStock ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+          seller: { "@id": absoluteUrl("/#store") },
+          shippingDetails,
+          hasMerchantReturnPolicy: returnPolicy,
+        },
+      },
+    ],
   };
 
   return (

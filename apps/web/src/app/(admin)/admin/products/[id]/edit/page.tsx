@@ -268,9 +268,15 @@ export default function EditProductPage(props: Props) {
 
       const res = await fetch(`/api/admin/products/${params.id}`, {
         method: "PUT",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
+
+      if (res.status === 401) {
+        window.location.href = `/admin/login?from=/admin/products/${params.id}/edit&error=session`;
+        return;
+      }
 
       const json = await res.json() as { error?: string };
       if (!res.ok) { setApiError(json.error ?? "Failed to save."); return; }
@@ -303,311 +309,209 @@ export default function EditProductPage(props: Props) {
     );
   }
 
+  const CARD: React.CSSProperties = {
+    border: "1px solid var(--es-bone)",
+    borderRadius: 8,
+    padding: "20px",
+    background: "var(--es-white)",
+  };
+
   return (
-    <div style={{ maxWidth: 760 }}>
+    <div>
+      <style>{`
+        .ep-grid { display: grid; grid-template-columns: minmax(0,1fr) 300px; gap: 32px; align-items: start; }
+        @media (max-width: 900px) { .ep-grid { grid-template-columns: 1fr; } }
+      `}</style>
+
       {/* Header */}
-      <div style={{ marginBottom: 40 }}>
-        <Link
-          href="/admin/products"
-          style={{
-            fontFamily: "var(--font-inter)",
-            fontSize: 11,
-            letterSpacing: "0.3em",
-            textTransform: "uppercase",
-            color: "var(--es-mute)",
-            textDecoration: "none",
-          }}
-        >
+      <div style={{ display: "flex", alignItems: "flex-end", gap: 24, marginBottom: 32, flexWrap: "wrap" }}>
+        <Link href="/admin/products" style={{ fontFamily: "var(--font-inter)", fontSize: 11, letterSpacing: "0.3em", textTransform: "uppercase", color: "var(--es-mute)", textDecoration: "none", paddingBottom: 2, borderBottom: "1px solid currentColor", flexShrink: 0, alignSelf: "center" }}>
           ← Products
         </Link>
-        <h1
-          style={{
-            fontFamily: "var(--font-bodoni)",
-            fontSize: 32,
-            fontWeight: 400,
-            color: "var(--es-ink)",
-            margin: "12px 0 0",
-          }}
-        >
-          Edit Product
-        </h1>
+        <div>
+          <p style={{ fontFamily: "var(--font-inter)", fontSize: 11, letterSpacing: "0.4em", textTransform: "uppercase", color: "var(--es-gold)", marginBottom: 6 }}>Catalogue</p>
+          <h1 style={{ fontFamily: "var(--font-bodoni)", fontSize: 32, fontWeight: 400, color: "var(--es-ink)", margin: 0 }}>Edit Product</h1>
+        </div>
       </div>
 
       {apiError && (
-        <div
-          style={{
-            background: "#fde8e8",
-            border: "1px solid #f5c6cb",
-            borderRadius: 4,
-            padding: "12px 16px",
-            marginBottom: 24,
-            fontFamily: "var(--font-inter)",
-            fontSize: 14,
-            color: "#c0392b",
-          }}
-        >
+        <div style={{ background: "#fde8e8", border: "1px solid #f5c6cb", borderRadius: 4, padding: "12px 16px", marginBottom: 24, fontFamily: "var(--font-inter)", fontSize: 14, color: "#c0392b" }}>
           {apiError}
         </div>
       )}
 
       <form onSubmit={(e) => void handleSave(e)}>
-        <div style={{ display: "flex", flexDirection: "column", gap: 28 }}>
+        <div className="ep-grid">
 
-          {/* Product Images */}
+          {/* ── Left column: content ── */}
           <div>
-            <label style={LABEL_STYLE}>Product Images</label>
-            <MultiImageUploader
-              value={images}
-              onChange={(next) => { setImages(next); setSaved(false); }}
-              onUploadingChange={setImageUploading}
-            />
+            {/* Images */}
+            <div style={{ marginBottom: 28 }}>
+              <label style={LABEL_STYLE}>Product Images</label>
+              <MultiImageUploader value={images} onChange={(next) => { setImages(next); setSaved(false); }} onUploadingChange={setImageUploading} />
+            </div>
+
+            {/* Videos */}
+            <div style={{ marginBottom: 28 }}>
+              <label style={LABEL_STYLE}>Product Videos <span style={{ fontSize: 10, color: "#aaa", textTransform: "none", letterSpacing: 0 }}>(optional)</span></label>
+              <MultiImageUploader kind="video" value={videos} onChange={(next) => { setVideos(next); setSaved(false); }} onUploadingChange={setVideoUploading} />
+            </div>
+
+            {/* Name + Slug */}
+            <div style={FIELD_ROW_STYLE}>
+              <div>
+                <label style={LABEL_STYLE}>Product Name</label>
+                <input style={INPUT_STYLE} value={form.name} onChange={(e) => { set("name", e.target.value); set("slug", autoSlug(e.target.value)); }} required />
+              </div>
+              <div>
+                <label style={LABEL_STYLE}>Web Address</label>
+                <input style={INPUT_STYLE} value={form.slug} onChange={(e) => set("slug", e.target.value)} required />
+                <span style={HELP_STYLE}>Auto-filled from the name.</span>
+              </div>
+            </div>
+
+            {/* Description */}
+            <div style={{ marginBottom: 28 }}>
+              <label style={LABEL_STYLE}>Description</label>
+              <textarea style={{ ...INPUT_STYLE, height: 140, resize: "vertical" }} value={form.description} onChange={(e) => set("description", e.target.value)} />
+            </div>
+
+            {/* Material + Care */}
+            <div style={FIELD_ROW_STYLE}>
+              <div>
+                <label style={LABEL_STYLE}>Material</label>
+                <input style={INPUT_STYLE} value={form.material} onChange={(e) => set("material", e.target.value)} placeholder="e.g. 100% Belgian Linen" />
+              </div>
+              <div>
+                <label style={LABEL_STYLE}>Care Instructions</label>
+                <input style={INPUT_STYLE} value={form.care_instructions} onChange={(e) => set("care_instructions", e.target.value)} placeholder="e.g. Hand wash cold" />
+              </div>
+            </div>
+
+            {/* SKUs */}
+            <div style={{ borderTop: "1px solid var(--es-bone)", paddingTop: 28, marginTop: 4 }}>
+              <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "space-between", alignItems: "flex-start", gap: 16, marginBottom: 20 }}>
+                <div>
+                  <p style={{ fontFamily: "var(--font-inter)", fontSize: 11, letterSpacing: "0.35em", textTransform: "uppercase", color: "var(--es-mute)", margin: 0 }}>Sizes, Colours &amp; Stock</p>
+                  <span style={{ ...HELP_STYLE, marginTop: 6 }}>One card per size or colour. At least one required.</span>
+                </div>
+                <button type="button" onClick={addSku} style={{ fontFamily: "var(--font-inter)", fontSize: 11, letterSpacing: "0.2em", textTransform: "uppercase", color: "var(--es-plum)", background: "none", border: "1px solid var(--es-plum)", padding: "8px 16px", cursor: "pointer", borderRadius: 2, flexShrink: 0 }}>
+                  + Add Size
+                </button>
+              </div>
+
+              {skus.map((sku, index) => (
+                <div key={index} style={{ border: "1px solid var(--es-bone)", borderRadius: 8, padding: 16, marginBottom: 14, background: "var(--es-white)" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+                    <span style={{ ...LABEL_STYLE, marginBottom: 0 }}>Size {index + 1}</span>
+                    <button type="button" onClick={() => removeSku(index)} style={{ display: "flex", alignItems: "center", gap: 6, background: "none", border: "none", cursor: "pointer", color: "#c0392b", fontSize: 12, letterSpacing: "0.1em", textTransform: "uppercase", padding: "8px 4px" }}>
+                      Remove ×
+                    </button>
+                  </div>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(110px, 1fr))", gap: 14 }}>
+                    <div>
+                      <label style={{ ...LABEL_STYLE, marginBottom: 4 }}>Size</label>
+                      <input type="text" value={sku.size} onChange={(e) => updateSku(index, "size", e.target.value)} style={{ ...INPUT_STYLE, padding: "8px 12px", fontSize: 13 }} placeholder="S / M / L" list="size-suggestions" />
+                    </div>
+                    <div>
+                      <label style={{ ...LABEL_STYLE, marginBottom: 4 }}>Colour</label>
+                      <input type="text" value={sku.color} onChange={(e) => updateSku(index, "color", e.target.value)} style={{ ...INPUT_STYLE, padding: "8px 12px", fontSize: 13 }} placeholder="Black" />
+                    </div>
+                    <div>
+                      <label style={{ ...LABEL_STYLE, marginBottom: 4 }}>Swatch</label>
+                      <input type="color" value={sku.color_hex} onChange={(e) => updateSku(index, "color_hex", e.target.value)} style={{ width: "100%", height: 38, border: "1px solid var(--es-bone)", borderRadius: 4, cursor: "pointer", padding: 2 }} />
+                    </div>
+                    <div>
+                      <label style={{ ...LABEL_STYLE, marginBottom: 4 }}>Stock</label>
+                      <input type="number" min={0} value={sku.stock_quantity} onChange={(e) => updateSku(index, "stock_quantity", e.target.value)} style={{ ...INPUT_STYLE, padding: "8px 12px", fontSize: 13 }} />
+                    </div>
+                  </div>
+                  <div style={{ marginTop: 14 }}>
+                    <label style={{ ...LABEL_STYLE, marginBottom: 4 }}>
+                      Product Code <span style={{ fontSize: 10, color: "#aaa", textTransform: "none", letterSpacing: 0 }}>(auto-filled)</span>
+                    </label>
+                    <input type="text" value={sku.sku_code} onChange={(e) => updateSku(index, "sku_code", e.target.value)} style={{ ...INPUT_STYLE, padding: "8px 12px", fontSize: 13, maxWidth: 280 }} placeholder="Fills in once you enter a size" />
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
 
-          {/* Product Videos */}
-          <div>
-            <label style={LABEL_STYLE}>Product Videos</label>
-            <MultiImageUploader
-              kind="video"
-              value={videos}
-              onChange={(next) => { setVideos(next); setSaved(false); }}
-              onUploadingChange={setVideoUploading}
-            />
-          </div>
+          {/* ── Right sidebar: config + actions ── */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 16, position: "sticky", top: 80 }}>
 
-          {/* Name + Slug */}
-          <div style={FIELD_ROW_STYLE}>
-            <div>
-              <label style={LABEL_STYLE}>Product Name</label>
-              <input
-                style={INPUT_STYLE}
-                value={form.name}
-                onChange={(e) => { set("name", e.target.value); set("slug", autoSlug(e.target.value)); }}
-                required
-              />
-            </div>
-            <div>
-              <label style={LABEL_STYLE}>Web Address</label>
-              <input style={INPUT_STYLE} value={form.slug} onChange={(e) => set("slug", e.target.value)} required />
-              <span style={HELP_STYLE}>
-                Filled in automatically from the name. Most people never need to touch this.
-              </span>
-            </div>
-          </div>
-
-          {/* Category + Status */}
-          <div style={FIELD_ROW_STYLE}>
-            <div>
-              <label style={LABEL_STYLE}>Shop &amp; Category</label>
-              <select style={INPUT_STYLE} value={form.category} onChange={(e) => set("category", e.target.value)}>
-                <optgroup label="── New Collection ──">
-                  <option value="women">Women</option>
-                  <option value="men">Men</option>
-                  <option value="children">Children</option>
-                  <option value="accessories">Accessories</option>
-                </optgroup>
-                <optgroup label="── Thrift Store ──">
-                  <option value="thrift-standard">Thrift · Standard (XS–XL)</option>
-                  <option value="thrift-plus">Thrift · Plus Size (16+)</option>
-                </optgroup>
-              </select>
-            </div>
-            <div>
+            {/* Status */}
+            <div style={CARD}>
               <label style={LABEL_STYLE}>Status</label>
-              <select style={INPUT_STYLE} value={form.status} onChange={(e) => set("status", e.target.value)}>
+              <select style={{ ...INPUT_STYLE, cursor: "pointer" }} value={form.status} onChange={(e) => set("status", e.target.value)}>
                 <option value="active">Active</option>
                 <option value="coming_soon">Coming Soon</option>
                 <option value="draft">Draft</option>
                 <option value="archived">Archived</option>
               </select>
-              <span style={HELP_STYLE}>
-                Draft = hidden. Active = live for customers to buy. Coming Soon = visible but not buyable yet.
-              </span>
+              <span style={HELP_STYLE}>Draft = hidden. Active = live. Coming Soon = visible, not buyable.</span>
             </div>
-          </div>
 
-          {/* Description */}
-          <div>
-            <label style={LABEL_STYLE}>Description</label>
-            <textarea
-              style={{ ...INPUT_STYLE, height: 120, resize: "vertical" }}
-              value={form.description}
-              onChange={(e) => set("description", e.target.value)}
-            />
-          </div>
+            {/* Category */}
+            <div style={CARD}>
+              <label style={LABEL_STYLE}>Shop &amp; Category</label>
+              <select style={{ ...INPUT_STYLE, cursor: "pointer" }} value={form.category} onChange={(e) => set("category", e.target.value)}>
+                <optgroup label="New Collection">
+                  <option value="women">Women</option>
+                  <option value="men">Men</option>
+                  <option value="children">Children (0-15 yrs)</option>
+                  <option value="accessories">Accessories</option>
+                </optgroup>
+                <optgroup label="Thrift Store - Standard">
+                  <option value="thrift-women">Thrift Standard - Women</option>
+                  <option value="thrift-men">Thrift Standard - Men</option>
+                  <option value="thrift-children">Thrift Standard - Children (0-15 yrs)</option>
+                </optgroup>
+                <optgroup label="Thrift Store - Plus Size">
+                  <option value="thrift-plus-women">Thrift Plus Size - Women</option>
+                  <option value="thrift-plus-men">Thrift Plus Size - Men</option>
+                </optgroup>
+              </select>
+            </div>
 
-          {/* Prices */}
-          <div style={FIELD_ROW_STYLE}>
-            <div>
-              <label style={LABEL_STYLE}>Selling Price (KES)</label>
-              <input type="number" style={INPUT_STYLE} value={form.base_price} onChange={(e) => set("base_price", e.target.value)} min={0} required />
-              <span style={HELP_STYLE}>What the customer pays, in Kenyan Shillings.</span>
-            </div>
-            <div>
-              <label style={LABEL_STYLE}>Original Price (optional)</label>
-              <input type="number" style={INPUT_STYLE} value={form.compare_price} onChange={(e) => set("compare_price", e.target.value)} min={0} placeholder="Optional" />
-              <span style={HELP_STYLE}>
-                Only fill this in to show a discount, e.g. &ldquo;Was 10,000, Now 8,500.&rdquo;
-              </span>
-            </div>
-          </div>
-
-          {/* Material + Care */}
-          <div style={FIELD_ROW_STYLE}>
-            <div>
-              <label style={LABEL_STYLE}>Material</label>
-              <input style={INPUT_STYLE} value={form.material} onChange={(e) => set("material", e.target.value)} placeholder="e.g. 100% Belgian Linen" />
-            </div>
-            <div>
-              <label style={LABEL_STYLE}>Care Instructions</label>
-              <input style={INPUT_STYLE} value={form.care_instructions} onChange={(e) => set("care_instructions", e.target.value)} placeholder="e.g. Hand wash cold" />
-            </div>
-          </div>
-
-          {/* Featured toggle */}
-          <div>
-            <label style={{ ...LABEL_STYLE, display: "flex", alignItems: "center", gap: 12, cursor: "pointer" }}>
-              <div
-                onClick={() => set("is_featured", !form.is_featured)}
-                style={{
-                  width: 44, height: 24, borderRadius: 12,
-                  background: form.is_featured ? "var(--es-plum)" : "var(--es-bone)",
-                  position: "relative", cursor: "pointer", transition: "background 0.2s", flexShrink: 0,
-                }}
-              >
-                <div
-                  style={{
-                    width: 18, height: 18, borderRadius: "50%", background: "#fff",
-                    position: "absolute", top: 3, left: form.is_featured ? 23 : 3,
-                    transition: "left 0.2s", boxShadow: "0 1px 3px rgba(0,0,0,0.2)",
-                  }}
-                />
+            {/* Pricing */}
+            <div style={CARD}>
+              <div style={{ marginBottom: 16 }}>
+                <label style={LABEL_STYLE}>Selling Price (KES)</label>
+                <input type="number" style={INPUT_STYLE} value={form.base_price} onChange={(e) => set("base_price", e.target.value)} min={0} required />
               </div>
-              <span>Featured Product</span>
-            </label>
-            <span style={{ ...HELP_STYLE, marginLeft: 56 }}>
-              Shows this item in the Featured section on your homepage.
-            </span>
-          </div>
-
-          {/* SKUs */}
-          <div style={{ borderTop: "1px solid var(--es-bone)", paddingTop: 28 }}>
-            <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "space-between", alignItems: "flex-start", gap: 16, marginBottom: 20 }}>
               <div>
-                <p style={{ fontFamily: "var(--font-inter)", fontSize: 11, letterSpacing: "0.35em", textTransform: "uppercase", color: "var(--es-mute)", margin: 0 }}>
-                  Sizes, Colours &amp; Stock
-                </p>
-                <span style={{ ...HELP_STYLE, marginTop: 6, maxWidth: 420 }}>
-                  Add one card below for every size or colour you sell, with how many you have of each. At least one is required.
-                </span>
+                <label style={LABEL_STYLE}>Original Price <span style={{ fontSize: 10, color: "#aaa", textTransform: "none", letterSpacing: 0 }}>(optional)</span></label>
+                <input type="number" style={INPUT_STYLE} value={form.compare_price} onChange={(e) => set("compare_price", e.target.value)} min={0} placeholder="Optional" />
+                <span style={HELP_STYLE}>Shows a strikethrough discount if higher than selling price.</span>
               </div>
-              <button
-                type="button"
-                onClick={addSku}
-                style={{
-                  fontFamily: "var(--font-inter)", fontSize: 11, letterSpacing: "0.2em",
-                  textTransform: "uppercase", color: "var(--es-plum)", background: "none",
-                  border: "1px solid var(--es-plum)", padding: "8px 16px", cursor: "pointer", borderRadius: 2,
-                  flexShrink: 0,
-                }}
-              >
-                + Add Size
-              </button>
             </div>
 
-            {skus.map((sku, index) => (
-              <div
-                key={index}
-                style={{ border: "1px solid var(--es-bone)", borderRadius: 8, padding: 16, marginBottom: 14, background: "var(--es-white)" }}
-              >
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
-                  <span style={{ ...LABEL_STYLE, marginBottom: 0 }}>Size {index + 1}</span>
-                  <button
-                    type="button"
-                    onClick={() => removeSku(index)}
-                    aria-label={`Remove size ${index + 1}`}
-                    style={{
-                      display: "flex", alignItems: "center", gap: 6, background: "none", border: "none",
-                      cursor: "pointer", color: "#c0392b", fontSize: 12, letterSpacing: "0.1em",
-                      textTransform: "uppercase", padding: "8px 4px",
-                    }}
-                  >
-                    Remove ×
-                  </button>
+            {/* Featured */}
+            <div style={CARD}>
+              <label style={{ ...LABEL_STYLE, display: "flex", alignItems: "center", gap: 12, cursor: "pointer", marginBottom: 0 }}>
+                <div onClick={() => set("is_featured", !form.is_featured)} style={{ width: 44, height: 24, borderRadius: 12, background: form.is_featured ? "var(--es-plum)" : "var(--es-bone)", position: "relative", cursor: "pointer", transition: "background 0.2s", flexShrink: 0 }}>
+                  <div style={{ width: 18, height: 18, borderRadius: "50%", background: "#fff", position: "absolute", top: 3, left: form.is_featured ? 23 : 3, transition: "left 0.2s", boxShadow: "0 1px 3px rgba(0,0,0,0.2)" }} />
                 </div>
+                <span>Featured Product</span>
+              </label>
+              <span style={{ ...HELP_STYLE, marginTop: 8 }}>Shows on the homepage featured section.</span>
+            </div>
 
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(110px, 1fr))", gap: 14 }}>
-                  <div>
-                    <label style={{ ...LABEL_STYLE, marginBottom: 4 }}>Size</label>
-                    <input type="text" value={sku.size} onChange={(e) => updateSku(index, "size", e.target.value)} style={{ ...INPUT_STYLE, padding: "8px 12px", fontSize: 13 }} placeholder="S / M / L" list="size-suggestions" />
-                  </div>
-                  <div>
-                    <label style={{ ...LABEL_STYLE, marginBottom: 4 }}>Colour</label>
-                    <input type="text" value={sku.color} onChange={(e) => updateSku(index, "color", e.target.value)} style={{ ...INPUT_STYLE, padding: "8px 12px", fontSize: 13 }} placeholder="Black" />
-                  </div>
-                  <div>
-                    <label style={{ ...LABEL_STYLE, marginBottom: 4 }}>Swatch</label>
-                    <input type="color" value={sku.color_hex} onChange={(e) => updateSku(index, "color_hex", e.target.value)} style={{ width: "100%", height: 38, border: "1px solid var(--es-bone)", borderRadius: 4, cursor: "pointer", padding: 2 }} />
-                  </div>
-                  <div>
-                    <label style={{ ...LABEL_STYLE, marginBottom: 4 }}>Stock</label>
-                    <input type="number" min={0} value={sku.stock_quantity} onChange={(e) => updateSku(index, "stock_quantity", e.target.value)} style={{ ...INPUT_STYLE, padding: "8px 12px", fontSize: 13 }} />
-                  </div>
-                </div>
-
-                <div style={{ marginTop: 14 }}>
-                  <label style={{ ...LABEL_STYLE, marginBottom: 4 }}>
-                    Product Code
-                    <span style={{ marginLeft: 6, fontSize: 10, color: "#aaa", textTransform: "none", letterSpacing: 0 }}>
-                      (auto-filled)
-                    </span>
-                  </label>
-                  <input
-                    type="text"
-                    value={sku.sku_code}
-                    onChange={(e) => updateSku(index, "sku_code", e.target.value)}
-                    style={{ ...INPUT_STYLE, padding: "8px 12px", fontSize: 13, maxWidth: 280 }}
-                    placeholder="Fills in once you enter a size"
-                  />
-                  <span style={{ ...HELP_STYLE, maxWidth: 420 }}>
-                    A short code so this size/colour can be told apart from others. Filled in for you. Only change it if you want something custom.
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Actions */}
-          <div style={{ display: "flex", alignItems: "center", gap: 16, paddingTop: 8, borderTop: "1px solid var(--es-bone)" }}>
-            <button
-              type="submit"
-              disabled={saving || imageUploading || videoUploading}
-              className="es-btn-plum"
-              style={{ opacity: saving || imageUploading || videoUploading ? 0.7 : 1, cursor: saving || imageUploading || videoUploading ? "not-allowed" : "pointer" }}
-            >
-              {saving ? "Saving…" : (imageUploading || videoUploading) ? "Waiting for upload…" : "Save Changes"}
-            </button>
-
-            {saved && (
-              <span style={{ fontFamily: "var(--font-inter)", fontSize: 13, color: "#2e7d32", letterSpacing: "0.05em" }}>
-                Saved, redirecting…
-              </span>
-            )}
-
-            <Link
-              href="/admin/products"
-              style={{ marginLeft: "auto", fontFamily: "var(--font-inter)", fontSize: 12, letterSpacing: "0.2em", textTransform: "uppercase", color: "var(--es-mute)", textDecoration: "none" }}
-            >
-              Cancel
-            </Link>
+            {/* Actions */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              <button type="submit" disabled={saving || imageUploading || videoUploading} className="es-btn-plum" style={{ width: "100%", opacity: saving || imageUploading || videoUploading ? 0.7 : 1, cursor: saving || imageUploading || videoUploading ? "not-allowed" : "pointer" }}>
+                {saving ? "Saving…" : (imageUploading || videoUploading) ? "Waiting for upload…" : "Save Changes"}
+              </button>
+              {saved && <span style={{ fontFamily: "var(--font-inter)", fontSize: 13, color: "#2e7d32", textAlign: "center" }}>Saved, redirecting…</span>}
+              <Link href="/admin/products" style={{ fontFamily: "var(--font-inter)", fontSize: 12, letterSpacing: "0.2em", textTransform: "uppercase", color: "var(--es-mute)", textDecoration: "none", textAlign: "center" }}>
+                Cancel
+              </Link>
+            </div>
           </div>
         </div>
       </form>
 
-      {/* Autocomplete suggestions for the Size field above — still a free-text
-          input (custom sizes are fine), this just makes it fast to pick a
-          standard size and keeps the spelling consistent, so the storefront's
-          size filter doesn't end up with near-duplicates like "5xl" and "5XL"
-          for the same real size. */}
       <datalist id="size-suggestions">
         {SIZE_SUGGESTIONS.map((s) => <option key={s} value={s} />)}
       </datalist>

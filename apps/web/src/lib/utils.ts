@@ -33,7 +33,7 @@ export function generateOrderRef(): string {
   globalThis.crypto.getRandomValues(bytes);
   let rand = "";
   for (const b of bytes) rand += REF_ALPHABET[b % REF_ALPHABET.length];
-  return `NF-${rand.slice(0, 5)}-${rand.slice(5)}`;
+  return `ES-${rand.slice(0, 5)}-${rand.slice(5)}`;
 }
 
 export function maskPhone(phone: string): string {

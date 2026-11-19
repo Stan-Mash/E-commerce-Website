@@ -14,6 +14,7 @@ import { TryOnModal } from "@/components/product/TryOnModal";
 import { isCategoryEligibleForTryOn } from "@/lib/tryon/provider";
 import type { ProductDetail } from "@nairobi-fashion/lib";
 import { WhatsAppOrderCard } from "@/components/product/WhatsAppOrderCard";
+import { MpesaExpressModal } from "@/components/product/MpesaExpressModal";
 
 const LOW_STOCK_THRESHOLD = 5;
 
@@ -63,6 +64,7 @@ export function ProductInfo({ product, tryOnEnabled = false }: Props) {
   const [addedMessage, setAddedMessage] = useState("");
   const [wishlisted, setWishlisted] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [showMpesaModal, setShowMpesaModal] = useState(false);
 
   useEffect(() => {
     const isWishlisted = readWishlist().includes(product.id);
@@ -259,7 +261,12 @@ export function ProductInfo({ product, tryOnEnabled = false }: Props) {
                 {selectedSize ?? "Select"}
               </span>
             </p>
-            {product.category?.toLowerCase() !== "accessories" && <SizeGuide activeSize={selectedSize} />}
+            {product.category?.toLowerCase() !== "accessories" && (
+              <SizeGuide
+                activeSize={selectedSize}
+                initialTab={/heel|boot|shoe|loafer|sandal|sneaker|stiletto|pump|flat/i.test(product.name + " " + (product.slug ?? "")) ? "footwear" : "adults"}
+              />
+            )}
           </div>
           <div className="flex gap-2 flex-wrap">
             {uniqueSizes.map((size) => {
@@ -337,6 +344,32 @@ export function ProductInfo({ product, tryOnEnabled = false }: Props) {
           {copied ? <Check size={20} /> : <Share2 size={20} />}
         </button>
       </div>
+
+      {/* Buy Now with M-Pesa */}
+      {!isComingSoon && inStock && (
+        <button
+          type="button"
+          onClick={() => setShowMpesaModal(true)}
+          style={{
+            display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+            width: "100%", padding: "13px 0",
+            background: "#1abc9c", color: "#fff",
+            border: "none", cursor: "pointer",
+            fontSize: 10, letterSpacing: "0.38em", textTransform: "uppercase",
+            fontFamily: "var(--font-inter,sans-serif)", fontWeight: 600,
+          }}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+          Buy Now with M-Pesa
+        </button>
+      )}
+      {showMpesaModal && (
+        <MpesaExpressModal
+          product={product}
+          selectedSize={selectedSize}
+          onClose={() => setShowMpesaModal(false)}
+        />
+      )}
 
       <WhatsAppOrderCard
         product={product}

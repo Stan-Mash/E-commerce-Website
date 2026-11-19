@@ -9,9 +9,6 @@ import React, { useState, useEffect, useCallback, useRef, memo } from "react";
 import { CheckCircle2, Printer } from "lucide-react";
 import { createClient } from "@supabase/supabase-js";
 
-// Auth helper
-// Wraps fetch to always send the admin_session HttpOnly cookie.
-// credentials:"include" is sufficient - the token no longer comes from localStorage.
 function adminFetch(url: string, init: RequestInit = {}): Promise<Response> {
   return fetch(url, { ...init, credentials: "include" });
 }
@@ -29,8 +26,10 @@ interface SKU {
 interface Product {
   id:          string;
   name:        string;
+  slug:        string;
   category:    string;
   base_price:  number;
+  status:      string;
   image_url?:  string | null;
   skus:        SKU[];
 }
@@ -123,10 +122,8 @@ interface ReceiptParams {
   changeDue:     number;
 }
 
-// Writes receipt to an already-open serial port (caller manages open/close)
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function writeESCPOS(port: any, params: ReceiptParams): Promise<void> {
-
   const enc = new TextEncoder();
   const ESC = 0x1b, GS = 0x1d;
   const cmd = (...b: number[]) => new Uint8Array(b);
@@ -137,8 +134,8 @@ async function writeESCPOS(port: any, params: ReceiptParams): Promise<void> {
     : params.paymentMethod === "mpesa_stk" ? "M-PESA STK" : "M-PESA TILL";
 
   const chunks: Uint8Array[] = [
-    cmd(ESC, 0x40),                          // init
-    cmd(ESC, 0x61, 0x01),                    // centre
+    cmd(ESC, 0x40),
+    cmd(ESC, 0x61, 0x01),
     cmd(GS,  0x21, 0x11), cmd(ESC, 0x45, 0x01),
     ln("ELITE STYLE CO"),
     cmd(GS,  0x21, 0x00), cmd(ESC, 0x45, 0x00),
@@ -146,7 +143,7 @@ async function writeESCPOS(port: any, params: ReceiptParams): Promise<void> {
     ln("Nairobi, Kenya"),
     ln("KRA PIN: P000000000A"),
     ln(new Date().toLocaleString("en-KE", { dateStyle: "short", timeStyle: "short" })),
-    cmd(0x0a), sep(), cmd(ESC, 0x61, 0x00),  // left
+    cmd(0x0a), sep(), cmd(ESC, 0x61, 0x00),
   ];
 
   for (const item of params.items) {
@@ -193,7 +190,7 @@ async function writeESCPOS(port: any, params: ReceiptParams): Promise<void> {
     ln("Returns: 14 days with original receipt."),
     ln("No returns on sale/clearance items."),
     cmd(0x0a), cmd(0x0a), cmd(0x0a),
-    cmd(GS, 0x56, 0x00),                     // full cut
+    cmd(GS, 0x56, 0x00),
   );
 
   const writer = port.writable!.getWriter();
@@ -201,7 +198,6 @@ async function writeESCPOS(port: any, params: ReceiptParams): Promise<void> {
   writer.releaseLock();
 }
 
-// Browser print fallback — no hardware required
 function browserPrintReceipt(params: ReceiptParams): void {
   const pmLabel = params.paymentMethod === "cash" ? "CASH"
     : params.paymentMethod === "mpesa_stk" ? "M-PESA STK" : "M-PESA TILL";
@@ -239,22 +235,19 @@ ${params.phone ? `<div class="c">Customer: ${params.phone}</div>` : ""}
   if (w) { w.document.write(html); w.document.close(); w.focus(); setTimeout(() => w.print(), 400); }
 }
 
-// Defined at module level (not inside POSPage) so React keeps it mounted;
-// an inline definition would remount it on every keystroke.
+// Shift modal
 
 interface ShiftModalProps {
   shiftAction:  "open" | "close";
-  cashierName:  string;                                   // pre-fills cashier input
-  shift:        Shift | null;                             // shows Cancel button when set
-  errorMsg:     string | null;                            // shown inside modal
+  cashierName:  string;
+  shift:        Shift | null;
+  errorMsg:     string | null;
   onOpen:       (name: string, float: number) => void;
   onClose:      (float: number) => void;
   onCancel:     () => void;
 }
 
 const ShiftModalComponent = memo(function ShiftModalComponent({ shiftAction, cashierName, shift, errorMsg, onOpen, onClose, onCancel }: ShiftModalProps) {
-  // Controlled local state - typing updates local state only, completely isolated
-  // from POSPage re-renders. This is the correct pattern for modal inputs.
   const [nameVal,    setNameVal]    = useState(cashierName);
   const [floatVal,   setFloatVal]   = useState("");
   const [closingVal, setClosingVal] = useState("");
@@ -263,18 +256,13 @@ const ShiftModalComponent = memo(function ShiftModalComponent({ shiftAction, cas
   const floatRef   = useRef<HTMLInputElement>(null);
   const closingRef = useRef<HTMLInputElement>(null);
 
-  // Focus the correct field on mount / when action switches
   useEffect(() => {
     if (shiftAction === "open") cashierRef.current?.focus();
     else                        closingRef.current?.focus();
   }, [shiftAction]);
 
-  const submitOpen = () => {
-    onOpen(nameVal.trim() || "Staff", parseFloat(floatVal) || 0);
-  };
-  const submitClose = () => {
-    onClose(parseFloat(closingVal) || 0);
-  };
+  const submitOpen  = () => { onOpen(nameVal.trim() || "Staff", parseFloat(floatVal) || 0); };
+  const submitClose = () => { onClose(parseFloat(closingVal) || 0); };
 
   return (
     <div
@@ -295,32 +283,13 @@ const ShiftModalComponent = memo(function ShiftModalComponent({ shiftAction, cas
         {shiftAction === "open" ? (
           <div>
             <label style={labelStyle}>Cashier Name</label>
-            <input
-              ref={cashierRef}
-              value={nameVal}
-              onChange={e => setNameVal(e.target.value)}
-              placeholder="Your name"
-              style={inputStyle}
-              onKeyDown={e => {
-                e.stopPropagation(); e.nativeEvent.stopImmediatePropagation();
-                if (e.key === "Enter") { e.preventDefault(); submitOpen(); }
-                if (e.key === "Tab")   { e.preventDefault(); floatRef.current?.focus(); }
-              }}
-            />
+            <input ref={cashierRef} value={nameVal} onChange={e => setNameVal(e.target.value)}
+              placeholder="Your name" style={inputStyle}
+              onKeyDown={e => { e.stopPropagation(); e.nativeEvent.stopImmediatePropagation(); if (e.key === "Enter") { e.preventDefault(); submitOpen(); } if (e.key === "Tab") { e.preventDefault(); floatRef.current?.focus(); } }} />
             <label style={labelStyle}>Opening Cash Float (KES)</label>
-            <input
-              ref={floatRef}
-              value={floatVal}
-              onChange={e => setFloatVal(e.target.value)}
-              type="number"
-              placeholder="0"
-              style={inputStyle}
-              onKeyDown={e => {
-                e.stopPropagation(); e.nativeEvent.stopImmediatePropagation();
-                if (e.key === "Enter") { e.preventDefault(); submitOpen(); }
-                if (e.key === "Tab")   { e.preventDefault(); cashierRef.current?.focus(); }
-              }}
-            />
+            <input ref={floatRef} value={floatVal} onChange={e => setFloatVal(e.target.value)}
+              type="number" placeholder="0" style={inputStyle}
+              onKeyDown={e => { e.stopPropagation(); e.nativeEvent.stopImmediatePropagation(); if (e.key === "Enter") { e.preventDefault(); submitOpen(); } if (e.key === "Tab") { e.preventDefault(); cashierRef.current?.focus(); } }} />
             <button type="button" onClick={submitOpen} style={{ fontFamily: FONT, fontSize: 12, letterSpacing: "0.2em", textTransform: "uppercase", background: "#7c3aed", color: "#fff", border: "none", borderRadius: 4, padding: "13px 0", cursor: "pointer", width: "100%", marginTop: 4, fontWeight: 700 }}>
               Open Shift
             </button>
@@ -328,15 +297,9 @@ const ShiftModalComponent = memo(function ShiftModalComponent({ shiftAction, cas
         ) : (
           <div>
             <label style={labelStyle}>Closing Cash Count (KES)</label>
-            <input
-              ref={closingRef}
-              value={closingVal}
-              onChange={e => setClosingVal(e.target.value)}
-              type="number"
-              placeholder="0"
-              style={inputStyle}
-              onKeyDown={e => { e.stopPropagation(); e.nativeEvent.stopImmediatePropagation(); if (e.key === "Enter") { e.preventDefault(); submitClose(); } }}
-            />
+            <input ref={closingRef} value={closingVal} onChange={e => setClosingVal(e.target.value)}
+              type="number" placeholder="0" style={inputStyle}
+              onKeyDown={e => { e.stopPropagation(); e.nativeEvent.stopImmediatePropagation(); if (e.key === "Enter") { e.preventDefault(); submitClose(); } }} />
             <button type="button" onClick={submitClose} style={{ fontFamily: FONT, fontSize: 12, letterSpacing: "0.2em", textTransform: "uppercase", background: "#c0392b", color: "#fff", border: "none", borderRadius: 4, padding: "13px 0", cursor: "pointer", width: "100%", marginTop: 4, fontWeight: 700 }}>
               Close Shift
             </button>
@@ -367,6 +330,7 @@ export default function POSPage() {
   const [paymentMethod,   setPaymentMethod]  = useState<"cash" | "mpesa_stk" | "mpesa_c2b">("cash");
   const [promoCode,       setPromoCode]      = useState("");
   const [amountTendered,  setAmountTendered] = useState("");
+  const [c2bRefCode,      setC2bRefCode]     = useState("");
   const [completing,      setCompleting]     = useState(false);
   const [successRef,      setSuccessRef]     = useState<string | null>(null);
   const [errorMsg,        setErrorMsg]       = useState<string | null>(null);
@@ -374,7 +338,6 @@ export default function POSPage() {
   // Shift
   const [shift,           setShift]          = useState<Shift | null>(null);
   const [showShiftModal,  setShowShiftModal]  = useState(false);
-  // openingFloat / closingFloat are read directly from refs at submit - no state needed
   const [shiftAction,     setShiftAction]    = useState<"open" | "close">("open");
 
   // Hold/park
@@ -396,15 +359,11 @@ export default function POSPage() {
 
   const [variantPickerProduct, setVariantPickerProduct] = useState<Product | null>(null);
 
-  // Printer — connect once, reuse for all subsequent prints in this session
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [printerPort, setPrinterPort] = useState<any>(null);
 
   const connectPrinter = useCallback(async () => {
-    if (!("serial" in navigator)) {
-      setErrorMsg("Web Serial not supported. Use Chrome or Edge on desktop.");
-      return;
-    }
+    if (!("serial" in navigator)) { setErrorMsg("Web Serial not supported. Use Chrome or Edge."); return; }
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const p = await (navigator as any).serial.requestPort();
@@ -422,7 +381,7 @@ export default function POSPage() {
   const handlePrint = useCallback(async (params: ReceiptParams) => {
     if (printerPort) {
       try { await writeESCPOS(printerPort, params); return; }
-      catch { setPrinterPort(null); } // port dropped — fall through to browser print
+      catch { setPrinterPort(null); }
     }
     browserPrintReceipt(params);
   }, [printerPort]);
@@ -447,7 +406,7 @@ export default function POSPage() {
   const loadShift = useCallback((locId: string) => {
     if (!locId) return;
     adminFetch(`/api/admin/pos/shifts?location_id=${locId}`)
-      .then((r) => r.json())
+      .then(r => r.json())
       .then((j: { shift: Shift | null }) => {
         setShift(j.shift ?? null);
         if (!j.shift) setShowShiftModal(true);
@@ -455,36 +414,40 @@ export default function POSPage() {
       .catch(() => {});
   }, []);
 
-  useEffect(() => {
-    if (locationId) void loadShift(locationId);
-  }, [locationId, loadShift]);
+  useEffect(() => { if (locationId) void loadShift(locationId); }, [locationId, loadShift]);
 
-  // Load products
+  // Load products — active status only, deduplicated by slug
   const loadProducts = useCallback(async () => {
     setLoading(true);
     try {
       const r = await adminFetch("/api/admin/products");
       if (r.ok) {
-        const j = await r.json() as { products: Product[] };
-        setProducts((j.products ?? []).filter(p => p.skus.some(s => s.stock_quantity > 0)));
+        const j = await r.json() as { products: (Product & { status: string; slug: string })[] };
+        const seen = new Set<string>();
+        const deduped = (j.products ?? [])
+          .filter(p => p.status === "active")
+          .filter(p => p.skus.some(s => s.stock_quantity > 0))
+          .filter(p => {
+            const key = p.slug || p.id;
+            if (seen.has(key)) return false;
+            seen.add(key);
+            return true;
+          });
+        setProducts(deduped);
       }
     } finally {
       setLoading(false);
     }
   }, []);
 
-  // loadProducts is also called manually after completing a sale and after
-  // clearing the cart (see below), not just from this mount effect — its
-  // setLoading(true) is needed to re-show the loading state on those
-  // refreshes too, so it isn't a redundant initializer we can delete.
-  // eslint-disable-next-line react-hooks/set-state-in-effect -- also invoked from manual refresh call sites elsewhere in this component
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { void loadProducts(); }, [loadProducts]);
 
   // Keyboard shortcuts
   const completeSaleRef = useRef<() => Promise<void>>(undefined);
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
-      if (showShiftModalRef.current) return;               // modal open, never intercept
+      if (showShiftModalRef.current) return;
       const tag = (e.target as HTMLElement)?.tagName;
       if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
       if (e.key === "F1") { e.preventDefault(); setPaymentMethod("cash"); }
@@ -510,7 +473,7 @@ export default function POSPage() {
   useEffect(() => {
     let buf = "", last = 0;
     function onKeyDown(e: KeyboardEvent) {
-      if (showShiftModalRef.current) return;               // modal open, never intercept
+      if (showShiftModalRef.current) return;
       const tag = (e.target as HTMLElement)?.tagName;
       if (tag === "INPUT" || tag === "TEXTAREA") return;
       const now = Date.now();
@@ -576,7 +539,7 @@ export default function POSPage() {
   }
 
   function clearCart() {
-    setCart([]); setPhone(""); setPromoCode(""); setAmountTendered("");
+    setCart([]); setPhone(""); setPromoCode(""); setAmountTendered(""); setC2bRefCode("");
     setSuccessRef(null); setErrorMsg(null);
     setC2bOrderId(null); setC2bOrderRef(null); setC2bPaid(false);
   }
@@ -609,11 +572,7 @@ export default function POSPage() {
   async function openShift(cashierNameVal: string, openingFloatVal: number) {
     const r = await adminFetch("/api/admin/pos/shifts", {
       method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        action: "open", location_id: locationId,
-        cashier_name: cashierNameVal || "Staff",
-        opening_float: openingFloatVal,
-      }),
+      body: JSON.stringify({ action: "open", location_id: locationId, cashier_name: cashierNameVal || "Staff", opening_float: openingFloatVal }),
     });
     const j = await r.json() as { shift?: Shift; error?: string };
     if (r.ok) { setShift(j.shift ?? null); setShowShiftModal(false); setCashierName(j.shift?.cashier_name ?? cashierNameVal); setErrorMsg(null); }
@@ -622,14 +581,13 @@ export default function POSPage() {
 
   async function closeShift(closingFloatVal: number) {
     if (!shift) return;
-    const float = closingFloatVal;
     const r = await adminFetch("/api/admin/pos/shifts", {
       method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "close", shift_id: shift.id, closing_float: float }),
+      body: JSON.stringify({ action: "close", shift_id: shift.id, closing_float: closingFloatVal }),
     });
     const j = await r.json() as { shift?: { variance: number; expected_float: number }; error?: string };
     if (r.ok) {
-      alert(`Shift closed.\nExpected: ${formatKES(j.shift?.expected_float ?? 0)}\nActual: ${formatKES(float)}\nVariance: ${formatKES(j.shift?.variance ?? 0)}`);
+      alert(`Shift closed.\nExpected: ${formatKES(j.shift?.expected_float ?? 0)}\nActual: ${formatKES(closingFloatVal)}\nVariance: ${formatKES(j.shift?.variance ?? 0)}`);
       setShift(null); setShowShiftModal(false); clearCart();
     } else setErrorMsg(j.error ?? "Failed to close shift");
   }
@@ -645,17 +603,15 @@ export default function POSPage() {
       const r = await adminFetch("/api/admin/pos", {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          phone,
-          payment_method: paymentMethod,
-          location_id:    locationId,
-          shift_id:       shift.id,          // ← CRITICAL: was missing before
-          cashier_name:   cashierName || shift.cashier_name || "Staff",
+          phone, payment_method: paymentMethod,
+          location_id: locationId, shift_id: shift.id,
+          cashier_name: cashierName || shift.cashier_name || "Staff",
           items: cart.map(c => ({
-            sku_id:     c.sku_id,
-            quantity:   c.quantity,
+            sku_id: c.sku_id, quantity: c.quantity,
             unit_price: Math.round(c.unit_price - c.item_discount / Math.max(c.quantity, 1)),
           })),
           promo_code: promoCode || undefined,
+          c2b_ref: paymentMethod === "mpesa_c2b" && c2bRefCode ? c2bRefCode.trim() : undefined,
         }),
       });
 
@@ -668,13 +624,12 @@ export default function POSPage() {
       if (!r.ok) { setErrorMsg(j.error ?? "Failed to complete sale."); return; }
 
       const sale = {
-        orderRef:      j.order_ref ?? "",
-        items:         [...cart],
-        subtotal,
-        discount:      (j.discount_amount ?? 0) + itemDiscounts,
-        total:         j.total ?? displayTotal,
+        orderRef: j.order_ref ?? "",
+        items: [...cart], subtotal,
+        discount: (j.discount_amount ?? 0) + itemDiscounts,
+        total: j.total ?? displayTotal,
         paymentMethod,
-        amountPaid:    tenderedAmt || (j.total ?? displayTotal),
+        amountPaid: tenderedAmt || (j.total ?? displayTotal),
         changeDue,
       };
       setLastSale(sale);
@@ -687,7 +642,7 @@ export default function POSPage() {
         setCart([]);
       } else {
         setSuccessRef(j.order_ref ?? "N/A");
-        setCart([]); setAmountTendered("");
+        setCart([]); setAmountTendered(""); setC2bRefCode("");
         void loadProducts();
       }
     } catch {
@@ -697,37 +652,21 @@ export default function POSPage() {
     }
   }
 
-  // Manual fallback: cashier has visually confirmed M-Pesa payment and marks paid
   async function markC2bPaid() {
     if (!c2bOrderId) return;
-    const confirmed = window.confirm(
-      "Only mark as paid after verifying the customer's M-Pesa payment on their phone.\n\nProceed?"
-    );
-    if (!confirmed) return;
+    if (!window.confirm("Only mark as paid after verifying the customer's M-Pesa payment.\n\nProceed?")) return;
     const r = await adminFetch(`/api/admin/orders/pending-buy-goods`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
+      method: "PATCH", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ orderId: c2bOrderId, action: "confirm" }),
     });
-    if (r.ok) {
-      setC2bPaid(true);
-    } else {
-      alert("Could not mark order as paid. Please try again.");
-    }
+    if (r.ok) setC2bPaid(true);
+    else alert("Could not mark order as paid. Please try again.");
   }
 
-  // Wire completeSale into ref so keyboard shortcut always calls the latest version.
-  // Written in an effect (not during render) since refs must not be mutated
-  // while rendering; no deps array so it re-syncs after every render.
-  useEffect(() => {
-    completeSaleRef.current = completeSale;
-  });
+  useEffect(() => { completeSaleRef.current = completeSale; });
 
   const locationName = locations.find(l => l.id === locationId)?.name ?? "Store";
 
-  // Shift modal callbacks (stable references so ShiftModalComponent doesn't
-  // remount). Declared before the C2B early returns below — hooks must run in
-  // the same order on every render.
   const handleOpenShift  = useCallback((name: string, float: number) => { void openShift(name, float); }, [locationId]); // eslint-disable-line react-hooks/exhaustive-deps
   const handleCloseShift = useCallback((float: number) => { void closeShift(float); }, [shift]);                         // eslint-disable-line react-hooks/exhaustive-deps
   const handleCancelShift = useCallback(() => setShowShiftModal(false), []);
@@ -735,7 +674,7 @@ export default function POSPage() {
   // C2B waiting screen
   if (c2bOrderId && !c2bPaid) {
     return (
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "70vh" }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", background: "var(--es-paper)" }}>
         <div style={{ textAlign: "center", padding: 48, background: "#fff", border: "1px solid #e8e8e8", borderRadius: 12, maxWidth: 520, width: "100%" }}>
           <div style={{ width: 64, height: 64, margin: "0 auto 20px", borderRadius: "50%", background: "#fff8e1", display: "flex", alignItems: "center", justifyContent: "center" }}>
             <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#c9a961" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
@@ -746,46 +685,28 @@ export default function POSPage() {
           <p style={{ fontFamily: FONT, fontSize: 48, fontWeight: 900, color: "#111", margin: "0 0 6px", letterSpacing: "-0.03em" }}>
             {formatKES(c2bTotal)}
           </p>
-
-          {/* Till + Reference boxes */}
           <div style={{ display: "grid", gridTemplateColumns: TILL_NUMBER ? "1fr 1fr" : "1fr", gap: 10, margin: "24px 0 20px" }}>
             {TILL_NUMBER && (
               <div style={{ background: "#e8f5e9", border: "2px solid #66bb6a", borderRadius: 8, padding: "14px 16px" }}>
-                <p style={{ fontFamily: FONT, fontSize: 9, color: "#2e7d32", marginBottom: 6, letterSpacing: "0.15em", textTransform: "uppercase", fontWeight: 700, margin: "0 0 6px" }}>
-                  Pay to Till
-                </p>
-                <p style={{ fontFamily: FONT, fontSize: 28, fontWeight: 900, color: "#2e7d32", margin: 0 }}>
-                  {TILL_NUMBER}
-                </p>
+                <p style={{ fontFamily: FONT, fontSize: 9, color: "#2e7d32", margin: "0 0 6px", letterSpacing: "0.15em", textTransform: "uppercase", fontWeight: 700 }}>Pay to Till</p>
+                <p style={{ fontFamily: FONT, fontSize: 28, fontWeight: 900, color: "#2e7d32", margin: 0 }}>{TILL_NUMBER}</p>
               </div>
             )}
             <div style={{ background: "#f3e8ff", border: "2px solid #7c3aed", borderRadius: 8, padding: "14px 16px" }}>
-              <p style={{ fontFamily: FONT, fontSize: 9, color: "#7c3aed", marginBottom: 6, letterSpacing: "0.15em", textTransform: "uppercase", fontWeight: 700, margin: "0 0 6px" }}>
-                Account Ref
-              </p>
-              <p style={{ fontFamily: FONT, fontSize: 28, fontWeight: 900, color: "#7c3aed", margin: 0, wordBreak: "break-all" }}>
-                {c2bOrderRef}
-              </p>
+              <p style={{ fontFamily: FONT, fontSize: 9, color: "#7c3aed", margin: "0 0 6px", letterSpacing: "0.15em", textTransform: "uppercase", fontWeight: 700 }}>Account Ref</p>
+              <p style={{ fontFamily: FONT, fontSize: 28, fontWeight: 900, color: "#7c3aed", margin: 0, wordBreak: "break-all" }}>{c2bOrderRef}</p>
             </div>
           </div>
-
           <p style={{ fontFamily: FONT, fontSize: 13, color: "#666", lineHeight: 1.8, margin: "0 0 24px" }}>
             Customer pays via <strong>M-Pesa Buy Goods</strong>{TILL_NUMBER ? <> · Till <strong>{TILL_NUMBER}</strong></> : ""}<br/>
-            They enter <strong>{c2bOrderRef}</strong> as the account reference.<br/>
+            Use <strong>{c2bOrderRef}</strong> as account reference.<br/>
             <span style={{ color: "#aaa", fontSize: 12 }}>Screen updates automatically once payment is received.</span>
           </p>
-
           <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
-            <button
-              onClick={() => void markC2bPaid()}
-              style={{ fontFamily: FONT, fontSize: 11, letterSpacing: "0.15em", textTransform: "uppercase", background: "#2e7d32", color: "#fff", border: "none", borderRadius: 4, padding: "11px 20px", cursor: "pointer", fontWeight: 700 }}
-            >
+            <button onClick={() => void markC2bPaid()} style={{ fontFamily: FONT, fontSize: 11, letterSpacing: "0.15em", textTransform: "uppercase", background: "#2e7d32", color: "#fff", border: "none", borderRadius: 4, padding: "11px 20px", cursor: "pointer", fontWeight: 700 }}>
               ✓ Mark as Paid
             </button>
-            <button
-              onClick={clearCart}
-              style={{ fontFamily: FONT, fontSize: 11, letterSpacing: "0.15em", textTransform: "uppercase", background: "#f1f1f1", color: "#555", border: "none", borderRadius: 4, padding: "11px 20px", cursor: "pointer" }}
-            >
+            <button onClick={clearCart} style={{ fontFamily: FONT, fontSize: 11, letterSpacing: "0.15em", textTransform: "uppercase", background: "#f1f1f1", color: "#555", border: "none", borderRadius: 4, padding: "11px 20px", cursor: "pointer" }}>
               Cancel Order
             </button>
           </div>
@@ -796,58 +717,49 @@ export default function POSPage() {
 
   if (c2bPaid) {
     return (
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "70vh" }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", background: "var(--es-paper)" }}>
         <div style={{ textAlign: "center", padding: 48, background: "#e8f5e9", border: "2px solid #66bb6a", borderRadius: 12, maxWidth: 480, width: "100%" }}>
           <div style={{ marginBottom: 8, color: "#2e7d32" }}><CheckCircle2 size={56} aria-hidden="true" /></div>
           <p style={{ fontFamily: FONT, fontSize: 28, fontWeight: 900, color: "#2e7d32", margin: "0 0 4px" }}>Payment Confirmed</p>
           <p style={{ fontFamily: FONT, fontSize: 15, color: "#2e7d32", fontWeight: 700 }}>{c2bOrderRef}</p>
           <div style={{ display: "flex", gap: 10, justifyContent: "center", marginTop: 24, flexWrap: "wrap" }}>
             {lastSale && <>
-              <button
-                onClick={() => void handlePrint({ ...lastSale, cashierName: cashierName || "Staff", phone, locationName })}
-                style={{ fontFamily: FONT, fontSize: 11, letterSpacing: "0.15em", textTransform: "uppercase", background: "#7c3aed", color: "#fff", border: "none", borderRadius: 4, padding: "10px 18px", cursor: "pointer" }}
-              >Print Receipt</button>
+              <button onClick={() => void handlePrint({ ...lastSale, cashierName: cashierName || "Staff", phone, locationName })}
+                style={{ fontFamily: FONT, fontSize: 11, letterSpacing: "0.15em", textTransform: "uppercase", background: "#7c3aed", color: "#fff", border: "none", borderRadius: 4, padding: "10px 18px", cursor: "pointer" }}>
+                Print Receipt
+              </button>
               {phone && (
-                <a
-                  href={whatsappLink({ ...lastSale, phone, locationName })}
-                  target="_blank" rel="noopener noreferrer"
-                  style={{ fontFamily: FONT, fontSize: 11, letterSpacing: "0.15em", textTransform: "uppercase", background: "#25D366", color: "#fff", border: "none", borderRadius: 4, padding: "10px 18px", textDecoration: "none", display: "inline-block" }}
-                >WhatsApp Receipt</a>
+                <a href={whatsappLink({ ...lastSale, phone, locationName })} target="_blank" rel="noopener noreferrer"
+                  style={{ fontFamily: FONT, fontSize: 11, letterSpacing: "0.15em", textTransform: "uppercase", background: "#25D366", color: "#fff", border: "none", borderRadius: 4, padding: "10px 18px", textDecoration: "none", display: "inline-block" }}>
+                  WhatsApp Receipt
+                </a>
               )}
             </>}
-            <button
-              onClick={() => { clearCart(); void loadProducts(); }}
-              style={{ fontFamily: FONT, fontSize: 11, letterSpacing: "0.15em", textTransform: "uppercase", background: "#2e7d32", color: "#fff", border: "none", borderRadius: 4, padding: "10px 18px", cursor: "pointer" }}
-            >New Sale</button>
+            <button onClick={() => { clearCart(); void loadProducts(); }}
+              style={{ fontFamily: FONT, fontSize: 11, letterSpacing: "0.15em", textTransform: "uppercase", background: "#2e7d32", color: "#fff", border: "none", borderRadius: 4, padding: "10px 18px", cursor: "pointer" }}>
+              New Sale
+            </button>
           </div>
         </div>
       </div>
     );
   }
 
-  // ShiftModal is now a module-level component (ShiftModalComponent) - see above POSPage.
-
-  // Main render
+  // Main render — full-height locked layout
   return (
-    <div>
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", overflow: "hidden", fontFamily: FONT, background: "#f7f7f8" }}>
+
+      {/* Modals */}
       {showShiftModal && (
-        <ShiftModalComponent
-          shiftAction={shiftAction}
-          cashierName={cashierName}
-          shift={shift}
-          errorMsg={errorMsg}
-          onOpen={handleOpenShift}
-          onClose={handleCloseShift}
-          onCancel={handleCancelShift}
-        />
+        <ShiftModalComponent shiftAction={shiftAction} cashierName={cashierName} shift={shift}
+          errorMsg={errorMsg} onOpen={handleOpenShift} onClose={handleCloseShift} onCancel={handleCancelShift} />
       )}
+
       {showHeld && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)", display: "flex", justifyContent: "flex-end", zIndex: 150 }} onClick={() => setShowHeld(false)}>
           <div style={{ width: 360, maxWidth: "100%", background: "#fff", height: "100%", overflowY: "auto", padding: 28, boxShadow: "-8px 0 40px rgba(0,0,0,0.12)" }} onClick={e => e.stopPropagation()}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
-              <h3 style={{ fontFamily: FONT, fontSize: 16, fontWeight: 800, color: "#111", margin: 0 }}>
-                Held ({heldCarts.length})
-              </h3>
+              <h3 style={{ fontFamily: FONT, fontSize: 16, fontWeight: 800, color: "#111", margin: 0 }}>Held ({heldCarts.length})</h3>
               <button onClick={() => setShowHeld(false)} style={{ background: "none", border: "none", fontSize: 22, cursor: "pointer", color: "#888", lineHeight: 1 }}>×</button>
             </div>
             {heldCarts.length === 0 ? (
@@ -867,17 +779,9 @@ export default function POSPage() {
         </div>
       )}
 
-      {/* Variant Picker Modal */}
       {variantPickerProduct && (
-        <div
-          onClick={() => setVariantPickerProduct(null)}
-          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 300, padding: 24 }}
-        >
-          <div
-            onClick={e => e.stopPropagation()}
-            style={{ background: "#fff", borderRadius: 16, maxWidth: 540, width: "100%", overflow: "hidden", boxShadow: "0 24px 64px rgba(0,0,0,0.22)" }}
-          >
-            {/* Product header */}
+        <div onClick={() => setVariantPickerProduct(null)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 300, padding: 24 }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: "#fff", borderRadius: 16, maxWidth: 540, width: "100%", overflow: "hidden", boxShadow: "0 24px 64px rgba(0,0,0,0.22)" }}>
             <div style={{ display: "flex", gap: 16, padding: "20px 24px", borderBottom: "1px solid #f5f5f5", alignItems: "center" }}>
               {variantPickerProduct.image_url ? (
                 // eslint-disable-next-line @next/next/no-img-element
@@ -888,54 +792,21 @@ export default function POSPage() {
                 </div>
               )}
               <div style={{ flex: 1, minWidth: 0 }}>
-                <p style={{ fontFamily: FONT, fontSize: 16, fontWeight: 800, color: "#111", margin: "0 0 4px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                  {variantPickerProduct.name}
-                </p>
-                <p style={{ fontFamily: FONT, fontSize: 20, fontWeight: 900, color: "#7c3aed", margin: 0, letterSpacing: "-0.02em" }}>
-                  {formatKES(variantPickerProduct.base_price)}
-                </p>
+                <p style={{ fontFamily: FONT, fontSize: 16, fontWeight: 800, color: "#111", margin: "0 0 4px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{variantPickerProduct.name}</p>
+                <p style={{ fontFamily: FONT, fontSize: 20, fontWeight: 900, color: "#7c3aed", margin: 0, letterSpacing: "-0.02em" }}>{formatKES(variantPickerProduct.base_price)}</p>
               </div>
-              <button
-                onClick={() => setVariantPickerProduct(null)}
-                style={{ background: "#f5f5f5", border: "none", borderRadius: "50%", width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0, color: "#666", fontSize: 18, lineHeight: 1 }}
-              >×</button>
+              <button onClick={() => setVariantPickerProduct(null)} style={{ background: "#f5f5f5", border: "none", borderRadius: "50%", width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0, color: "#666", fontSize: 18, lineHeight: 1 }}>×</button>
             </div>
-
-            {/* Variants */}
             <div style={{ padding: 24 }}>
-              <p style={{ fontFamily: FONT, fontSize: 10, letterSpacing: "0.3em", textTransform: "uppercase", color: "#bbb", margin: "0 0 14px" }}>
-                Select Size / Colour
-              </p>
+              <p style={{ fontFamily: FONT, fontSize: 10, letterSpacing: "0.3em", textTransform: "uppercase", color: "#bbb", margin: "0 0 14px" }}>Select Size / Colour</p>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10, maxHeight: 300, overflowY: "auto" }}>
                 {variantPickerProduct.skus.filter(s => s.stock_quantity > 0).map(sku => (
-                  <button
-                    key={sku.id}
-                    onClick={() => { addToCart(variantPickerProduct, sku); setVariantPickerProduct(null); }}
-                    style={{
-                      fontFamily: FONT, border: `1.5px solid ${sku.stock_quantity <= 3 ? "#fde8e8" : "#ede9fe"}`,
-                      borderRadius: 10, padding: "12px 8px", cursor: "pointer",
-                      background: sku.stock_quantity <= 3 ? "#fffaf9" : "#faf8ff",
-                      textAlign: "center",
-                    }}
-                  >
-                    {sku.size !== "ONE SIZE" && (
-                      <p style={{ fontFamily: FONT, fontSize: 13, fontWeight: 700, color: "#111", margin: "0 0 2px" }}>{sku.size}</p>
-                    )}
-                    {sku.color && (
-                      <p style={{ fontFamily: FONT, fontSize: 12, color: "#555", margin: sku.size !== "ONE SIZE" ? "0 0 8px" : "0 0 8px", textTransform: "capitalize", fontWeight: sku.size === "ONE SIZE" ? 700 : 400 }}>
-                        {sku.color}
-                      </p>
-                    )}
-                    {!sku.color && sku.size === "ONE SIZE" && (
-                      <p style={{ fontFamily: FONT, fontSize: 12, color: "#555", margin: "0 0 8px" }}>One Size</p>
-                    )}
-                    <span style={{
-                      display: "inline-block", fontFamily: FONT, fontSize: 9, fontWeight: 700,
-                      letterSpacing: "0.08em", textTransform: "uppercase",
-                      color: sku.stock_quantity <= 3 ? "#c0392b" : "#2e7d32",
-                      background: sku.stock_quantity <= 3 ? "#fde8e8" : "#e8f5e9",
-                      padding: "2px 8px", borderRadius: 20,
-                    }}>
+                  <button key={sku.id} onClick={() => { addToCart(variantPickerProduct, sku); setVariantPickerProduct(null); }}
+                    style={{ fontFamily: FONT, border: `1.5px solid ${sku.stock_quantity <= 3 ? "#fde8e8" : "#ede9fe"}`, borderRadius: 10, padding: "12px 8px", cursor: "pointer", background: sku.stock_quantity <= 3 ? "#fffaf9" : "#faf8ff", textAlign: "center" }}>
+                    {sku.size !== "ONE SIZE" && <p style={{ fontFamily: FONT, fontSize: 13, fontWeight: 700, color: "#111", margin: "0 0 2px" }}>{sku.size}</p>}
+                    {sku.color && <p style={{ fontFamily: FONT, fontSize: 12, color: "#555", margin: "0 0 8px", textTransform: "capitalize" }}>{sku.color}</p>}
+                    {!sku.color && sku.size === "ONE SIZE" && <p style={{ fontFamily: FONT, fontSize: 12, color: "#555", margin: "0 0 8px" }}>One Size</p>}
+                    <span style={{ display: "inline-block", fontFamily: FONT, fontSize: 9, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: sku.stock_quantity <= 3 ? "#c0392b" : "#2e7d32", background: sku.stock_quantity <= 3 ? "#fde8e8" : "#e8f5e9", padding: "2px 8px", borderRadius: 20 }}>
                       {sku.stock_quantity} left
                     </span>
                   </button>
@@ -946,172 +817,177 @@ export default function POSPage() {
         </div>
       )}
 
-      {/* Header */}
-      <div style={{ marginBottom: 18, display: "flex", alignItems: "flex-start", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
-        <div>
-          <p style={{ fontFamily: FONT, fontSize: 10, letterSpacing: "0.35em", textTransform: "uppercase", color: "#c9a961", marginBottom: 4 }}>
-            In-Store
-          </p>
-          <h1 style={{ fontFamily: FONT, fontSize: 26, fontWeight: 900, color: "#111", margin: "0 0 4px", letterSpacing: "-0.03em" }}>
-            POS Terminal
-          </h1>
-          <p style={{ fontFamily: FONT, fontSize: 11, color: "#aaa", margin: 0 }}>
-            F1 = Cash · F2 = STK · F3 = Till · Enter = Complete Sale
-          </p>
-        </div>
-        <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-          {/* Printer connect/disconnect */}
-          <button
-            onClick={() => printerPort ? void disconnectPrinter() : void connectPrinter()}
-            title={printerPort ? "Printer connected, click to disconnect" : "Connect receipt printer"}
-            style={{ fontFamily: FONT, fontSize: 10, letterSpacing: "0.1em", textTransform: "uppercase", background: printerPort ? "#e8f5e9" : "#f5f5f5", color: printerPort ? "#2e7d32" : "#888", border: `1px solid ${printerPort ? "#a5d6a7" : "#ddd"}`, borderRadius: 4, padding: "7px 12px", cursor: "pointer", display: "flex", alignItems: "center", gap: 5 }}
-          >
-            <Printer size={14} aria-hidden="true" />
-            <span>{printerPort ? "Printer On" : "Printer Off"}</span>
+      {/* POS Toolbar — replaces the old h1 header */}
+      <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 16px", background: "#fff", borderBottom: "1px solid #e8e8e8", flexShrink: 0, flexWrap: "wrap" }}>
+        {/* Keyboard hints */}
+        {[["F1", "Cash"], ["F2", "STK Push"], ["F3", "Till"], ["↵", "Complete"]].map(([k, v]) => (
+          <span key={k} style={{ fontFamily: FONT, fontSize: 10, background: "#f3f3f5", border: "1px solid #e0e0e0", borderRadius: 4, padding: "3px 8px", color: "#666", whiteSpace: "nowrap" }}>
+            <strong style={{ color: "#111" }}>{k}</strong> {v}
+          </span>
+        ))}
+
+        <div style={{ flex: 1 }} />
+
+        {/* Printer */}
+        <button onClick={() => printerPort ? void disconnectPrinter() : void connectPrinter()}
+          title={printerPort ? "Disconnect printer" : "Connect receipt printer"}
+          style={{ fontFamily: FONT, fontSize: 10, letterSpacing: "0.08em", textTransform: "uppercase", background: printerPort ? "#e8f5e9" : "#f5f5f5", color: printerPort ? "#2e7d32" : "#888", border: `1px solid ${printerPort ? "#a5d6a7" : "#ddd"}`, borderRadius: 4, padding: "5px 10px", cursor: "pointer", display: "flex", alignItems: "center", gap: 4 }}>
+          <Printer size={12} aria-hidden="true" />
+          {printerPort ? "On" : "Off"}
+        </button>
+
+        {/* Held orders */}
+        <button onClick={() => setShowHeld(true)}
+          style={{ fontFamily: FONT, fontSize: 10, letterSpacing: "0.08em", textTransform: "uppercase", background: heldCarts.length > 0 ? "#fff8e1" : "#f5f5f5", color: heldCarts.length > 0 ? "#92680a" : "#aaa", border: `1px solid ${heldCarts.length > 0 ? "#f0c040" : "#ddd"}`, borderRadius: 4, padding: "5px 10px", cursor: "pointer", fontWeight: heldCarts.length > 0 ? 700 : 400 }}>
+          {heldCarts.length > 0 ? `⏸ Held (${heldCarts.length})` : "Held (0)"}
+        </button>
+
+        {/* Location */}
+        {locations.length > 1 ? (
+          <select value={locationId} onChange={e => setLocationId(e.target.value)}
+            style={{ padding: "5px 8px", borderRadius: 4, border: "1px solid #e0e0e0", fontFamily: FONT, fontSize: 12, color: "#111", background: "#fff" }}>
+            {locations.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
+          </select>
+        ) : (
+          <span style={{ fontFamily: FONT, fontSize: 11, color: "#999" }}>{locationName}</span>
+        )}
+
+        {/* Shift */}
+        {shift ? (
+          <>
+            <span style={{ fontFamily: FONT, fontSize: 11, color: "#2e7d32", fontWeight: 700 }}>● {shift.cashier_name}</span>
+            <button onClick={() => { setShiftAction("close"); setShowShiftModal(true); }}
+              style={{ fontFamily: FONT, fontSize: 10, letterSpacing: "0.1em", textTransform: "uppercase", background: "#fde8e8", color: "#c0392b", border: "1px solid #f5c6cb", borderRadius: 4, padding: "5px 10px", cursor: "pointer" }}>
+              End Shift
+            </button>
+          </>
+        ) : (
+          <button onClick={() => { setShiftAction("open"); setShowShiftModal(true); }}
+            style={{ fontFamily: FONT, fontSize: 10, letterSpacing: "0.12em", textTransform: "uppercase", background: "#7c3aed", color: "#fff", border: "none", borderRadius: 4, padding: "6px 14px", cursor: "pointer", fontWeight: 700 }}>
+            Open Shift
           </button>
-          {heldCarts.length > 0 && (
-            <button onClick={() => setShowHeld(true)} style={{ fontFamily: FONT, fontSize: 10, letterSpacing: "0.1em", textTransform: "uppercase", background: "#fff8e1", color: "#92680a", border: "1px solid #f0c040", borderRadius: 4, padding: "7px 12px", cursor: "pointer", fontWeight: 700 }}>
-              ⏸ Held ({heldCarts.length})
-            </button>
-          )}
-          {locations.length > 1 ? (
-            <select
-              value={locationId}
-              onChange={e => setLocationId(e.target.value)}
-              style={{ padding: "8px 12px", borderRadius: 4, border: "1px solid #e0e0e0", fontFamily: FONT, fontSize: 13, color: "#111", background: "#fff" }}
-            >
-              {locations.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
-            </select>
-          ) : (
-            <span style={{ fontFamily: FONT, fontSize: 12, color: "#888", letterSpacing: "0.05em" }}>
-              {locationName}
-            </span>
-          )}
-          {shift ? (
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <span style={{ fontFamily: FONT, fontSize: 12, color: "#2e7d32", fontWeight: 700 }}>
-                ● {shift.cashier_name}
-              </span>
-              <button onClick={() => { setShiftAction("close"); setShowShiftModal(true); }} style={{ fontFamily: FONT, fontSize: 10, letterSpacing: "0.12em", textTransform: "uppercase", background: "#fde8e8", color: "#c0392b", border: "1px solid #f5c6cb", borderRadius: 4, padding: "7px 12px", cursor: "pointer" }}>
-                End Shift
-              </button>
-            </div>
-          ) : (
-            <button onClick={() => { setShiftAction("open"); setShowShiftModal(true); }} style={{ fontFamily: FONT, fontSize: 10, letterSpacing: "0.12em", textTransform: "uppercase", background: "#7c3aed", color: "#fff", border: "none", borderRadius: 4, padding: "8px 16px", cursor: "pointer", fontWeight: 700 }}>
-              Open Shift
-            </button>
-          )}
-        </div>
+        )}
       </div>
 
       {!shift && (
-        <div style={{ background: "#fff8e1", border: "1px solid #f0c040", borderRadius: 6, padding: "10px 16px", marginBottom: 16, fontFamily: FONT, fontSize: 13, color: "#92680a" }}>
-          No open shift. Open a shift before processing any sales.
+        <div style={{ background: "#fff8e1", border: "none", borderBottom: "1px solid #f0c040", padding: "8px 16px", fontFamily: FONT, fontSize: 12, color: "#92680a", flexShrink: 0 }}>
+          No open shift — open a shift before processing sales.
         </div>
       )}
 
-      <div style={{ display: "flex", gap: 20, alignItems: "start", flexWrap: "wrap" }}>
+      {/* Body: product grid + cart */}
+      <div style={{ display: "flex", flex: 1, overflow: "hidden", minHeight: 0 }}>
 
-        {/* Product browser */}
-        <div style={{ flex: 1, minWidth: 280 }}>
+        {/* ── Product panel ── */}
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", padding: "12px 12px 0 16px" }}>
+
           {/* Search */}
-          <div style={{ position: "relative", marginBottom: 12 }}>
-            <svg style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", pointerEvents: "none" }} width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#bbb" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-            <input
-              ref={searchRef}
-              type="text"
-              placeholder="Search products or scan barcode…"
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              style={{ ...inputStyle, paddingLeft: 36, marginBottom: 0, fontSize: 14, background: "#fafafa", border: "1.5px solid #ececec", borderRadius: 8 }}
-            />
+          <div style={{ position: "relative", marginBottom: 10, flexShrink: 0 }}>
+            <svg style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", pointerEvents: "none" }} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#bbb" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <input ref={searchRef} type="text" placeholder="Search or scan barcode…"
+              value={search} onChange={e => setSearch(e.target.value)}
+              style={{ ...inputStyle, paddingLeft: 32, marginBottom: 0, fontSize: 13, background: "#fff", borderColor: "#e0e0e0", borderRadius: 6 }} />
             {search && (
-              <button onClick={() => setSearch("")} style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: "#bbb", fontSize: 18, lineHeight: 1, padding: 0 }}>×</button>
+              <button onClick={() => setSearch("")} style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: "#bbb", fontSize: 16, lineHeight: 1, padding: 0 }}>×</button>
             )}
           </div>
+
           {/* Category tabs */}
-          <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 16 }}>
+          <div style={{ display: "flex", gap: 5, flexWrap: "wrap", marginBottom: 10, flexShrink: 0 }}>
             {categories.map(cat => (
-              <button
-                key={cat}
-                onClick={() => setCategoryFilter(cat)}
-                style={{
-                  fontFamily: FONT, fontSize: 10, fontWeight: 600,
-                  letterSpacing: "0.1em", textTransform: "uppercase",
-                  padding: "6px 16px", borderRadius: 20,
-                  border: `1.5px solid ${categoryFilter === cat ? "#7c3aed" : "#e8e8e8"}`,
-                  background: categoryFilter === cat ? "#7c3aed" : "#fff",
-                  color: categoryFilter === cat ? "#fff" : "#999",
-                  cursor: "pointer", transition: "all 0.15s",
-                }}
-              >{cat}</button>
+              <button key={cat} onClick={() => setCategoryFilter(cat)}
+                style={{ fontFamily: FONT, fontSize: 10, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", padding: "5px 12px", borderRadius: 20, border: `1.5px solid ${categoryFilter === cat ? "#7c3aed" : "#e8e8e8"}`, background: categoryFilter === cat ? "#7c3aed" : "#fff", color: categoryFilter === cat ? "#fff" : "#999", cursor: "pointer" }}>
+                {cat}
+              </button>
             ))}
           </div>
 
-          {loading ? (
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: 220 }}>
-              <p style={{ fontFamily: FONT, fontSize: 13, color: "#ccc", letterSpacing: "0.1em" }}>Loading products…</p>
-            </div>
-          ) : filtered.length === 0 ? (
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: 220, gap: 10 }}>
-              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#ddd" strokeWidth="1.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-              <p style={{ fontFamily: FONT, fontSize: 13, color: "#ccc", margin: 0 }}>No products found</p>
-            </div>
-          ) : (
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(195px, 1fr))", gap: 14, maxHeight: "calc(100vh - 310px)", overflowY: "auto", paddingRight: 4 }}>
-              {filtered.map(product => {
-                const inStockSkus = product.skus.filter(s => s.stock_quantity > 0);
-                const lowStock = inStockSkus.some(s => s.stock_quantity <= 3);
-                return (
-                  <div
-                    key={product.id}
-                    onClick={() => {
-                      if (inStockSkus.length === 1 && inStockSkus[0]) addToCart(product, inStockSkus[0]);
-                      else setVariantPickerProduct(product);
-                    }}
-                    style={{ background: "#fff", borderRadius: 12, border: "1px solid #f0f0f0", overflow: "hidden", display: "flex", flexDirection: "column", cursor: "pointer", boxShadow: "0 1px 4px rgba(0,0,0,0.05)", transition: "box-shadow 0.15s" }}
-                  >
-                    {product.image_url ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={product.image_url} alt={product.name} style={{ width: "100%", height: 140, objectFit: "cover" }} />
-                    ) : (
-                      <div style={{ width: "100%", height: 140, background: "linear-gradient(135deg,#f5f3ff,#ede9fe)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#c4b5fd" strokeWidth="1.5"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
-                      </div>
-                    )}
-                    <div style={{ padding: "12px 14px 14px", display: "flex", flexDirection: "column", flex: 1 }}>
-                      <p style={{ fontFamily: FONT, fontSize: 13, fontWeight: 700, color: "#111", margin: "0 0 3px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                        {product.name}
-                      </p>
-                      <p style={{ fontFamily: FONT, fontSize: 15, fontWeight: 900, color: "#7c3aed", margin: 0, letterSpacing: "-0.02em" }}>
-                        {formatKES(product.base_price)}
-                      </p>
-                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 10 }}>
-                        <span style={{ fontFamily: FONT, fontSize: 10, color: lowStock ? "#c0392b" : "#aaa", letterSpacing: "0.03em" }}>
-                          {lowStock ? "Low stock" : `${inStockSkus.length} variant${inStockSkus.length !== 1 ? "s" : ""}`}
-                        </span>
-                        <span style={{ fontFamily: FONT, fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#fff", background: "#7c3aed", padding: "4px 12px", borderRadius: 20 }}>
-                          {inStockSkus.length === 1 ? "Add" : "Select"}
-                        </span>
+          {/* Product grid — compact 4-5 columns, scrollable */}
+          <div style={{ flex: 1, overflowY: "auto", paddingBottom: 12 }}>
+            {loading ? (
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: 160 }}>
+                <p style={{ fontFamily: FONT, fontSize: 13, color: "#ccc" }}>Loading products…</p>
+              </div>
+            ) : filtered.length === 0 ? (
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: 160, gap: 10 }}>
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#ddd" strokeWidth="1.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                <p style={{ fontFamily: FONT, fontSize: 13, color: "#ccc", margin: 0 }}>No products found</p>
+              </div>
+            ) : (
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: 10 }}>
+                {filtered.map(product => {
+                  const inStockSkus = product.skus.filter(s => s.stock_quantity > 0);
+                  const totalStock  = inStockSkus.reduce((s, k) => s + k.stock_quantity, 0);
+                  const lowStock    = inStockSkus.some(s => s.stock_quantity <= 3);
+                  return (
+                    <div key={product.id}
+                      onClick={() => {
+                        if (inStockSkus.length === 1 && inStockSkus[0]) addToCart(product, inStockSkus[0]);
+                        else setVariantPickerProduct(product);
+                      }}
+                      style={{ background: "#fff", borderRadius: 8, border: "1px solid #ececec", overflow: "hidden", display: "flex", flexDirection: "column", cursor: "pointer", boxShadow: "0 1px 3px rgba(0,0,0,0.04)", transition: "box-shadow 0.12s" }}
+                    >
+                      {/* Thumbnail — square aspect ratio */}
+                      {product.image_url ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={product.image_url} alt={product.name} style={{ width: "100%", aspectRatio: "1/1", objectFit: "cover" }} />
+                      ) : (
+                        <div style={{ width: "100%", aspectRatio: "1/1", background: "linear-gradient(135deg,#f5f3ff,#ede9fe)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#c4b5fd" strokeWidth="1.5"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/></svg>
+                        </div>
+                      )}
+
+                      <div style={{ padding: "8px 10px 10px" }}>
+                        <p style={{ fontFamily: FONT, fontSize: 11, fontWeight: 700, color: "#111", margin: "0 0 2px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          {product.name}
+                        </p>
+                        <p style={{ fontFamily: FONT, fontSize: 13, fontWeight: 900, color: "#7c3aed", margin: "0 0 6px", letterSpacing: "-0.02em" }}>
+                          {formatKES(product.base_price)}
+                        </p>
+
+                        {/* Variant pills (up to 4) */}
+                        {inStockSkus.length > 1 && (
+                          <div style={{ display: "flex", flexWrap: "wrap", gap: 3, marginBottom: 5 }}>
+                            {inStockSkus.slice(0, 4).map(sku => (
+                              <span key={sku.id} style={{ fontFamily: FONT, fontSize: 9, background: "#f3f3f5", border: "1px solid #e0e0e0", borderRadius: 3, padding: "1px 5px", color: "#555" }}>
+                                {sku.size === "ONE SIZE" ? sku.color || "OS" : sku.size}
+                              </span>
+                            ))}
+                            {inStockSkus.length > 4 && (
+                              <span style={{ fontFamily: FONT, fontSize: 9, color: "#aaa" }}>+{inStockSkus.length - 4}</span>
+                            )}
+                          </div>
+                        )}
+
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                          <span style={{ fontFamily: FONT, fontSize: 9, color: lowStock ? "#c0392b" : "#aaa" }}>
+                            {lowStock ? `${totalStock} left` : `${inStockSkus.length} size${inStockSkus.length !== 1 ? "s" : ""}`}
+                          </span>
+                          <span style={{ fontFamily: FONT, fontSize: 9, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "#fff", background: "#7c3aed", padding: "3px 8px", borderRadius: 12 }}>
+                            {inStockSkus.length === 1 ? "Add" : "Pick"}
+                          </span>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* Cart panel */}
-        <div style={{ width: 370, maxWidth: "100%", flexShrink: 0, background: "#fff", borderRadius: 10, padding: 22, border: "1px solid #e8e8e8", position: "sticky", top: 20 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
-            <p style={{ fontFamily: FONT, fontSize: 10, letterSpacing: "0.3em", textTransform: "uppercase", color: "#888", margin: 0 }}>
-              Cart ({cart.length})
-            </p>
+        {/* ── Cart panel — full height, pinned footer ── */}
+        <div style={{ width: 340, flexShrink: 0, display: "flex", flexDirection: "column", background: "#fff", borderLeft: "1px solid #e8e8e8", overflow: "hidden" }}>
+
+          {/* Cart header */}
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 16px", borderBottom: "1px solid #f0f0f0", flexShrink: 0 }}>
+            <span style={{ fontFamily: FONT, fontSize: 11, letterSpacing: "0.25em", textTransform: "uppercase", color: "#888" }}>
+              Cart ({cart.reduce((s, c) => s + c.quantity, 0)})
+            </span>
             <div style={{ display: "flex", gap: 6 }}>
               {cart.length > 0 && <>
                 <button onClick={holdCart} style={{ fontFamily: FONT, fontSize: 9, color: "#c9a961", background: "none", border: "1px solid #c9a961", cursor: "pointer", padding: "3px 8px", borderRadius: 3, letterSpacing: "0.1em", textTransform: "uppercase" }}>
-                  Hold
+                  Hold ⏸
                 </button>
                 <button onClick={clearCart} style={{ fontFamily: FONT, fontSize: 9, color: "#aaa", background: "none", border: "none", cursor: "pointer" }}>
                   Clear
@@ -1120,29 +996,30 @@ export default function POSPage() {
             </div>
           </div>
 
+          {/* Success / error banners */}
           {successRef && (
-            <div style={{ background: "#e8f5e9", border: "1px solid #a5d6a7", borderRadius: 6, padding: 14, marginBottom: 14, textAlign: "center" }}>
-              <p style={{ fontFamily: FONT, fontSize: 15, fontWeight: 800, color: "#2e7d32", margin: "0 0 2px" }}>✓ Sale Complete</p>
-              <p style={{ fontFamily: FONT, fontSize: 12, color: "#2e7d32", margin: "0 0 8px", fontWeight: 600 }}>Ref: {successRef}</p>
+            <div style={{ background: "#e8f5e9", borderBottom: "1px solid #a5d6a7", padding: "12px 16px", flexShrink: 0 }}>
+              <p style={{ fontFamily: FONT, fontSize: 14, fontWeight: 800, color: "#2e7d32", margin: "0 0 2px" }}>✓ Sale Complete</p>
+              <p style={{ fontFamily: FONT, fontSize: 11, color: "#2e7d32", margin: "0 0 6px", fontWeight: 600 }}>Ref: {successRef}</p>
               {lastSale?.changeDue != null && lastSale.changeDue > 0 && (
-                <p style={{ fontFamily: FONT, fontSize: 20, fontWeight: 900, color: "#111", margin: "0 0 10px" }}>
+                <p style={{ fontFamily: FONT, fontSize: 18, fontWeight: 900, color: "#111", margin: "0 0 8px" }}>
                   Change: {formatKES(lastSale.changeDue)}
                 </p>
               )}
-              <div style={{ display: "flex", gap: 6, justifyContent: "center", flexWrap: "wrap" }}>
+              <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                 {lastSale && (
                   <button onClick={() => void handlePrint({ ...lastSale, cashierName: cashierName || "Staff", phone, locationName })}
-                    style={{ fontFamily: FONT, fontSize: 9, letterSpacing: "0.12em", textTransform: "uppercase", background: "#7c3aed", color: "#fff", border: "none", borderRadius: 3, padding: "7px 12px", cursor: "pointer" }}>
+                    style={{ fontFamily: FONT, fontSize: 9, letterSpacing: "0.1em", textTransform: "uppercase", background: "#7c3aed", color: "#fff", border: "none", borderRadius: 3, padding: "6px 12px", cursor: "pointer" }}>
                     Print
                   </button>
                 )}
                 {lastSale && phone && (
                   <a href={whatsappLink({ ...lastSale, phone, locationName })} target="_blank" rel="noopener noreferrer"
-                    style={{ fontFamily: FONT, fontSize: 9, letterSpacing: "0.12em", textTransform: "uppercase", background: "#25D366", color: "#fff", border: "none", borderRadius: 3, padding: "7px 12px", textDecoration: "none", display: "inline-block" }}>
+                    style={{ fontFamily: FONT, fontSize: 9, letterSpacing: "0.1em", textTransform: "uppercase", background: "#25D366", color: "#fff", border: "none", borderRadius: 3, padding: "6px 12px", textDecoration: "none", display: "inline-block" }}>
                     WhatsApp
                   </a>
                 )}
-                <button onClick={clearCart} style={{ fontFamily: FONT, fontSize: 9, letterSpacing: "0.12em", textTransform: "uppercase", background: "#2e7d32", color: "#fff", border: "none", borderRadius: 3, padding: "7px 12px", cursor: "pointer" }}>
+                <button onClick={clearCart} style={{ fontFamily: FONT, fontSize: 9, letterSpacing: "0.1em", textTransform: "uppercase", background: "#2e7d32", color: "#fff", border: "none", borderRadius: 3, padding: "6px 12px", cursor: "pointer" }}>
                   New Sale
                 </button>
               </div>
@@ -1150,153 +1027,151 @@ export default function POSPage() {
           )}
 
           {errorMsg && (
-            <div style={{ background: "#fde8e8", border: "1px solid #f5c6cb", borderRadius: 4, padding: "10px 12px", marginBottom: 10, fontFamily: FONT, fontSize: 12, color: "#c0392b" }}>
+            <div style={{ background: "#fde8e8", borderBottom: "1px solid #f5c6cb", padding: "8px 16px", fontFamily: FONT, fontSize: 12, color: "#c0392b", flexShrink: 0 }}>
               {errorMsg}
+              <button onClick={() => setErrorMsg(null)} style={{ float: "right", background: "none", border: "none", cursor: "pointer", color: "#c0392b", fontSize: 14, lineHeight: 1, padding: 0 }}>×</button>
             </div>
           )}
 
-          {cart.length === 0 && !successRef && (
-            <div style={{ padding: "40px 0", textAlign: "center", fontFamily: FONT, fontSize: 13, color: "#ccc" }}>
-              Tap a product or scan a barcode.
-            </div>
-          )}
-
-          {cart.length > 0 && <>
-            {/* Items */}
-            <div style={{ marginBottom: 10, maxHeight: 290, overflowY: "auto" }}>
-              {cart.map(item => (
-                <div key={item.sku_id} style={{ padding: "9px 0", borderBottom: "1px solid #f0f0f0" }}>
-                  <div style={{ display: "flex", alignItems: "flex-start", gap: 6 }}>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <p style={{ fontFamily: FONT, fontSize: 12, color: "#111", margin: 0, fontWeight: 700, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                        {item.product_name}
-                      </p>
-                      <p style={{ fontFamily: FONT, fontSize: 10, color: "#888", margin: "2px 0 0" }}>
-                        {item.size}{item.color ? `/${item.color}` : ""} · {formatKES(item.unit_price)}
-                      </p>
-                    </div>
-                    <div style={{ display: "flex", alignItems: "center", gap: 3, flexShrink: 0 }}>
-                      <button onClick={() => updateQty(item.sku_id, -1)} style={qtyBtnStyle}>−</button>
-                      <span style={{ fontFamily: FONT, fontSize: 13, color: "#111", width: 18, textAlign: "center", fontWeight: 700 }}>{item.quantity}</span>
-                      <button onClick={() => updateQty(item.sku_id, 1)}  style={qtyBtnStyle}>+</button>
-                    </div>
-                    <span style={{ fontFamily: FONT, fontSize: 12, fontWeight: 700, color: "#111", width: 64, textAlign: "right", flexShrink: 0 }}>
-                      {formatKES(item.unit_price * item.quantity - item.item_discount)}
-                    </span>
-                    <button onClick={() => setCart(p => p.filter(c => c.sku_id !== item.sku_id))} style={{ background: "none", border: "none", cursor: "pointer", color: "#e74c3c", fontSize: 15, padding: "1px 2px", lineHeight: 1, flexShrink: 0 }}>×</button>
+          {/* Cart line items — scrollable middle */}
+          <div style={{ flex: 1, overflowY: "auto", padding: "0 16px", minHeight: 0 }}>
+            {cart.length === 0 && !successRef && (
+              <div style={{ padding: "32px 0", textAlign: "center", fontFamily: FONT, fontSize: 12, color: "#ccc" }}>
+                Tap a product or scan a barcode.
+              </div>
+            )}
+            {cart.map(item => (
+              <div key={item.sku_id} style={{ padding: "8px 0", borderBottom: "1px solid #f0f0f0" }}>
+                <div style={{ display: "flex", alignItems: "flex-start", gap: 6 }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ fontFamily: FONT, fontSize: 12, color: "#111", margin: 0, fontWeight: 700, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{item.product_name}</p>
+                    <p style={{ fontFamily: FONT, fontSize: 10, color: "#888", margin: "1px 0 0" }}>{item.size}{item.color ? `/${item.color}` : ""} · {formatKES(item.unit_price)}</p>
                   </div>
-                  {/* Item-level discount */}
-                  <div style={{ display: "flex", alignItems: "center", gap: 5, marginTop: 5 }}>
-                    <span style={{ fontFamily: FONT, fontSize: 9, color: "#bbb", letterSpacing: "0.1em", textTransform: "uppercase" }}>Disc KES</span>
-                    <input
-                      type="number" min="0"
-                      value={item.item_discount || ""}
-                      onChange={e => updateItemDisc(item.sku_id, e.target.value)}
-                      placeholder="0"
-                      style={{ width: 60, padding: "3px 6px", border: "1px solid #e8e8e8", borderRadius: 3, fontFamily: FONT, fontSize: 11, color: "#111", background: "#fafafa" }}
-                    />
-                    {item.item_discount > 0 && (
-                      <span style={{ fontFamily: FONT, fontSize: 9, color: "#e74c3c" }}>-{formatKES(item.item_discount)}</span>
-                    )}
+                  <div style={{ display: "flex", alignItems: "center", gap: 3, flexShrink: 0 }}>
+                    <button onClick={() => updateQty(item.sku_id, -1)} style={qtyBtnStyle}>−</button>
+                    <span style={{ fontFamily: FONT, fontSize: 12, color: "#111", width: 16, textAlign: "center", fontWeight: 700 }}>{item.quantity}</span>
+                    <button onClick={() => updateQty(item.sku_id, 1)}  style={qtyBtnStyle}>+</button>
                   </div>
+                  <span style={{ fontFamily: FONT, fontSize: 12, fontWeight: 700, color: "#111", width: 58, textAlign: "right", flexShrink: 0 }}>
+                    {formatKES(item.unit_price * item.quantity - item.item_discount)}
+                  </span>
+                  <button onClick={() => setCart(p => p.filter(c => c.sku_id !== item.sku_id))} style={{ background: "none", border: "none", cursor: "pointer", color: "#e74c3c", fontSize: 14, padding: "1px 2px", lineHeight: 1, flexShrink: 0 }}>×</button>
                 </div>
-              ))}
-            </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 4, marginTop: 4 }}>
+                  <span style={{ fontFamily: FONT, fontSize: 9, color: "#bbb", letterSpacing: "0.1em", textTransform: "uppercase" }}>Disc KES</span>
+                  <input type="number" min="0" value={item.item_discount || ""} onChange={e => updateItemDisc(item.sku_id, e.target.value)} placeholder="0"
+                    style={{ width: 52, padding: "2px 5px", border: "1px solid #e8e8e8", borderRadius: 3, fontFamily: FONT, fontSize: 10, color: "#111", background: "#fafafa" }} />
+                  {item.item_discount > 0 && <span style={{ fontFamily: FONT, fontSize: 9, color: "#e74c3c" }}>−{formatKES(item.item_discount)}</span>}
+                </div>
+              </div>
+            ))}
+          </div>
 
-            {/* Totals */}
-            <div style={{ borderTop: "1px solid #e8e8e8", paddingTop: 10, marginBottom: 10 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", fontFamily: FONT, fontSize: 12, color: "#888", marginBottom: 3 }}>
+          {/* Cart footer — always pinned at bottom */}
+          {cart.length > 0 && (
+            <div style={{ flexShrink: 0, borderTop: "2px solid #e8e8e8", padding: "12px 16px", background: "#fff" }}>
+              {/* Subtotal + discounts */}
+              <div style={{ display: "flex", justifyContent: "space-between", fontFamily: FONT, fontSize: 11, color: "#888", marginBottom: 2 }}>
                 <span>Subtotal</span><span>{formatKES(subtotal)}</span>
               </div>
               {itemDiscounts > 0 && (
-                <div style={{ display: "flex", justifyContent: "space-between", fontFamily: FONT, fontSize: 12, color: "#e74c3c", marginBottom: 3 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", fontFamily: FONT, fontSize: 11, color: "#e74c3c", marginBottom: 2 }}>
                   <span>Item Discounts</span><span>−{formatKES(itemDiscounts)}</span>
                 </div>
               )}
-              <input
-                value={promoCode}
-                onChange={e => setPromoCode(e.target.value.toUpperCase())}
+
+              {/* Promo code */}
+              <input value={promoCode} onChange={e => setPromoCode(e.target.value.toUpperCase())}
                 placeholder="Promo code (optional)"
-                style={{ ...inputStyle, marginTop: 8, marginBottom: 0, fontSize: 12 }}
-              />
-            </div>
+                style={{ ...inputStyle, marginTop: 6, marginBottom: 6, fontSize: 11, padding: "7px 10px" }} />
 
-            <div style={{ display: "flex", justifyContent: "space-between", fontFamily: FONT, fontSize: 20, fontWeight: 900, color: "#111", borderTop: "2px solid #111", paddingTop: 12, marginBottom: 14, letterSpacing: "-0.02em" }}>
-              <span>Total</span><span>{formatKES(displayTotal)}</span>
-            </div>
-
-            {/* Customer phone */}
-            <label style={labelStyle}>Customer Phone</label>
-            <input type="tel" value={phone} onChange={e => setPhone(e.target.value)} placeholder="0700 000 000 (optional)" style={inputStyle} />
-
-            {/* Payment method */}
-            <label style={labelStyle}>Payment Method</label>
-            <div style={{ display: "flex", gap: 5, marginBottom: 4 }}>
-              {(["cash", "mpesa_stk", "mpesa_c2b"] as const).map(m => (
-                <button key={m} onClick={() => setPaymentMethod(m)} style={{
-                  flex: 1, padding: "8px 4px", fontFamily: FONT,
-                  border: `2px solid ${paymentMethod === m ? "#7c3aed" : "#e0e0e0"}`,
-                  background: paymentMethod === m ? "#7c3aed" : "transparent",
-                  color: paymentMethod === m ? "#fff" : "#888",
-                  borderRadius: 4, cursor: "pointer", lineHeight: 1.3,
-                }}>
-                  <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" }}>
-                    {m === "cash" ? "Cash" : m === "mpesa_stk" ? "STK Push" : "M-Pesa Till"}
-                  </div>
-                  <div style={{ fontSize: 9, opacity: 0.7, letterSpacing: "0.05em" }}>
-                    {m === "cash" ? "[F1]" : m === "mpesa_stk" ? "[F2]" : "[F3]"}
-                  </div>
-                </button>
-              ))}
-            </div>
-            {paymentMethod === "mpesa_stk" && (
-              <p style={{ fontFamily: FONT, fontSize: 10, color: "#c0392b", margin: "0 0 10px", letterSpacing: "0.03em" }}>
-                STK Push requires a Paybill shortcode. If using a Buy Goods till, use M-Pesa Till instead.
-              </p>
-            )}
-            {paymentMethod !== "mpesa_stk" && <div style={{ marginBottom: 10 }} />}
-
-            {/* Cash change calculator */}
-            {paymentMethod === "cash" && (
-              <div style={{ background: "#fafafa", borderRadius: 6, padding: "10px 12px", marginBottom: 12, border: "1px solid #f0f0f0" }}>
-                <label style={labelStyle}>Amount Tendered (KES)</label>
-                <input
-                  type="number"
-                  value={amountTendered}
-                  onChange={e => setAmountTendered(e.target.value)}
-                  placeholder={String(displayTotal)}
-                  style={inputStyle}
-                />
-                {tenderedAmt > 0 && tenderedAmt < displayTotal && (
-                  <p style={{ fontFamily: FONT, fontSize: 11, color: "#e74c3c", margin: "-8px 0 4px" }}>
-                    Short by {formatKES(displayTotal - tenderedAmt)}
-                  </p>
-                )}
-                {changeDue > 0 && (
-                  <div style={{ background: "#e8f5e9", border: "1px solid #a5d6a7", borderRadius: 4, padding: "8px 12px" }}>
-                    <p style={{ fontFamily: FONT, fontSize: 9, color: "#2e7d32", textTransform: "uppercase", letterSpacing: "0.12em", margin: "0 0 2px" }}>Change Due</p>
-                    <p style={{ fontFamily: FONT, fontSize: 22, fontWeight: 900, color: "#2e7d32", margin: 0 }}>{formatKES(changeDue)}</p>
-                  </div>
-                )}
+              {/* Total */}
+              <div style={{ display: "flex", justifyContent: "space-between", fontFamily: FONT, fontSize: 18, fontWeight: 900, color: "#111", borderTop: "2px solid #111", paddingTop: 8, marginBottom: 10, letterSpacing: "-0.02em" }}>
+                <span>Total</span><span>{formatKES(displayTotal)}</span>
               </div>
-            )}
 
-            {/* Complete Sale */}
-            <button
-              onClick={() => void completeSale()}
-              disabled={completing || !shift}
-              style={{
-                width: "100%", padding: "14px 0",
-                background: completing || !shift ? "#ccc" : "#7c3aed",
-                color: "#fff", border: "none", borderRadius: 6,
-                fontFamily: FONT, fontSize: 11, letterSpacing: "0.25em",
-                textTransform: "uppercase", cursor: !shift || completing ? "not-allowed" : "pointer",
-                fontWeight: 700,
-              }}
-            >
-              {completing ? "Processing…" : !shift ? "Open a Shift First" : "Complete Sale [Enter]"}
-            </button>
-          </>}
+              {/* Customer phone */}
+              <input type="tel" value={phone} onChange={e => setPhone(e.target.value)} placeholder="0700 000 000 (optional)"
+                style={{ ...inputStyle, marginBottom: 8, fontSize: 12, padding: "7px 10px" }} />
+
+              {/* Payment method */}
+              <div style={{ display: "flex", gap: 4, marginBottom: 8 }}>
+                {(["cash", "mpesa_stk", "mpesa_c2b"] as const).map(m => (
+                  <button key={m} onClick={() => setPaymentMethod(m)} style={{
+                    flex: 1, padding: "7px 4px", fontFamily: FONT,
+                    border: `2px solid ${paymentMethod === m ? "#7c3aed" : "#e0e0e0"}`,
+                    background: paymentMethod === m ? "#7c3aed" : "transparent",
+                    color: paymentMethod === m ? "#fff" : "#888",
+                    borderRadius: 4, cursor: "pointer", lineHeight: 1.3,
+                  }}>
+                    <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase" }}>
+                      {m === "cash" ? "Cash" : m === "mpesa_stk" ? "STK" : "Till"}
+                    </div>
+                    <div style={{ fontSize: 8, opacity: 0.7 }}>
+                      {m === "cash" ? "F1" : m === "mpesa_stk" ? "F2" : "F3"}
+                    </div>
+                  </button>
+                ))}
+              </div>
+
+              {paymentMethod === "mpesa_stk" && (
+                <p style={{ fontFamily: FONT, fontSize: 9, color: "#c0392b", margin: "0 0 8px", letterSpacing: "0.02em" }}>
+                  STK Push requires a Paybill shortcode. If using Buy Goods till, select Till instead.
+                </p>
+              )}
+
+              {/* Cash denominations + change calculator */}
+              {paymentMethod === "cash" && (
+                <div style={{ background: "#fafafa", borderRadius: 6, padding: "8px 10px", marginBottom: 8, border: "1px solid #f0f0f0" }}>
+                  <div style={{ display: "flex", gap: 3, marginBottom: 6 }}>
+                    {[500, 1000, 2000, 5000].map(d => (
+                      <button key={d} onClick={() => setAmountTendered(String(d))}
+                        style={{ flex: 1, padding: "5px 2px", fontFamily: FONT, fontSize: 9, fontWeight: 700, background: amountTendered === String(d) ? "#111" : "#fff", color: amountTendered === String(d) ? "#fff" : "#555", border: "1px solid #e0e0e0", borderRadius: 4, cursor: "pointer" }}>
+                        {d >= 1000 ? `${d / 1000}k` : d}
+                      </button>
+                    ))}
+                    <button onClick={() => setAmountTendered(String(displayTotal))}
+                      style={{ flex: 1, padding: "5px 2px", fontFamily: FONT, fontSize: 9, fontWeight: 700, background: amountTendered === String(displayTotal) ? "#111" : "#fff", color: amountTendered === String(displayTotal) ? "#fff" : "#555", border: "1px solid #e0e0e0", borderRadius: 4, cursor: "pointer" }}>
+                      Exact
+                    </button>
+                  </div>
+                  <input type="number" value={amountTendered} onChange={e => setAmountTendered(e.target.value)} placeholder={`Amount tendered (${formatKES(displayTotal)})`}
+                    style={{ ...inputStyle, marginBottom: 0, fontSize: 11, padding: "7px 10px" }} />
+                  {tenderedAmt > 0 && tenderedAmt < displayTotal && (
+                    <p style={{ fontFamily: FONT, fontSize: 10, color: "#e74c3c", margin: "4px 0 0" }}>
+                      Short by {formatKES(displayTotal - tenderedAmt)}
+                    </p>
+                  )}
+                  {changeDue > 0 && (
+                    <div style={{ background: "#e8f5e9", border: "1px solid #a5d6a7", borderRadius: 4, padding: "6px 10px", marginTop: 6 }}>
+                      <p style={{ fontFamily: FONT, fontSize: 9, color: "#2e7d32", textTransform: "uppercase", letterSpacing: "0.12em", margin: "0 0 1px" }}>Change Due</p>
+                      <p style={{ fontFamily: FONT, fontSize: 20, fontWeight: 900, color: "#2e7d32", margin: 0 }}>{formatKES(changeDue)}</p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* C2B reference code */}
+              {paymentMethod === "mpesa_c2b" && (
+                <input value={c2bRefCode} onChange={e => setC2bRefCode(e.target.value.toUpperCase())}
+                  placeholder="M-Pesa confirmation code (optional)"
+                  style={{ ...inputStyle, marginBottom: 8, fontSize: 11, padding: "7px 10px" }} />
+              )}
+
+              {/* Complete Sale */}
+              <button onClick={() => void completeSale()} disabled={completing || !shift}
+                style={{
+                  width: "100%", padding: "13px 0",
+                  background: completing || !shift ? "#ccc" : "#7c3aed",
+                  color: "#fff", border: "none", borderRadius: 6,
+                  fontFamily: FONT, fontSize: 11, letterSpacing: "0.2em",
+                  textTransform: "uppercase", cursor: !shift || completing ? "not-allowed" : "pointer",
+                  fontWeight: 700,
+                }}>
+                {completing ? "Processing…" : !shift ? "Open a Shift First" : "Complete Sale [Enter]"}
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -1318,7 +1193,7 @@ const inputStyle: React.CSSProperties = {
 };
 
 const qtyBtnStyle: React.CSSProperties = {
-  width: 24, height: 24, border: "1px solid #e0e0e0", background: "none",
-  borderRadius: 3, cursor: "pointer", fontFamily: FONT, fontSize: 14, color: "#111",
+  width: 22, height: 22, border: "1px solid #e0e0e0", background: "none",
+  borderRadius: 3, cursor: "pointer", fontFamily: FONT, fontSize: 13, color: "#111",
   display: "flex", alignItems: "center", justifyContent: "center", lineHeight: 1,
 };

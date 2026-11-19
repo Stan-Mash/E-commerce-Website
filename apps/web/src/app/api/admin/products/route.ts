@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { isAuthenticatedAdminRequest } from "@/lib/adminAuth";
 import { syncProductImages, resolveImageList, syncProductVideos, resolveVideoList } from "@/lib/productImages";
-import { withApiErrorHandling } from "@/lib/apiErrorHandler";
+import { withApiErrorHandling, friendlyDbError } from "@/lib/apiErrorHandler";
 import { createAdminSupabaseClient } from "@/lib/supabase/server";
 
 function checkAuth(request: NextRequest): boolean {
@@ -95,6 +95,24 @@ export const POST = withApiErrorHandling("admin/products POST", async (request: 
   // Normalize category to lowercase for DB constraint
   const normalizedCategory = category.toLowerCase();
 
+  // Deduplicate slug: if it already exists, append -2, -3, … until unique.
+  let uniqueSlug = slug;
+  {
+    const { data: existing } = await supabase
+      .from("products")
+      .select("slug")
+      .like("slug", `${slug}%`)
+      .order("slug");
+    if (existing && existing.length > 0) {
+      const taken = new Set((existing as { slug: string }[]).map((r) => r.slug));
+      if (taken.has(slug)) {
+        let n = 2;
+        while (taken.has(`${slug}-${n}`)) n++;
+        uniqueSlug = `${slug}-${n}`;
+      }
+    }
+  }
+
   // Resolve the full ordered image list; first image is the primary thumbnail.
   const imageList = resolveImageList(body) ?? [];
 
@@ -102,7 +120,7 @@ export const POST = withApiErrorHandling("admin/products POST", async (request: 
     .from("products")
     .insert({
       name,
-      slug,
+      slug: uniqueSlug,
       description: description ?? null,
       category: normalizedCategory,
       base_price: Number(base_price),
@@ -117,7 +135,7 @@ export const POST = withApiErrorHandling("admin/products POST", async (request: 
     .single();
 
   if (productError) {
-    return NextResponse.json({ error: productError.message }, { status: 500 });
+    return NextResponse.json({ error: friendlyDbError(productError.message) }, { status: 500 });
   }
 
   // Populate the product's gallery.

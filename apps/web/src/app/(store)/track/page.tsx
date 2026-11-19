@@ -171,8 +171,9 @@ export default function TrackOrderPage() {
   return (
     <>
       <title>Track Your Order | Elite Style Co.</title>
+      <meta name="robots" content="noindex, follow" />
 
-      <main className="min-h-screen bg-white">
+      <div className="min-h-screen bg-white">
         {/* Hero */}
         <section
           className="relative flex flex-col items-center justify-center text-center px-6"
@@ -232,7 +233,7 @@ export default function TrackOrderPage() {
                   required
                   value={ref}
                   onChange={(e) => setRef(e.target.value.toUpperCase())}
-                  placeholder="e.g. NF-XXXX-XXXX"
+                  placeholder="e.g. ES-XXXXX-XXXXX"
                   className="border border-[rgba(0,0,0,0.15)] px-4 py-3 text-[14px] text-es-ink placeholder:text-es-faint focus:outline-none focus:border-[var(--es-ink)] transition-colors"
                   style={{ fontFamily: "var(--font-inter)" }}
                 />
@@ -410,7 +411,7 @@ export default function TrackOrderPage() {
             </div>
           </section>
         )}
-      </main>
+      </div>
     </>
   );
 }

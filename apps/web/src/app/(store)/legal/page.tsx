@@ -28,7 +28,7 @@ const P_STYLE: React.CSSProperties = {
 
 export default function LegalPage() {
   return (
-    <main className="min-h-screen bg-es-white">
+    <div className="min-h-screen bg-es-white">
       <div style={{ maxWidth: 760, margin: "0 auto", padding: "80px 24px 100px" }}>
         <p style={{ fontFamily: "var(--font-inter)", fontSize: 11, letterSpacing: ".45em", textTransform: "uppercase", color: "var(--es-gold)", marginBottom: 16 }}>
           LEGAL
@@ -106,7 +106,7 @@ export default function LegalPage() {
             <strong>Pricing:</strong> All prices are in Kenyan Shillings (KES) and include any applicable taxes. Prices are subject to change without notice, but the price displayed at the time of your order is the price you pay.
           </p>
           <p style={P_STYLE}>
-            <strong>Delivery:</strong> We offer free delivery within Nairobi CBD and a flat fee for outside Nairobi. Delivery timelines are estimates and may vary. We are not liable for delays caused by third-party couriers or circumstances beyond our control.
+            <strong>Delivery:</strong> We offer delivery across Nairobi and Kenya at a flat fee. Delivery timelines are estimates and may vary. We are not liable for delays caused by third-party couriers or circumstances beyond our control.
           </p>
           <p style={P_STYLE}>
             <strong>Returns:</strong> We accept returns within 14 days of delivery for eligible items. See our{" "}
@@ -167,6 +167,6 @@ export default function LegalPage() {
           </Link>
         </div>
       </div>
-    </main>
+    </div>
   );
 }

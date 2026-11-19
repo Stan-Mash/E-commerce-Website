@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import type { Metadata } from "next";
 import { ElitePlate } from "@/components/es/ElitePlate";
 import { Breadcrumb } from "@/components/product/ProductBreadcrumb";
@@ -6,9 +7,9 @@ import { formatKES } from "@/lib/utils";
 import { createPublicSupabaseClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
-  title: "Women's Fashion Nairobi",
+  title: "Women's Fashion Nairobi | Dresses, Blazers & Co-ords | Elite Style Co.",
   description:
-    "Shop curated women's fashion in Nairobi: tailored dresses, co-ords, and blazers in KES pricing with M-Pesa checkout and free Nairobi CBD delivery.",
+    "Shop women's fashion online in Nairobi — tailored dresses, blazers, co-ords, skirts & sets. KES pricing, M-Pesa checkout, 24-hour delivery across Kenya.",
   alternates: { canonical: "/woman" },
 };
 
@@ -59,7 +60,7 @@ export default async function WomanPage() {
   const products = await getWomenProducts();
 
   return (
-    <main className="min-h-screen bg-es-paper">
+    <div className="min-h-screen bg-es-paper">
       {/* Editorial hero */}
       <div className="relative w-full" style={{ height: "60vh" }}>
         <ElitePlate kind="woman" tone="smoke" className="absolute inset-0" />
@@ -137,11 +138,12 @@ export default async function WomanPage() {
                       </span>
                     )}
                     {primaryImage ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
+                      <Image
                         src={primaryImage.url}
                         alt={primaryImage.alt ?? product.name}
-                        className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+                        fill
+                        sizes="(max-width: 640px) 50vw, 25vw"
+                        className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
                       />
                     ) : (
                       <div
@@ -184,6 +186,6 @@ export default async function WomanPage() {
           </div>
         )}
       </div>
-    </main>
+    </div>
   );
 }

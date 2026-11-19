@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { SUPPORT_WHATSAPP_LINK, SUPPORT_EMAIL } from "@/lib/supportConfig";
-import { ADULT_SIZES, KIDS_SIZES } from "@/lib/sizeGuide";
+import { ADULT_SIZES, KIDS_SIZES, ADULT_FOOTWEAR, KIDS_FOOTWEAR } from "@/lib/sizeGuide";
 
 export const metadata: Metadata = { title: "Sizing Guide", alternates: { canonical: "/sizing-guide" } };
 
@@ -53,9 +53,34 @@ function SizeTable({ rows }: { rows: typeof ADULT_SIZES }) {
   );
 }
 
+function FootwearTable({ rows }: { rows: typeof ADULT_FOOTWEAR }) {
+  return (
+    <div style={{ overflowX: "auto", borderRadius: 8, border: "1px solid #e5e4df", marginBottom: 40 }}>
+      <table style={{ width: "100%", borderCollapse: "collapse" }}>
+        <thead>
+          <tr>
+            <th style={TH}>EU</th>
+            <th style={TH}>UK</th>
+            <th style={TH}>Foot length (cm)</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row) => (
+            <tr key={row.eu} style={{ transition: "background 0.1s" }}>
+              <td style={{ ...TD, fontWeight: 700, color: "#171717", letterSpacing: ".06em" }}>{row.eu}</td>
+              <td style={TD}>{row.uk}</td>
+              <td style={TD}>{row.cm}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 export default function SizingGuidePage() {
   return (
-    <main className="min-h-screen bg-es-white">
+    <div className="min-h-screen bg-es-white">
       <div style={{ maxWidth: 760, margin: "0 auto", padding: "80px 24px 100px" }}>
         <p style={{ fontFamily: "var(--font-inter)", fontSize: 11, letterSpacing: ".45em", textTransform: "uppercase", color: "var(--es-gold)", marginBottom: 16 }}>
           ELITE STYLE CO.
@@ -78,6 +103,18 @@ export default function SizingGuidePage() {
           Children
         </h2>
         <SizeTable rows={KIDS_SIZES} />
+
+        {/* Footwear */}
+        <h2 style={{ fontFamily: "var(--font-bodoni)", fontSize: 26, fontWeight: 700, color: "var(--es-ink)", marginBottom: 8 }}>
+          Footwear
+        </h2>
+        <p style={{ fontFamily: "var(--font-inter)", fontSize: 14, color: "var(--es-mute)", marginBottom: 20 }}>
+          Measure your foot from heel to longest toe on a flat surface. Size up if between sizes.
+        </p>
+        <h3 style={{ fontFamily: "var(--font-inter)", fontSize: 11, letterSpacing: ".38em", textTransform: "uppercase", color: "var(--es-ink)", marginBottom: 16 }}>Adults</h3>
+        <FootwearTable rows={ADULT_FOOTWEAR} />
+        <h3 style={{ fontFamily: "var(--font-inter)", fontSize: 11, letterSpacing: ".38em", textTransform: "uppercase", color: "var(--es-ink)", marginBottom: 16 }}>Children</h3>
+        <FootwearTable rows={KIDS_FOOTWEAR} />
 
         {/* Measuring tips */}
         <div style={{ background: "var(--es-paper)", padding: "28px 32px", marginBottom: 40 }}>
@@ -109,6 +146,6 @@ export default function SizingGuidePage() {
           Shop the Collection →
         </Link>
       </div>
-    </main>
+    </div>
   );
 }

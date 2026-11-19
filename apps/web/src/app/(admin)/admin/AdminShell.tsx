@@ -5,225 +5,357 @@ import { usePathname } from "next/navigation";
 import AdminSessionSync from "./AdminSessionSync";
 import LogoutButton from "./LogoutButton";
 import AdminNav from "./AdminNav";
+import { X, Menu } from "lucide-react";
 
-// Below this width the sidebar becomes an off-canvas drawer opened by a
-// hamburger button, instead of a permanent 240px column that leaves almost
-// no room for page content on a phone screen.
-const MOBILE_BREAKPOINT = 768;
+// Page title map — shown in the top header
+const PAGE_TITLES: Record<string, string> = {
+  "/admin":                     "Dashboard",
+  "/admin/orders":              "Orders",
+  "/admin/pending-payments":    "Pending Payments",
+  "/admin/abandoned-checkouts": "Abandoned Checkouts",
+  "/admin/pos":                 "POS Terminal",
+  "/admin/products":            "Products",
+  "/admin/stock":               "Stock",
+  "/admin/returns":             "Returns",
+  "/admin/customers":           "Customers",
+  "/admin/reviews":             "Reviews",
+  "/admin/promotions":          "Promotions",
+  "/admin/newsletter":          "Newsletter",
+  "/admin/delivery":            "Delivery",
+  "/admin/reports":             "Reports",
+  "/admin/settings":            "Settings",
+  "/admin/finance":             "Finance",
+  "/admin/audit":               "Activity Log",
+};
+
+function resolveTitle(pathname: string): string {
+  if (PAGE_TITLES[pathname]) return PAGE_TITLES[pathname];
+  for (const [key, label] of Object.entries(PAGE_TITLES)) {
+    if (pathname.startsWith(key + "/")) return label;
+  }
+  return "Admin";
+}
+
+const SIDEBAR_W = 240;
 
 export default function AdminShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const [navOpen, setNavOpen] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const pageTitle = resolveTitle(pathname);
+  const isPOS = pathname === "/admin/pos";
 
-  // Close the drawer whenever the route changes (tapping a nav link navigates).
-  const [prevPathname, setPrevPathname] = useState(pathname);
-  if (pathname !== prevPathname) {
-    setPrevPathname(pathname);
-    setNavOpen(false);
-  }
+  // Close drawer on route change
+  const [prev, setPrev] = useState(pathname);
+  if (pathname !== prev) { setPrev(pathname); setDrawerOpen(false); }
 
-  // Lock body scroll while the drawer is open on mobile, so the page behind
-  // it doesn't scroll along with it.
+  // Lock body scroll when drawer is open
   useEffect(() => {
-    document.body.style.overflow = navOpen ? "hidden" : "";
+    document.body.style.overflow = drawerOpen ? "hidden" : "";
     return () => { document.body.style.overflow = ""; };
-  }, [navOpen]);
+  }, [drawerOpen]);
 
   return (
-    <div style={{ display: "flex", minHeight: "100vh", fontFamily: "var(--font-inter)" }}>
-      {/* No apostrophes or other characters inside this <style> tag's text
-          content: <style> is an HTML "raw text" element, so the browser
-          never decodes character-reference entities in it. React's SSR
-          output still HTML-escapes apostrophes (' -> &#x27;) when
-          serializing any string child, including inside <style>. The
-          server HTML then contains the literal 6 characters "&#x27;" where
-          the client's hydration render has a literal apostrophe — a
-          guaranteed text mismatch, and a full-page hydration failure, on
-          every single admin page load. Keep CSS comments describing intent
-          in a JSX comment above the tag instead, like this one, never
-          inside the template string itself.
-
-          .admin-sidebar's `position: fixed !important` below must win over
-          the element's own inline style (position: sticky, height: 100vh)
-          — inline styles otherwise beat an unmarked class rule, which left
-          the sidebar's 100vh box sitting in normal document flow (just
-          visually offscreen) and pushing all real page content below the
-          fold. */}
+    <div className="admin-root" style={{ display: "flex", minHeight: "100vh", fontFamily: "var(--font-inter)", background: "#0a0a0a" }}>
       <style>{`
-        .admin-nav-link:hover {
-          color: var(--es-gold) !important;
-          background: rgba(201,169,97,0.06) !important;
+        /* ── Sidebar ──────────────────────────────────────────────── */
+        .admin-sidebar {
+          width: ${SIDEBAR_W}px;
+          flex-shrink: 0;
+          background: #111;
+          display: flex;
+          flex-direction: column;
+          position: fixed;
+          top: 0;
+          left: 0;
+          height: 100vh;
+          overflow: hidden;
+          z-index: 100;
+          border-right: 1px solid #1a1a1a;
         }
-        .admin-logout-link:hover {
-          color: #e53e3e !important;
+        .admin-sidebar-inner {
+          display: flex;
+          flex-direction: column;
+          height: 100%;
+          overflow-y: auto;
+          scrollbar-width: none;
         }
-        .admin-topbar { display: none; }
-        .admin-backdrop { display: none; }
+        .admin-sidebar-inner::-webkit-scrollbar { display: none; }
 
-        @media (max-width: ${MOBILE_BREAKPOINT - 1}px) {
+        /* ── Mobile top bar ───────────────────────────────────────── */
+        .admin-topbar {
+          display: none;
+        }
+
+        /* ── Nav link hover ───────────────────────────────────────── */
+        .admin-nav-link:hover {
+          background: rgba(255,255,255,0.05) !important;
+          color: #fff !important;
+        }
+        .admin-nav-link:hover svg { color: #c9a961 !important; }
+
+        /* ── Backdrop ─────────────────────────────────────────────── */
+        .admin-backdrop {
+          display: none;
+          position: fixed;
+          inset: 0;
+          background: rgba(0,0,0,0.7);
+          backdrop-filter: blur(2px);
+          z-index: 190;
+        }
+        .admin-backdrop.open { display: block; }
+
+        /* ── Right column offset for fixed sidebar ────────────────── */
+        .admin-right-column {
+          margin-left: ${SIDEBAR_W}px;
+        }
+
+        /* ── Mobile layout ────────────────────────────────────────── */
+        @media (max-width: 767px) {
+          .admin-right-column {
+            margin-left: 0 !important;
+          }
+          .admin-sidebar {
+            top: 0; left: 0; bottom: 0;
+            height: 100dvh !important;
+            width: min(${SIDEBAR_W}px, 85vw) !important;
+            transform: translateX(-110%);
+            transition: transform 0.25s cubic-bezier(0.4,0,0.2,1);
+            z-index: 200;
+          }
+          .admin-sidebar.open {
+            transform: translateX(0);
+            box-shadow: 8px 0 40px rgba(0,0,0,0.5);
+          }
           .admin-topbar {
             display: flex;
             align-items: center;
-            gap: 16px;
+            justify-content: space-between;
             position: sticky;
             top: 0;
             z-index: 120;
-            background: var(--es-ink);
-            padding: 14px 16px;
-            width: 100%;
-          }
-          .admin-sidebar {
-            position: fixed !important;
-            top: 0;
-            left: 0;
-            bottom: 0;
-            height: 100vh !important;
-            transform: translateX(-100%);
-            transition: transform 0.22s ease;
-            z-index: 200;
-            box-shadow: 4px 0 24px rgba(0,0,0,0.25);
-          }
-          .admin-sidebar.is-open {
-            transform: translateX(0);
-          }
-          .admin-backdrop.is-open {
-            display: block;
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.5);
-            z-index: 150;
+            background: #111;
+            border-bottom: 1px solid #1a1a1a;
+            padding: 0 16px;
+            height: 56px;
+            flex-shrink: 0;
           }
           .admin-main {
-            padding: 20px 16px !important;
-            width: 100%;
-            min-width: 0;
+            padding: 20px 16px 80px !important;
           }
-          .admin-shell-body {
-            flex-direction: column;
+          .admin-body {
+            flex-direction: column !important;
           }
+        }
+
+        /* ── Desktop top header ───────────────────────────────────── */
+        .admin-desktop-header {
+          display: none;
+        }
+        @media (min-width: 768px) {
+          .admin-desktop-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 40px;
+            height: 56px;
+            flex-shrink: 0;
+            border-bottom: 1px solid #1a1a1a;
+            background: #111;
+          }
+        }
+
+        @media (max-width: 1024px) and (min-width: 768px) {
+          .admin-main { padding: 28px 24px !important; }
+        }
+
+        /* POS full-screen mode — no padding, locked height, no scroll */
+        .admin-main.pos-mode {
+          padding: 0 !important;
+          overflow: hidden !important;
+          height: calc(100vh - 56px) !important;
+          flex: none !important;
+          min-height: 0 !important;
         }
       `}</style>
 
-      <div className="admin-shell-body" style={{ display: "flex", flex: 1, minWidth: 0 }}>
-        {/* Mobile top bar: hamburger + wordmark. Hidden on desktop via CSS. */}
-        <div className="admin-topbar">
-          <button
-            type="button"
-            onClick={() => setNavOpen(true)}
-            aria-label="Open menu"
-            aria-expanded={navOpen}
-            style={{
-              background: "none",
-              border: "1px solid rgba(255,255,255,0.25)",
-              borderRadius: 4,
-              color: "#fff",
-              width: 40,
-              height: 40,
+      <div className="admin-body" style={{ display: "flex", flex: 1, minWidth: 0 }}>
+        {/* ── Sidebar ─────────────────────────────────────────── */}
+        <aside className={`admin-sidebar${drawerOpen ? " open" : ""}`} aria-label="Admin navigation">
+          <div className="admin-sidebar-inner">
+            {/* Brand */}
+            <div style={{
+              padding: "20px 16px 12px",
               display: "flex",
               alignItems: "center",
-              justifyContent: "center",
-              cursor: "pointer",
+              justifyContent: "space-between",
+              borderBottom: "1px solid #1a1a1a",
               flexShrink: 0,
-            }}
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-              <path d="M4 7h16M4 12h16M4 17h16" />
-            </svg>
-          </button>
-          <span
-            style={{
+            }}>
+              <div>
+                <span style={{
+                  fontFamily: "var(--font-bodoni)",
+                  fontSize: 14,
+                  letterSpacing: "0.18em",
+                  textTransform: "uppercase",
+                  color: "var(--es-gold)",
+                  display: "block",
+                  lineHeight: 1.3,
+                }}>
+                  Elite Style Co.
+                </span>
+                <span style={{
+                  fontFamily: "var(--font-inter)",
+                  fontSize: 10,
+                  letterSpacing: "0.1em",
+                  textTransform: "uppercase",
+                  color: "#3a3a3a",
+                  display: "block",
+                  marginTop: 2,
+                }}>
+                  Admin Console
+                </span>
+              </div>
+              {/* Close button — mobile only (hidden on desktop via opacity trick) */}
+              <button
+                type="button"
+                onClick={() => setDrawerOpen(false)}
+                aria-label="Close menu"
+                className="admin-drawer-close"
+                style={{
+                  background: "none",
+                  border: "1px solid #2a2a2a",
+                  borderRadius: 6,
+                  color: "#666",
+                  width: 32,
+                  height: 32,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  cursor: "pointer",
+                  flexShrink: 0,
+                  padding: 0,
+                }}
+              >
+                <X size={14} />
+              </button>
+            </div>
+
+            {/* Nav groups */}
+            <AdminNav />
+
+            {/* Logout */}
+            <div style={{
+              padding: "12px 16px 20px",
+              borderTop: "1px solid #1a1a1a",
+              flexShrink: 0,
+            }}>
+              <LogoutButton />
+            </div>
+          </div>
+        </aside>
+
+        {/* Backdrop for mobile drawer */}
+        <div
+          className={`admin-backdrop${drawerOpen ? " open" : ""}`}
+          onClick={() => setDrawerOpen(false)}
+          aria-hidden="true"
+        />
+
+        {/* ── Right column: topbar + main ─────────────────────── */}
+        <div className="admin-right-column" style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0, background: "var(--es-paper)" }}>
+          {/* Mobile top bar */}
+          <div className="admin-topbar">
+            <button
+              type="button"
+              onClick={() => setDrawerOpen(true)}
+              aria-label="Open navigation"
+              style={{
+                background: "none",
+                border: "1px solid #2a2a2a",
+                borderRadius: 7,
+                color: "#aaa",
+                width: 38,
+                height: 38,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                cursor: "pointer",
+                flexShrink: 0,
+                padding: 0,
+              }}
+            >
+              <Menu size={18} />
+            </button>
+            <span style={{
               fontFamily: "var(--font-bodoni)",
               fontSize: 13,
               letterSpacing: "0.2em",
               textTransform: "uppercase",
               color: "var(--es-gold)",
-            }}
-          >
-            Elite Style Co.
-          </span>
-        </div>
-
-        {/* Tap-outside-to-close backdrop, mobile only */}
-        <div
-          className={`admin-backdrop${navOpen ? " is-open" : ""}`}
-          onClick={() => setNavOpen(false)}
-          aria-hidden="true"
-        />
-
-        {/* Sidebar */}
-        <nav
-          className={`admin-sidebar${navOpen ? " is-open" : ""}`}
-          style={{
-            width: 240,
-            flexShrink: 0,
-            background: "var(--es-ink)",
-            display: "flex",
-            flexDirection: "column",
-            padding: "32px 0",
-            position: "sticky",
-            top: 0,
-            height: "100vh",
-            overflowY: "auto",
-          }}
-          aria-label="Admin navigation"
-        >
-          {/* Wordmark (desktop; mobile shows it in the top bar instead) */}
-          <div style={{ padding: "0 28px 40px" }}>
-            <span
-              style={{
-                fontFamily: "var(--font-bodoni)",
-                fontSize: 13,
-                letterSpacing: "0.25em",
-                textTransform: "uppercase",
-                color: "var(--es-gold)",
-                display: "block",
-                lineHeight: 1.4,
-              }}
-            >
+              position: "absolute",
+              left: "50%",
+              transform: "translateX(-50%)",
+            }}>
               Elite Style Co.
             </span>
-            <span
-              style={{
+            <div style={{ width: 38, flexShrink: 0 }} />
+          </div>
+
+          {/* Desktop page header */}
+          <div className="admin-desktop-header">
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <h1 style={{
                 fontFamily: "var(--font-inter)",
-                fontSize: 10,
-                letterSpacing: "0.3em",
-                textTransform: "uppercase",
-                color: "#555555",
-                display: "block",
-                marginTop: 4,
-              }}
-            >
-              Admin Console
-            </span>
+                fontSize: 15,
+                fontWeight: 600,
+                color: "#e8e8e8",
+                margin: 0,
+                letterSpacing: "-0.01em",
+              }}>
+                {pageTitle}
+              </h1>
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <span style={{
+                fontFamily: "var(--font-inter)",
+                fontSize: 11,
+                color: "#3a3a3a",
+                letterSpacing: "0.05em",
+              }}>
+                elitestyle.co.ke
+              </span>
+              <div style={{
+                width: 30,
+                height: 30,
+                borderRadius: "50%",
+                background: "rgba(201,169,97,0.15)",
+                border: "1px solid rgba(201,169,97,0.3)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}>
+                <span style={{ fontFamily: "var(--font-bodoni)", fontSize: 13, color: "var(--es-gold)" }}>E</span>
+              </div>
+            </div>
           </div>
 
-          {/* Nav Links + Owner Nav (client component for active highlighting) */}
-          <AdminNav />
-
-          {/* Logout — must be a form POST, not a <Link>, to prevent Next.js
-              prefetch from calling GET /api/admin/logout and silently clearing
-              session cookies on every page load. */}
-          <div style={{ marginTop: "auto", padding: "32px 28px 0" }}>
-            <LogoutButton />
-          </div>
-        </nav>
-
-        {/* Clears stale esc_admin_token from localStorage (legacy cleanup) */}
-        <AdminSessionSync />
-
-        {/* Main Content */}
-        <main
-          className="admin-main"
-          style={{
-            flex: 1,
-            background: "var(--es-paper)",
-            padding: 48,
-            minWidth: 0,
-          }}
-        >
-          {children}
-        </main>
+          {/* Main content */}
+          <main
+            className={`admin-main${isPOS ? " pos-mode" : ""}`}
+            style={{
+              flex: 1,
+              background: "var(--es-paper)",
+              padding: "36px 40px",
+              minWidth: 0,
+              overflowX: "hidden",
+            }}
+          >
+            {children}
+          </main>
+        </div>
       </div>
+
+      <AdminSessionSync />
     </div>
   );
 }

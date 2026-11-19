@@ -6,7 +6,7 @@ export const metadata: Metadata = { title: "About Us", alternates: { canonical: 
 
 export default function AboutPage() {
   return (
-    <main className="min-h-screen">
+    <div className="min-h-screen">
       {/* Hero */}
       <section
         className="relative flex flex-col items-center justify-center text-center px-6"
@@ -102,7 +102,7 @@ export default function AboutPage() {
                 numeral: "03",
                 label: "WE DELIVER TO YOU",
                 description:
-                  "Your order is packed and dispatched. Free delivery within Nairobi CBD, low flat rate countrywide. Track your order and receive it at your door.",
+                  "Your order is packed and dispatched within 24 hours. Flat rate countrywide. Track your order and receive it at your door.",
               },
             ].map((step) => (
               <div key={step.numeral} className="flex flex-col">
@@ -144,6 +144,6 @@ export default function AboutPage() {
           </p>
         </div>
       </section>
-    </main>
+    </div>
   );
 }

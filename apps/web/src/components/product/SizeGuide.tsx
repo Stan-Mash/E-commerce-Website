@@ -2,18 +2,20 @@
 
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
-import { ADULT_SIZES, KIDS_SIZES } from "@/lib/sizeGuide";
+import { ADULT_SIZES, KIDS_SIZES, ADULT_FOOTWEAR, KIDS_FOOTWEAR } from "@/lib/sizeGuide";
 
-type Tab = "adults" | "kids";
+type Tab = "adults" | "kids" | "footwear";
 
 interface Props {
   /** Optional: highlight the currently selected size in the table */
   activeSize?: string | null;
+  /** Open the modal on this tab instead of the default "adults" tab */
+  initialTab?: Tab;
 }
 
-export function SizeGuide({ activeSize }: Props) {
+export function SizeGuide({ activeSize, initialTab }: Props) {
   const [open, setOpen] = useState(false);
-  const [tab, setTab] = useState<Tab>("adults");
+  const [tab, setTab] = useState<Tab>(initialTab ?? "adults");
 
   // Close on Escape
   useEffect(() => {
@@ -68,52 +70,105 @@ export function SizeGuide({ activeSize }: Props) {
 
         {/* Tab switcher */}
         <div className="sg-tabs">
-          {(["adults", "kids"] as Tab[]).map((t) => (
+          {(["adults", "kids", "footwear"] as Tab[]).map((t) => (
             <button
               key={t}
               onClick={() => setTab(t)}
               className={cn("sg-tab", tab === t && "sg-tab--active")}
             >
-              {t === "adults" ? "Adults" : "Children"}
+              {t === "adults" ? "Adults" : t === "kids" ? "Children" : "Footwear"}
             </button>
           ))}
         </div>
 
-        <p className="sg-note">All measurements in centimetres (cm).</p>
+        {tab !== "footwear" && (
+          <p className="sg-note">All measurements in centimetres (cm).</p>
+        )}
 
-        {/* Table */}
-        <div className="sg-table-wrap">
-          <table className="sg-table">
-            <thead>
-              <tr>
-                <th>Size</th>
-                <th>Chest</th>
-                <th>Waist</th>
-                <th>Hips</th>
-                <th>Height fits</th>
-              </tr>
-            </thead>
-            <tbody>
-              {(tab === "adults" ? ADULT_SIZES : KIDS_SIZES).map((row) => (
-                <tr
-                  key={row.size}
-                  className={cn(activeSize === row.size && "sg-row--active")}
-                >
-                  <td className="sg-size-cell">{row.size}</td>
-                  <td>{row.chest}</td>
-                  <td>{row.waist}</td>
-                  <td>{row.hips}</td>
-                  <td>{row.height}</td>
+        {/* Clothing table */}
+        {tab !== "footwear" && (
+          <div className="sg-table-wrap">
+            <table className="sg-table">
+              <thead>
+                <tr>
+                  <th>Size</th>
+                  <th>Chest</th>
+                  <th>Waist</th>
+                  <th>Hips</th>
+                  <th>Height fits</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {(tab === "adults" ? ADULT_SIZES : KIDS_SIZES).map((row) => (
+                  <tr
+                    key={row.size}
+                    className={cn(activeSize === row.size && "sg-row--active")}
+                  >
+                    <td className="sg-size-cell">{row.size}</td>
+                    <td>{row.chest}</td>
+                    <td>{row.waist}</td>
+                    <td>{row.hips}</td>
+                    <td>{row.height}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {/* Footwear table */}
+        {tab === "footwear" && (
+          <>
+            <p className="sg-note">EU sizing with UK and foot length equivalents.</p>
+            <div className="sg-table-wrap">
+              <table className="sg-table">
+                <thead>
+                  <tr>
+                    <th>EU</th>
+                    <th>UK</th>
+                    <th>Foot length (cm)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {ADULT_FOOTWEAR.map((row) => (
+                    <tr key={`adult-${row.eu}`}>
+                      <td className="sg-size-cell">{row.eu}</td>
+                      <td>{row.uk}</td>
+                      <td>{row.cm}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <p className="sg-note" style={{ marginTop: 16 }}>Children&rsquo;s footwear</p>
+            <div className="sg-table-wrap">
+              <table className="sg-table">
+                <thead>
+                  <tr>
+                    <th>EU</th>
+                    <th>UK</th>
+                    <th>Foot length (cm)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {KIDS_FOOTWEAR.map((row) => (
+                    <tr key={`kids-${row.eu}`}>
+                      <td className="sg-size-cell">{row.eu}</td>
+                      <td>{row.uk}</td>
+                      <td>{row.cm}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
+        )}
 
         {/* Footer note */}
         <p className="sg-footer-note">
-          Measurements are body measurements, not garment measurements.
-          For the best fit, size up if you are between sizes.
+          {tab === "footwear"
+            ? "Measure your foot from heel to longest toe on a flat surface. Size up if between sizes."
+            : "Measurements are body measurements, not garment measurements. For the best fit, size up if you are between sizes."}
         </p>
       </div>
 

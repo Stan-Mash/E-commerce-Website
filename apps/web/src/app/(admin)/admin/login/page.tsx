@@ -21,7 +21,9 @@ function EyeIcon({ open }: { open: boolean }) {
 function LoginForm() {
   const searchParams = useSearchParams();
   const from  = searchParams.get("from")  ?? "/admin";
-  const error = searchParams.get("error") === "1";
+  const errorParam = searchParams.get("error");
+  const error = errorParam === "1";
+  const sessionExpired = errorParam === "session";
   const [showPw, setShowPw] = useState(false);
 
   return (
@@ -142,6 +144,18 @@ function LoginForm() {
               <EyeIcon open={showPw} />
             </button>
           </div>
+
+          {sessionExpired && (
+            <p style={{
+              fontFamily: "var(--font-inter)",
+              fontSize: 13,
+              color: "#e09000",
+              marginBottom: 20,
+              marginTop: -16,
+            }}>
+              Your session expired. Please sign in again.
+            </p>
+          )}
 
           {error && (
             <p style={{

@@ -1,56 +1,18 @@
 import Link from "next/link";
 import Image from "next/image";
 import type { Metadata } from "next";
+import { JOURNAL_ARTICLES } from "@/lib/journalData";
 
 export const metadata: Metadata = {
-  title: "Journal",
+  title: "Fashion Journal | Style Tips & Trends for Nairobi",
   description:
-    "Style notes, trend reports, and Nairobi-made styling guidance from Elite Style Co.",
+    "Nairobi fashion tips, outfit ideas, and trend reports from Elite Style Co. Office looks, capsule wardrobes, plus size style, and what to wear in Kenya's seasons.",
   alternates: { canonical: "/journal" },
 };
 
-const ARTICLES = [
-  {
-    slug: "dressed-for-the-nairobi-rains",
-    title: "Dressed for the Nairobi Rains",
-    category: "STYLE",
-    date: "May 2026",
-    excerpt:
-      "When the long rains arrive, dressing well is an act of defiance, a refusal to let the weather dictate your elegance.",
-    image: "/products/tweed-set-black-white.jpg",
-  },
-  {
-    slug: "5-trends-nairobi-2026",
-    title: "5 Trends Taking Over Nairobi This Season",
-    category: "TRENDS",
-    date: "April 2026",
-    excerpt:
-      "From oversized blazers to bold co-ords: the looks dominating Nairobi streets right now, and exactly where to get them.",
-    image: "/products/tweed-set-pink-black.jpg",
-  },
-  {
-    slug: "capsule-wardrobe-on-a-budget",
-    title: "A Capsule Wardrobe on Any Budget",
-    category: "STYLE",
-    date: "March 2026",
-    excerpt:
-      "You don't need a full wardrobe refresh to look great every day. Here are the ten pieces worth investing in first.",
-    image: "/products/knitted-vest-blue.png",
-  },
-  {
-    slug: "linen-season-nairobi",
-    title: "Linen Season: Nairobi",
-    category: "STYLE",
-    date: "February 2026",
-    excerpt:
-      "The case for linen in a city that never really gets cold: why breathable, natural fabrics belong in every wardrobe year-round.",
-    image: "/products/tweed-set-white-gold.jpg",
-  },
-];
-
 export default function JournalPage() {
   return (
-    <main className="min-h-screen bg-es-paper">
+    <div className="min-h-screen bg-es-paper">
       <div className="mx-auto w-full max-w-[1200px] px-6 py-10 sm:px-16 sm:py-20">
         {/* Page header */}
         <header className="mb-14">
@@ -67,7 +29,7 @@ export default function JournalPage() {
 
         {/* Article grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-14">
-          {ARTICLES.map((article) => {
+          {JOURNAL_ARTICLES.map((article) => {
             return (
               <Link
                 key={article.slug}
@@ -111,6 +73,6 @@ export default function JournalPage() {
           })}
         </div>
       </div>
-    </main>
+    </div>
   );
 }

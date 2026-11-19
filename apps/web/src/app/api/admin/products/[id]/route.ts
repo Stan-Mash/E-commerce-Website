@@ -3,7 +3,7 @@ import { z } from "zod";
 import { isAuthenticatedAdminRequest } from "@/lib/adminAuth";
 import { syncProductImages, resolveImageList, syncProductVideos, resolveVideoList } from "@/lib/productImages";
 import { recordAudit, getOperator } from "@/lib/audit";
-import { withApiErrorHandling } from "@/lib/apiErrorHandler";
+import { withApiErrorHandling, friendlyDbError } from "@/lib/apiErrorHandler";
 import { createAdminSupabaseClient } from "@/lib/supabase/server";
 
 function checkAuth(request: NextRequest): boolean {
@@ -133,7 +133,7 @@ export const PUT = withApiErrorHandling("admin/products/[id] PUT", async (
     .single();
 
   if (productError) {
-    return NextResponse.json({ error: productError.message }, { status: 500 });
+    return NextResponse.json({ error: friendlyDbError(productError.message) }, { status: 500 });
   }
 
   await recordAudit(supabase, {

@@ -4,8 +4,10 @@ import { SITE_URL as BASE } from "@/lib/site";
 
 const STATIC_PATHS = [
   "", "/products", "/woman", "/man", "/children", "/coming-soon",
-  "/search", "/journal", "/atelier", "/sizing-guide", "/returns",
-  "/legal", "/contact", "/track", "/wishlist",
+  "/journal", "/atelier", "/sizing-guide", "/returns",
+  "/legal", "/contact",
+  "/thrifted", "/thrifted/plus-size", "/thrifted/standard",
+  "/style-finder",
 ];
 
 export const revalidate = 3600;

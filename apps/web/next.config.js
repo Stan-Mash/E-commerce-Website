@@ -67,6 +67,13 @@ const nextConfig = {
       { protocol: "https", hostname: "*.supabase.co" },
     ],
   },
+  async redirects() {
+    return [
+      { source: "/products/pointed-comfortable-coorprate-heels", destination: "/products/pointed-comfortable-corporate-heels", permanent: true },
+      { source: "/products/fleece-linned-stockings",             destination: "/products/fleece-lined-stockings",             permanent: true },
+      { source: "/products/silicone-earing-stopper",             destination: "/products/silicone-earring-stopper",           permanent: true },
+    ];
+  },
   async headers() {
     return [
       {

@@ -55,7 +55,7 @@ export default async function ComingSoonPage() {
   const products = await getComingSoon();
 
   return (
-    <main className="min-h-screen bg-es-paper">
+    <div className="min-h-screen bg-es-paper">
       <div className="mx-auto w-full max-w-[1280px] px-4 sm:px-8 lg:px-16 py-10 sm:py-20">
         <header className="mb-10 text-center">
           <p className="mb-3 text-[11px] tracking-[.48em] uppercase text-es-gold">
@@ -134,6 +134,6 @@ export default async function ComingSoonPage() {
           </div>
         )}
       </div>
-    </main>
+    </div>
   );
 }

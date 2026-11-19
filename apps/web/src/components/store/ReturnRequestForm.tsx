@@ -64,7 +64,7 @@ export default function ReturnRequestForm() {
         <input
           value={orderRef}
           onChange={(e) => setOrderRef(e.target.value.toUpperCase())}
-          placeholder="NF-XXXX-XXXX"
+          placeholder="ES-XXXXX-XXXXX"
           className="w-full border-b border-es-bone bg-transparent py-2 text-es-ink outline-none focus:border-es-ink"
         />
       </div>

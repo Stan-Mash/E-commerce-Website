@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
+import { AddFullOutfitButton } from "@/components/product/AddFullOutfitButton";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -24,14 +25,25 @@ function formatKES(amount: number) {
   }).format(amount);
 }
 
-// Given a product's category, return the categories we want to suggest.
-// Accessories complement everything. For accessories, suggest clothing.
+// Return complementary categories based on the product's own department.
+// Men's products cross-sell other men's items; children cross-sell children's;
+// accessories cross-sell women's; everything else cross-sells accessories.
 function complementaryCategories(category: string): string[] {
   const cat = category.toLowerCase();
-  if (cat.includes("accessor")) {
-    return ["women", "Woman", "men", "Man", "children", "Children"];
+  // Men's products → suggest more men's pieces (not women's accessories)
+  if ((cat.includes("men") || cat === "thrift-men") && !cat.includes("women")) {
+    return ["men", "thrift-men"];
   }
-  return ["accessories", "Accessories", "ACCESSORIES"];
+  // Children's products → suggest more children's pieces
+  if (cat.includes("children")) {
+    return ["children", "thrift-children"];
+  }
+  // Accessories → suggest women's clothing to build an outfit
+  if (cat.includes("accessor")) {
+    return ["women", "thrift-women"];
+  }
+  // Women's, thrift-women, fallback → suggest accessories to complete the look
+  return ["accessories"];
 }
 
 const PLACEHOLDER_GRADIENTS = [
@@ -94,24 +106,36 @@ interface Props {
 
 export async function CompleteTheLook({ category, currentProductId }: Props) {
   const products = await getComplementaryProducts(category, currentProductId);
-  if (products.length === 0) return null;
+  // Need at least 2 items to show the section — 1 looks like an error, 0 is empty.
+  if (products.length < 2) return null;
 
   return (
     <section className="mt-16 mb-12">
       {/* Header */}
-      <div className="mb-8">
-        <p className="text-[11px] tracking-[.45em] uppercase text-es-champagne-dk mb-2">
-          ELITE STYLE CO.
-        </p>
-        <h2
-          className="text-2xl sm:text-3xl font-bold leading-tight text-es-ink"
-          style={{ fontFamily: "var(--font-bodoni)", letterSpacing: "-0.01em" }}
-        >
-          Complete the Look
-        </h2>
-        <p className="mt-2 text-sm text-es-mute">
-          Pair it with these to finish the outfit.
-        </p>
+      <div className="mb-8 flex items-end justify-between flex-wrap gap-4">
+        <div>
+          <p className="text-[11px] tracking-[.45em] uppercase text-es-champagne-dk mb-2">
+            ELITE STYLE CO.
+          </p>
+          <h2
+            className="text-2xl sm:text-3xl font-bold leading-tight text-es-ink"
+            style={{ fontFamily: "var(--font-bodoni)", letterSpacing: "-0.01em" }}
+          >
+            Complete the Look
+          </h2>
+          <p className="mt-2 text-sm text-es-mute">
+            Pair it with these to finish the outfit.
+          </p>
+        </div>
+        <AddFullOutfitButton
+          items={products.map((p) => ({
+            id: p.id,
+            name: p.name,
+            base_price: p.base_price,
+            imageUrl: p.product_images?.[0]?.url ?? null,
+            skuId: (p as unknown as { skus: { id?: string }[] }).skus?.[0]?.id ?? p.id,
+          }))}
+        />
       </div>
 
       {/* Products */}

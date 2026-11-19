@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import type { Metadata } from "next";
 import { ElitePlate } from "@/components/es/ElitePlate";
 import { Breadcrumb } from "@/components/product/ProductBreadcrumb";
@@ -6,9 +7,9 @@ import { formatKES } from "@/lib/utils";
 import { createPublicSupabaseClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
-  title: "Children's Fashion Nairobi",
+  title: "Children's Fashion Nairobi | Kids Clothes Kenya | Elite Style Co.",
   description:
-    "Shop curated children's fashion in Nairobi: mini co-ords and everyday styles in KES pricing with M-Pesa checkout and free Nairobi CBD delivery.",
+    "Shop children's fashion online in Nairobi — mini co-ords, dresses, sets & everyday kids' wear. KES pricing, M-Pesa checkout, 24-hour delivery across Kenya.",
   alternates: { canonical: "/children" },
 };
 
@@ -59,7 +60,7 @@ export default async function ChildrenPage() {
   const products = await getChildrenProducts();
 
   return (
-    <main className="min-h-screen bg-es-paper">
+    <div className="min-h-screen bg-es-paper">
       {/* Editorial hero */}
       <div className="relative w-full" style={{ height: "60vh" }}>
         <ElitePlate kind="child" tone="sand" className="absolute inset-0" />
@@ -145,11 +146,12 @@ export default async function ChildrenPage() {
                       </span>
                     )}
                     {primaryImage ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
+                      <Image
                         src={primaryImage.url}
                         alt={primaryImage.alt ?? product.name}
-                        className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+                        fill
+                        sizes="(max-width: 640px) 50vw, 25vw"
+                        className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
                       />
                     ) : (
                       <div
@@ -192,6 +194,6 @@ export default async function ChildrenPage() {
           </div>
         )}
       </div>
-    </main>
+    </div>
   );
 }

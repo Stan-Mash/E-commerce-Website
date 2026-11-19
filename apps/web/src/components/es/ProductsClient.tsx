@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useState, useEffect, useCallback } from "react";
 import { compareSizes } from "@/lib/sizeGuide";
+import { useCart } from "@/components/checkout/CartProvider";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -16,7 +17,7 @@ interface ProductRow {
   compare_price: number | null;
   category: string;
   product_images: { url: string; alt: string | null; sort_order: number }[];
-  skus: { size: string; color?: string | null; color_hex?: string | null; stock_quantity: number }[];
+  skus: { id?: string; size: string; color?: string | null; color_hex?: string | null; stock_quantity: number }[];
 }
 
 type SortOption = "featured" | "price-asc" | "price-desc" | "newest";
@@ -148,6 +149,85 @@ interface ProductsClientProps {
   activeCategory: string;
 }
 
+// ---------------------------------------------------------------------------
+// Quick-add overlay (inline size picker)
+// ---------------------------------------------------------------------------
+function QuickAddCard({ product }: { product: ProductRow }) {
+  const { addItem, openCart } = useCart();
+  const [added, setAdded] = useState<string | null>(null);
+
+  const sizes = [...new Set(product.skus.map((s) => s.size))].sort(compareSizes);
+
+  function handleAdd(size: string, e: React.MouseEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    const sku = product.skus.find((s) => s.size === size);
+    if (!sku || sku.stock_quantity <= 0) return;
+    addItem({
+      productId: product.id,
+      skuId: sku.id ?? product.skus[0]?.id ?? product.id,
+      name: product.name,
+      price: product.base_price,
+      size,
+      imageUrl: product.product_images?.[0]?.url ?? "",
+      quantity: 1,
+    });
+    setAdded(size);
+    openCart();
+    setTimeout(() => setAdded(null), 1500);
+  }
+
+  if (sizes.length === 0) {
+    return (
+      <div className="es-quick-view">
+        <button
+          type="button"
+          onClick={(e) => { e.preventDefault(); e.stopPropagation(); addItem({ productId: product.id, skuId: product.skus[0]?.id ?? product.id, name: product.name, price: product.base_price, imageUrl: product.product_images?.[0]?.url ?? "", quantity: 1 }); openCart(); }}
+          style={{ background: "none", border: "none", color: "#fff", cursor: "pointer", fontSize: 10, letterSpacing: "0.32em", textTransform: "uppercase" }}
+        >
+          + Add to Bag
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="es-quick-view" style={{ padding: "10px 8px 8px" }}>
+      {added ? (
+        <span style={{ fontSize: 10, letterSpacing: "0.28em" }}>Added ✓</span>
+      ) : (
+        <div style={{ display: "flex", gap: 4, justifyContent: "center", flexWrap: "wrap" }}>
+          {sizes.map((size) => {
+            const sku = product.skus.find((s) => s.size === size);
+            const available = (sku?.stock_quantity ?? 0) > 0;
+            return (
+              <button
+                key={size}
+                type="button"
+                onClick={(e) => handleAdd(size, e)}
+                disabled={!available}
+                style={{
+                  fontSize: 9, letterSpacing: "0.18em",
+                  padding: "4px 7px", border: "1px solid rgba(255,255,255,0.5)",
+                  background: available ? "rgba(255,255,255,0.15)" : "transparent",
+                  color: available ? "#fff" : "rgba(255,255,255,0.35)",
+                  cursor: available ? "pointer" : "not-allowed",
+                  textDecoration: available ? "none" : "line-through",
+                }}
+              >
+                {size}
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Main client component
+// ---------------------------------------------------------------------------
 export function ProductsClient({ products, activeCategory }: ProductsClientProps) {
   const [sort, setSort] = useState<SortOption>("featured");
   const [sizeFilter, setSizeFilter] = useState<string[]>([]);
@@ -497,17 +577,11 @@ export function ProductsClient({ products, activeCategory }: ProductsClientProps
               (a, b) => a.sort_order - b.sort_order
             );
             const primaryImage = sortedImages[0];
-            const sizeCount = [
-              ...new Set(product.skus.map((s) => s.size)),
-            ].length;
             const hasCompare =
               product.compare_price &&
               product.compare_price > product.base_price;
             const gradient =
               PLACEHOLDER_GRADIENTS[index % PLACEHOLDER_GRADIENTS.length];
-            const categoryLabel =
-              CATEGORY_LABELS[product.category.toLowerCase()] ??
-              product.category;
             const stock = totalStock(product);
             const lowStock = stock > 0 && stock <= 5;
             const soldOut = stock <= 0;
@@ -540,8 +614,8 @@ export function ProductsClient({ products, activeCategory }: ProductsClientProps
                     />
                   )}
 
-                  {/* Quick view overlay */}
-                  <div className="es-quick-view">View Product</div>
+                  {/* Quick-add overlay */}
+                  <QuickAddCard product={product} />
 
                   {/* Wishlist button */}
                   <WishlistButton productId={product.id} />
@@ -549,25 +623,13 @@ export function ProductsClient({ products, activeCategory }: ProductsClientProps
 
                 {/* Card body */}
                 <div className="flex flex-col gap-1">
-                  {/* Category label */}
-                  <p className="text-[10px] tracking-[.4em] uppercase text-es-mute">
-                    {categoryLabel}
+                  {/* Name */}
+                  <p
+                    className="text-base sm:text-xl font-bold leading-tight text-es-ink"
+                    style={{ fontFamily: "var(--font-bodoni)" }}
+                  >
+                    {product.name}
                   </p>
-
-                  {/* Name + sizes row */}
-                  <div className="flex items-start justify-between gap-2">
-                    <p
-                      className="text-base sm:text-xl font-bold leading-tight text-es-ink"
-                      style={{ fontFamily: "var(--font-bodoni)" }}
-                    >
-                      {product.name}
-                    </p>
-                    {sizeCount > 0 && (
-                      <span className="mt-1 shrink-0 text-[10px] tracking-[.34em] uppercase text-es-mute whitespace-nowrap">
-                        {sizeCount} {sizeCount === 1 ? "SIZE" : "SIZES"}
-                      </span>
-                    )}
-                  </div>
 
                   {/* Price */}
                   <div className="flex items-center gap-2 mt-0.5">

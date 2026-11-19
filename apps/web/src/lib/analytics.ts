@@ -80,3 +80,38 @@ export function trackSignUp(method: string): void {
 export function trackTryOnGenerated(productId: string, durationMs: number, success: boolean): void {
   gtag("event", "try_on_generated", { product_id: productId, duration_ms: durationMs, success });
 }
+
+export function trackAddToWishlist(item: AnalyticsItem): void {
+  gtag("event", "add_to_wishlist", { currency: CURRENCY, value: item.price, items: [item] });
+  fbq("AddToWishlist", { content_ids: [item.item_id], content_type: "product", value: item.price, currency: CURRENCY });
+}
+
+export function trackStartWhatsAppOrder(item: AnalyticsItem): void {
+  gtag("event", "start_whatsapp_order", { currency: CURRENCY, value: item.price, items: [item] });
+  fbq("Contact", { content_name: "WhatsApp Order", value: item.price, currency: CURRENCY });
+  ttq("Contact", { content_id: item.item_id, value: item.price, currency: CURRENCY });
+}
+
+// Server-side CAPI forwarding (fire-and-forget from client; deduplicated server-side by event_id)
+export function forwardToCapi(
+  event_name: string,
+  event_id: string,
+  platforms: ("meta" | "tiktok")[],
+  options?: {
+    custom_data?: Record<string, unknown>;
+    event_source_url?: string;
+  }
+): void {
+  if (typeof window === "undefined") return;
+  void fetch("/api/events/capi", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      event_name,
+      event_id,
+      platforms,
+      event_source_url: options?.event_source_url ?? window.location.href,
+      custom_data: options?.custom_data,
+    }),
+  }).catch(() => null);
+}

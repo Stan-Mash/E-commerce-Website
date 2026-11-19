@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 
 export default function StyleFinderPage() {
   return (
-    <main className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white">
       {/* Page header */}
       <div className="border-b border-es-hair bg-es-paper">
         <div className="mx-auto max-w-[1200px] px-6 sm:px-16 py-14 sm:py-20">
@@ -34,6 +34,6 @@ export default function StyleFinderPage() {
       <div className="mx-auto max-w-[1200px] px-6 sm:px-16 py-14 sm:py-20">
         <StyleFinderQuiz />
       </div>
-    </main>
+    </div>
   );
 }

@@ -11,7 +11,7 @@ const STEPS = [
   {
     num: "01",
     heading: "WhatsApp us",
-    body: `Message us on WhatsApp (${SUPPORT_PHONE}) with your order reference and reason for return. Say "I want to return order NF-XXXX".`,
+    body: `Message us on WhatsApp (${SUPPORT_PHONE}) with your order reference and reason for return. Say "I want to return order ES-XXXX".`,
   },
   {
     num: "02",
@@ -21,7 +21,7 @@ const STEPS = [
   {
     num: "03",
     heading: "Drop off or we collect",
-    body: "Drop your parcel at our CBD store (Shop 35, Stanbank House, Moi Avenue Street), or arrange a collection for a small fee of KES 200 within Nairobi.",
+    body: "Drop your parcel at our CBD store (Shop 35, Stanbank House, Moi Avenue), or arrange a collection for a small fee of KES 200 within Nairobi.",
   },
   {
     num: "04",
@@ -39,7 +39,8 @@ const CAN_RETURN = [
 
 const CANNOT_RETURN = [
   "Intimate apparel (underwear, swimwear, socks) for hygiene reasons",
-  "Items purchased in a sale or with a promotional discount",
+  "Earrings and pierced jewellery (for hygiene reasons, unless faulty)",
+  "Clearance or final-sale items (marked as such at time of purchase)",
   "Customised or personalised items",
   "Items showing signs of wear, washing, or damage",
   "Items without original tags or packaging",
@@ -47,7 +48,7 @@ const CANNOT_RETURN = [
 
 export default function ReturnsPage() {
   return (
-    <main className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white">
       {/* Hero */}
       <section
         className="relative flex flex-col items-center justify-center text-center px-6"
@@ -281,6 +282,6 @@ export default function ReturnsPage() {
           </div>
         </div>
       </section>
-    </main>
+    </div>
   );
 }

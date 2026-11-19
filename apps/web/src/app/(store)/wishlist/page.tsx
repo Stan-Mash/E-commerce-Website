@@ -63,7 +63,9 @@ export default function WishlistPage() {
   }
 
   return (
-    <main className="min-h-screen bg-es-paper">
+    <>
+      <meta name="robots" content="noindex, follow" />
+      <div className="min-h-screen bg-es-paper">
       <div className="mx-auto w-full max-w-[1280px] px-4 sm:px-8 lg:px-16 py-12 sm:py-20">
         <p className="mb-3 text-[11px] tracking-[.48em] uppercase text-es-gold">Elite Style Co.</p>
         <h1 className="mb-10 text-4xl sm:text-5xl font-bold leading-none tracking-tight text-es-ink" style={{ fontFamily: "var(--font-bodoni)" }}>
@@ -118,6 +120,7 @@ export default function WishlistPage() {
           </div>
         )}
       </div>
-    </main>
+    </div>
+    </>
   );
 }

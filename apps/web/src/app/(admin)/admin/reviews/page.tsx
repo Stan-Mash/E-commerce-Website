@@ -93,7 +93,10 @@ export default function AdminReviewsPage() {
               <div style={{ flex: 1, minWidth: 240 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
                   <span style={{ color: "#c9a961" }}>{"★".repeat(r.rating)}{"☆".repeat(5 - r.rating)}</span>
-                  <strong style={{ fontSize: 14 }}>{r.author_name}</strong>
+                  <span style={{ fontSize: 13, color: "var(--es-ink)" }}>
+                    <span style={{ color: "var(--es-mute)", fontSize: 11, marginRight: 3 }}>by</span>
+                    <strong>{r.author_name?.trim() || "Anonymous"}</strong>
+                  </span>
                   <span style={{ fontSize: 11, color: "var(--es-mute)" }}>
                     on {r.product?.name ?? "-"} · {new Date(r.created_at).toLocaleDateString("en-KE")}
                   </span>

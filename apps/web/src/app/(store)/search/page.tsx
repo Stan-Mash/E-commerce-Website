@@ -136,7 +136,9 @@ export default function SearchPage() {
   const trimmed = query.trim();
 
   return (
-    <main className="min-h-screen bg-es-white">
+    <>
+      <meta name="robots" content="noindex, follow" />
+      <div className="min-h-screen bg-es-white">
       {/* Search input */}
       <div
         className="mx-auto w-full max-w-[700px] px-6 sm:px-16"
@@ -318,6 +320,7 @@ export default function SearchPage() {
           )}
         </div>
       )}
-    </main>
+    </div>
+    </>
   );
 }

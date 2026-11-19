@@ -1,31 +1,9 @@
 import Link from "next/link";
 import Image from "next/image";
-
-const POSTS = [
-  {
-    tag: "Style Notes",
-    title: "Dressing for the boardroom you haven't seen yet.",
-    desc: "A four-piece capsule that works from 8am meetings to evening dinners, and why less is always more.",
-    readTime: "4 min read",
-    image: "/products/tweed-set-white-black.jpg",
-  },
-  {
-    tag: "How It Works",
-    title: "Why M-Pesa checkout is the only way to shop in Kenya.",
-    desc: "No card. No foreign fees. Just your Safaricom number and a PIN. Here's why 15 million Kenyans agree.",
-    readTime: "3 min read",
-    image: "/products/tote-bag-black.png",
-  },
-  {
-    tag: "New Arrivals",
-    title: "The pieces our buyers picked first this season.",
-    desc: "From the tweed co-ord to the everyday tote: our lead buyer breaks down what sold out in 48 hours.",
-    readTime: "5 min read",
-    image: "/products/shoulder-bag-fuschia.jpg",
-  },
-] as const;
+import { JOURNAL_ARTICLES } from "@/lib/journalData";
 
 export function Journal() {
+  const posts = JOURNAL_ARTICLES.slice(0, 3);
   return (
     <section className="bg-white py-20 px-8 md:px-10 border-t border-es-hair">
       <div className="max-w-[1400px] mx-auto">
@@ -44,8 +22,8 @@ export function Journal() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-px bg-es-hair">
-          {POSTS.map((p) => (
-            <article key={p.title} className="bg-white group">
+          {posts.map((p) => (
+            <article key={p.slug} className="bg-white group">
               <div className="relative w-full overflow-hidden bg-es-bone" style={{ aspectRatio: "16 / 10" }}>
                 <Image
                   src={p.image}
@@ -58,7 +36,7 @@ export function Journal() {
               <div className="p-10">
               <div className="mb-6">
                 <span className="font-sans text-[10px] font-semibold tracking-label uppercase text-es-champagne-dk border border-es-champagne px-2.5 py-1">
-                  {p.tag}
+                  {p.category}
                 </span>
               </div>
 
@@ -68,14 +46,14 @@ export function Journal() {
               </h3>
 
               <p className="font-sans text-[13px] text-es-mute leading-relaxed mb-7">
-                {p.desc}
+                {p.excerpt}
               </p>
 
               <div className="flex items-center justify-between">
                 <span className="font-sans text-[11px] text-es-faint tracking-wide">
                   {p.readTime}
                 </span>
-                <Link href="/journal" className="font-sans text-[11px] font-semibold text-es-char no-underline tracking-label uppercase border-b border-es-char pb-0.5 hover:text-es-champagne-dk hover:border-es-champagne-dk transition-colors">
+                <Link href={`/journal/${p.slug}`} className="font-sans text-[11px] font-semibold text-es-char no-underline tracking-label uppercase border-b border-es-char pb-0.5 hover:text-es-champagne-dk hover:border-es-champagne-dk transition-colors">
                   Read →
                 </Link>
               </div>
