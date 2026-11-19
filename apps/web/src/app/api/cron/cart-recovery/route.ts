@@ -68,9 +68,12 @@ function waMessage(cart: AbandonedCart, stage: number): string {
 }
 
 export async function GET(req: NextRequest) {
-  // Verify Vercel Cron auth
+  // Verify Vercel Cron auth — fail closed: no secret in production = deny all.
   const auth = req.headers.get("authorization") ?? "";
-  if (CRON_SECRET && auth !== `Bearer ${CRON_SECRET}`) {
+  const isDev = process.env.NODE_ENV !== "production";
+  if (!CRON_SECRET) {
+    if (!isDev) return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
+  } else if (auth !== `Bearer ${CRON_SECRET}`) {
     return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
   }
 

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { withApiErrorHandling } from "@/lib/apiErrorHandler";
+import { rateLimit, clientIp } from "@/lib/rateLimit";
 import { createAdminSupabaseClient } from "@/lib/supabase/server";
 
 // ── Env ───────────────────────────────────────────────────────────────────────
@@ -11,8 +12,17 @@ const TT_ACCESS_TOKEN = process.env.TIKTOK_ACCESS_TOKEN ?? "";
 const CAPI_SECRET     = process.env.CAPI_ENDPOINT_SECRET ?? "";
 
 // ── Schema ────────────────────────────────────────────────────────────────────
+// Allowlist prevents bots from poisoning Meta/TikTok ad optimisation with
+// arbitrary event names or custom_data values.
+const ALLOWED_EVENTS = [
+  "PageView", "ViewContent", "AddToCart", "AddToWishlist",
+  "InitiateCheckout", "AddPaymentInfo", "Purchase",
+  "Lead", "CompleteRegistration", "Search", "Contact",
+  "FindLocation", "Schedule", "Subscribe", "StartTrial",
+] as const;
+
 const Schema = z.object({
-  event_name: z.string().min(1).max(100),
+  event_name: z.enum(ALLOWED_EVENTS),
   event_id:   z.string().min(1).max(200),
   platforms:  z.array(z.enum(["meta", "tiktok"])).min(1),
   event_time: z.number().int().optional(),
@@ -115,19 +125,27 @@ async function sendTikTok(payload: z.infer<typeof Schema>, ip: string, ua: strin
 // ── Route ─────────────────────────────────────────────────────────────────────
 
 export const POST = withApiErrorHandling("capi POST", async (request: NextRequest) => {
-  // Optional shared secret for server-to-server calls
+  const ip = clientIp(request);
+  const ua = request.headers.get("user-agent") ?? "";
+
+  // Rate limit: 60 events/min per IP to prevent ad-optimisation poisoning.
+  if (!(await rateLimit(`capi:${ip}`, 60))) {
+    return NextResponse.json({ ok: false, error: "Too many requests" }, { status: 429 });
+  }
+
+  // Shared secret — required in production to prevent unauthenticated callers
+  // from flooding Meta/TikTok with fake events.
   if (CAPI_SECRET) {
     const secret = request.headers.get("x-capi-secret");
     if (secret !== CAPI_SECRET) {
       return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
     }
+  } else if (process.env.NODE_ENV === "production") {
+    console.error("[capi] CAPI_ENDPOINT_SECRET is not set — endpoint is unauthenticated in production.");
   }
 
-  const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "";
-  const ua = request.headers.get("user-agent") ?? "";
-
   const body = await request.json() as unknown;
-  const data = Schema.parse(body);
+  const data = Schema.parse(body); // throws ZodError → 422 via withApiErrorHandling
 
   const results: Record<string, unknown> = {};
 
