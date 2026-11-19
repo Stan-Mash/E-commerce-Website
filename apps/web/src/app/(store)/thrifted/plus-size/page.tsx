@@ -26,9 +26,12 @@ interface ProductRow {
   skus: { size: string; stock_quantity: number }[];
 }
 
+// Query all thrift categories — until products are re-tagged, plus-size shows full thrift stock
 const PLUS_CATEGORIES = [
-  "thrift-plus-women", "thrift-plus-men",
-  "thrift-plus",
+  "thrift-plus-women", "thrift-plus-men", "thrift-plus",
+  "thrift-women", "thrift-men", "thrift-children",
+  "thrift-standard",
+  "thrifted", "Thrifted", "THRIFTED",
 ];
 
 async function getProducts(): Promise<ProductRow[]> {

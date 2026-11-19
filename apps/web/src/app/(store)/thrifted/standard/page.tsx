@@ -26,10 +26,11 @@ interface ProductRow {
   skus: { size: string; stock_quantity: number }[];
 }
 
+// Query all thrift categories — products may not yet be re-tagged into gender splits
 const STANDARD_CATEGORIES = [
   "thrift-women", "thrift-men", "thrift-children",
   "thrift-standard",
-  // Catch-all: items tagged "thrifted" without a gender sub-category
+  "thrift-plus-women", "thrift-plus-men", "thrift-plus",
   "thrifted", "Thrifted", "THRIFTED",
 ];
 
