@@ -34,7 +34,7 @@ export async function fetchFeedProducts(): Promise<FeedProduct[]> {
     imageUrls: (p.product_images ?? [])
       .filter((i) => i.media_type !== "video")
       .sort((a, b) => a.sort_order - b.sort_order)
-      .map((i) => i.url),
+      .map((i) => i.url.startsWith("/") ? `${FEED_BASE}${i.url}` : i.url),
     inStock: (p.skus ?? []).reduce((s, k) => s + k.stock_quantity, 0) > 0,
   }));
 }
