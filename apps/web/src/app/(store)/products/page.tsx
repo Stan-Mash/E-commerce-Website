@@ -6,9 +6,9 @@ import { Breadcrumb } from "@/components/product/ProductBreadcrumb";
 import { createPublicSupabaseClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
-  title: "New Arrivals",
+  title: "Shop All Clothes Nairobi | New Arrivals | Elite Style Co.",
   description:
-    "Browse the full Elite Style Co. collection: new arrivals across Women, Men, and Children in KES pricing with M-Pesa checkout. Delivered within 24 hours.",
+    "Browse the full Elite Style Co. collection — women's, men's & children's fashion. New arrivals daily. KES pricing, M-Pesa checkout, 24-hour delivery across Kenya.",
   alternates: { canonical: "/products" },
 };
 
