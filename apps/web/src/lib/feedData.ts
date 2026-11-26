@@ -1,7 +1,7 @@
 import { createAdminSupabaseClient } from "@/lib/supabase/server";
 import type { FeedProduct } from "@/lib/feeds";
 
-export const FEED_BASE = process.env.NEXT_PUBLIC_SITE_URL ?? "https://e-commerce-website-web.vercel.app";
+export const FEED_BASE = process.env.NEXT_PUBLIC_SITE_URL ?? "https://elitestyle.co.ke";
 export const STORE_NAME = "Elite Style Co.";
 
 // Active catalogue rows shaped for the feed builders.

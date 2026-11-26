@@ -39,6 +39,14 @@ const GOOGLE_PRODUCT_CATEGORY: Record<string, string> = {
   children: "Apparel & Accessories > Clothing > Children's Clothing",
   child: "Apparel & Accessories > Clothing > Children's Clothing",
   accessories: "Apparel & Accessories > Clothing Accessories",
+  "thrift-women": "Apparel & Accessories > Clothing > Women's Clothing",
+  "thrift-plus-women": "Apparel & Accessories > Clothing > Women's Clothing",
+  "thrift-men": "Apparel & Accessories > Clothing > Men's Clothing",
+  "thrift-plus-men": "Apparel & Accessories > Clothing > Men's Clothing",
+  "thrift-children": "Apparel & Accessories > Clothing > Children's Clothing",
+  "thrift-standard": "Apparel & Accessories > Clothing",
+  "thrift-plus": "Apparel & Accessories > Clothing",
+  thrifted: "Apparel & Accessories > Clothing",
 };
 
 export function googleProductCategory(category: string): string {
